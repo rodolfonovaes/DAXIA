@@ -1,0 +1,46 @@
+<EASYLINK>
+   <SERVICE>
+      <ID>015</ID>
+      <DATA_SELECTION>
+         <FIN_NUM>SE2->E2_NUM</FIN_NUM>
+         <FIN_SEND>
+            <FIN_IT>
+               <FIN_ELE1>'E2_NUM'</FIN_ELE1>
+               <E2_NUM>AvKey(#TAG FIN_NUM#, "E2_NUM")</E2_NUM>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_PREFIXO'</FIN_ELE1>
+               <E2_PREFIXO>SE2->E2_PREFIXO</E2_PREFIXO>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_PARCELA'</FIN_ELE1>
+               <E2_PARCELA>SE2->E2_PARCELA</E2_PARCELA>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_TIPO'</FIN_ELE1>
+               <E2_TIPO>SE2->E2_TIPO</E2_TIPO>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_FORNECE'</FIN_ELE1>
+               <E2_FORNECE>SE2->E2_FORNECE</E2_FORNECE>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_LOJA'</FIN_ELE1>
+               <E2_LOJA>SE2->E2_LOJA</E2_LOJA>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+         </FIN_SEND>
+      </DATA_SELECTION>
+      <DATA_SEND>
+         <SEND>EECINFIN(#TAG FIN_SEND#, 'SE2', 'EXCLUIR')</SEND>
+      </DATA_SEND>
+      <DATA_RECEIVE>
+         <SRV_STATUS>.T.</SRV_STATUS>
+      </DATA_RECEIVE>
+   </SERVICE>
+</EASYLINK>

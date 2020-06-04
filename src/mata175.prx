@@ -1,0 +1,2622 @@
+#INCLUDE 'MATA175.CH'
+#INCLUDE 'PROTHEUS.CH'
+#INCLUDE 'FILEIO.CH'
+
+#DEFINE MAXGETDAD  999
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATA175  ³ Autor ³ Gilson do Nascimento  ³ Data ³ 09.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa de Baixas do Controle de Qualidade (CQ)           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ Void MATA175(ExpA1,ExpN1)                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/	
+
+Function MATA175(xRotAuto,xOpcAuto)
+
+Local nOpcAuto     := If(xOpcAuto <> Nil,xOpcAuto,4)
+Local nPos	:= 0
+
+Private cChaveD1   := ''
+Private cArqCQ     := ''
+Private lEstorno   := .F.
+Private nAColsIni  := 0
+Private lEstNeg    := (GetMV('MV_ESTNEG')=='S')
+Private cDirCQ     := AllTrim(GetMV('MV_DIRCQ'))
+Private l175Auto   := (xRotAuto <> NIL)
+Private aRotAuto   := xRotAuto
+Private aAutoItens := {}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Array contendo as Rotinas a executar do programa  ³
+//³ ----------- Elementos contidos por dimensao ------------ ³
+//³ 1. Nome a aparecer no cabecalho                          ³
+//³ 2. Nome da Rotina associada                              ³
+//³ 3. Usado pela rotina                                     ³
+//³ 4. Tipo de Transa‡„o a ser efetuada                      ³
+//³    1 - Pesquisa e Posiciona em um Banco de Dados         ³
+//³    2 - Simplesmente Mostra os Campos                     ³
+//³    3 - Inclui registros no Bancos de Dados               ³
+//³    4 - Altera o registro corrente                        ³
+//³    5 - Remove o registro corrente do Banco de Dados      ³
+//³    6 - Altera determinados campos sem incluir novos Regs ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aRotina := MenuDef()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define o cabecalho da tela de atualizacoes               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private cCadastro := OemToAnsi(STR0030)
+
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Endereca a funcao de BROWSE                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If l175Auto
+	dbSelectArea("SD7")
+	If nOpcAuto <> Nil
+		dbSelectArea("SD7")
+		nPos := Ascan(aRotina,{|x| x[4]== nOpcAuto})
+		If ( nPos # 0 )
+			bBlock := &( "{ |x,y,z,k| " + aRotina[ nPos,2 ] + "(x,y,z,k) }" )
+			Eval( bBlock,Alias(),SD7->(Recno()),nPos)
+		EndIf
+	EndIf
+Else
+	mBrowse( 6, 1,22,75,'SD7',,'D7_LIBERA' )
+EndIf
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Visual³ Autor ³ Gilson do Nascimento  ³ Data ³ 09.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa generico para visualizacao                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Visual(cAlias,nReg,nOpc)
+
+Local nCnt       := 0
+Local nHdl       := 0
+Local aQtd       := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local nTipo      := 0
+Local nSeq       := 0
+Local nLib       := 0
+Local nRej       := 0
+Local nTrf       := 0
+Local cAcha      := ''
+Local nAt        := 0
+Local nAt1       := 0
+Local cTexto     := ''
+Local cFornece   := ''
+Local cLoja      := ''
+Local cSeek      := ''
+Local aAreaAnt   := GetArea()
+Local oDlg
+Local nOpca    := 0
+Local aObjects := {},aPosObj  :={}
+Local aSize    := MsAdvSize()
+Local aInfo    := {aSize[1],aSize[2],aSize[3],aSize[4],3,3}
+Local lCliente := .F.
+Local cPicD7Qtde	:= PesqPictQt("D7_QTDE",14)
+Local lTranCQ  := IsTranCQ()
+
+dbSelectArea(cAlias)
+dbSetOrder(1)
+If RecCount() == 0
+	Return .T.
+EndIf
+
+//-- Posiciona-se no Registro de Sequencia 001
+If !dbSeek(SD7->D7_FILIAL + SD7->D7_NUMERO + SD7->D7_PRODUTO + SD7->D7_LOCAL + '001', .F.)
+	Help('', 1, 'SEMSEQ001')
+	Return .F.
+EndIf
+
+If SD7->D7_FILIAL # xFilial('SD7')
+	Help(' ', 1, 'A000FI')
+	Return .T.
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega o conte£do do arquivo MV_DIRCQ+CQ99999.TXT   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cTexto := ''
+If File(cDirCQ+(cArqCQ:='CQ'+SD7->D7_NUMERO+'.TXT')) .And. (nHdl:=fOpen(cDirCQ+cArqCQ,0+64))>0
+	If fClose(nHdl)
+		cTexto := MemoRead(cDirCQ+cArqCQ)
+	EndIf
+EndIf
+
+aQtd := A175CalcQt(SD7->D7_NUMERO, SD7->D7_PRODUTO, SD7->D7_LOCAL)
+If Empty(aQtd)
+	Return .T.
+EndIf
+
+Private cA175Loc   := SD7->D7_LOCAL
+Private cA175Num   := SD7->D7_NUMERO
+Private cA175Prod  := SD7->D7_PRODUTO
+Private cA175LoteC := SD7->D7_NUMLOTE
+Private cA175LotCt := SD7->D7_LOTECTL
+Private nPotenc175 := SD7->D7_POTENCI
+Private nPotencOri := SD7->D7_POTENCI
+
+If SD7->D7_ORIGLAN == 'CP'
+	SD1->(dbSetOrder(2))
+	If SD1->(dbSeek(xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA, .F.))
+		cLoja := SD1->D1_LOJA
+		If SD1->D1_TIPO $ 'D|B' // Devolucao|Beneficiamento
+			lCliente := .T.
+			SA1->(dbSetOrder(1))
+			If SA1->(MsSeek(xFilial('SA1')+SD1->D1_FORNECE+SD1->D1_LOJA, .F.))
+				cFornece := Substr(SA1->A1_NOME,1,30)
+			EndIf
+		Else
+			SA2->(dbSetOrder(1))
+			If SA2->(MsSeek(xFilial('SA2')+SD1->D1_FORNECE+SD1->D1_LOJA))
+				cFornece := Substr(SA2->A2_NOME,1,30)
+			EndIf
+		EndIf
+	EndIf
+Else
+	SD3->(dbSetOrder(3))
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta a entrada de dados do arquivo                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aTela      := {}
+Private aGets      := {}
+Private aHeader    := {}
+Private aHeaderPro := {}
+Private nUsado     := 0
+Private nNumLin    := 0
+Private nNCpox     := 0
+Private Continua   := ''
+Private lTab       := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta o cabecalho                                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SX2->(dbSeek('SD7'))
+
+dbSelectArea('SX3')
+dbSetOrder(1)
+dbSeek('SD7')
+Do While !Eof() .And. X3_ARQUIVO == 'SD7'
+	If (X3Uso(X3_USADO) .And. cNivel >= X3_NIVEL) .Or. (X3_PROPRI == 'U')
+		nUsado++
+		aAdd(aHeader,{ TRim(X3Titulo()), X3_CAMPO, X3_PICTURE, X3_TAMANHO, X3_DECIMAL, X3_VALID, X3_USADO, X3_TIPO, X3_ARQUIVO, X3_CONTEXT })
+		aAdd(aHeaderPro,{X3_CAMPO, X3_PROPRI} )
+	EndIf
+	dbSkip()
+EndDo
+If !l175Auto
+	ADHeadRec("SD7",aHeader)	// Walk-Thru
+EndIf
+
+Private aCOLS := {}
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Posiciona ponteiro do arquivo cabeca e inicializa variaveis  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea('SD7')
+dbSeek(cSeek:=xFilial('SD7')+cA175Num+cA175Prod+cA175Loc)
+
+nCnt := 0
+
+Do While !SD7->(Eof()) .And. D7_FILIAL+D7_NUMERO+D7_PRODUTO+D7_LOCAL == cSeek
+	//-- Adiciona Linha ao aCols
+	aAdd(aCols, {})
+	nCnt++
+	nUsado := 0
+
+	dbSelectArea('SX3')
+	dbSeek(cAlias)
+	Do While !SX3->(Eof()) .And. X3_ARQUIVO == cAlias
+		If (X3Uso(x3_usado) .And. cNivel >= X3_NIVEL) .Or. (X3_PROPRI == 'U')
+
+			//-- Adiciona Coluna ao aCols
+			aAdd(aCols[Len(aCols)], {})
+			nUsado++
+
+			If X3_CONTEXT # 'V'
+				aCOLS[nCnt, nUsado] := &(cAlias+'->'+X3_CAMPO)
+				If AllTRim(X3_CAMPO) == 'D7_TIPO'
+					nTipo := aCols[nCnt][nUsado]
+				ElseIf AllTRim(X3_CAMPO) == 'D7_SEQ'
+					nSeq := aCols[nCnt][nUsado]
+				EndIf
+			ElseIf X3_CONTEXT == 'V'
+				aCOLS[nCnt, nUsado] := CriaVar(AllTRim(X3_CAMPO))
+				
+				//-- Descricao do Tipo de Movimentacao do CQ
+				If AllTRim(X3_CAMPO) == 'D7_DESCRT'
+					If SD7->D7_TIPO  == 0
+						aCols[nCnt, nUsado] := OemToAnsi(STR0007)	//'Qtd Original        '
+					ElseIf SD7->D7_TIPO == 1
+						aCols[nCnt, nUsado] := OemToAnsi(STR0008)	//'Liberado            '
+					ElseIf SD7->D7_TIPO == 2
+						aCols[nCnt, nUsado] := OemToAnsi(STR0009)	//'Rejeitado           '
+					ElseIf SD7->D7_TIPO == 3
+						aCols[nCnt, nUsado] := OemToAnsi(STR0010)	//'Tranferencia para outra Filial '
+					ElseIf SD7->D7_TIPO == 4
+						aCols[nCnt, nUsado] := OemToAnsi(STR0011)	//'Estorno Transferencia '
+					ElseIf nTipo == 5
+						aCols[nCnt, nUsado] := OemToAnsi(STR0046)	//'Alterar Dt.Validade '
+					ElseIf SD7->D7_TIPO == 6
+						aCols[nCnt, nUsado] := OemToAnsi(STR0012)	//'Estorno Liberacao   '
+					ElseIf SD7->D7_TIPO == 7
+						aCols[nCnt, nUsado] := OemToAnsi(STR0013)	//'Estorno Rejeicao    '
+					ElseIf SD7->D7_TIPO == 8
+						aCols[nCnt, nUsado] := OemToAnsi(STR0025)	//'Despesas Agregadas  '
+					ElseIf SD7->D7_TIPO == 9
+						aCols[nCnt, nUsado] := OemToAnsi(STR0026)	//'Estorno Despesas    '
+					EndIf
+					//-- Descricao do Tipo de Motivo de Rejeicao
+				ElseIf Upper(AllTRim(X3_CAMPO)) == 'D7_DESCREJ'
+					If SX5->(dbSeek(xFilial('SX5')+'43'+SD7->D7_MOTREJE,.F.))
+						aCols[nCnt,nUsado] := Left(X5Descri(),35)
+					EndIf
+					//-- Obsercacao
+				ElseIf !Empty(nTipo) .And. AllTRim(X3_CAMPO) == 'D7_OBS'
+					cAcha := OemToAnsi(STR0014)+Str(SD7->D7_TIPO,1)+OemToAnsi(STR0015)+SD7->D7_SEQ+'/A]'		//'[TIPO:'###'/SEQ:'
+					nAt   := At(cAcha,cTexto)
+					cAcha := OemToAnsi(STR0014)+Str(SD7->D7_TIPO,1)+OemToAnsi(STR0015)+SD7->D7_SEQ+'/Z]'		//'[TIPO:'###'/SEQ:'
+					nAt1  := At(cAcha,cTexto)
+					aCols[nCnt][nUsado] := If(nAt>0.And.nAt1>0,Substr(cTexto,nAt+20,nAt1-nAt-21),' ')
+				EndIf
+
+			EndIf
+		EndIf
+		SX3->(dbSkip())
+	EndDo
+	If !l175Auto
+		aAdd(aCols[nCnt], "SD7")
+		aAdd(aCols[nCnt], SD7->(RecNo()))
+	EndIf
+
+	dbSelectArea('SD7')
+	SD7->(dbSkip())
+EndDo
+
+nAColsIni := Len(aCols)
+
+dbSelectArea( cAlias )
+dbSetOrder(1)
+dbSeek(xFilial()+cA175Num+cA175Prod+cA175Loc)
+
+// Posiciona no SB1 p/ achar a descricao do produto
+SB1->(dbSetOrder(1))
+SB1->(MsSeek(xFilial('SB1') + SD7->D7_PRODUTO, .F.))
+
+nLib := (aQtd[2]-aQtd[4])
+nRej := (aQtd[3]-aQtd[5])
+nTrf := (aQtd[10]-aQtd[11])
+
+AADD(aObjects,{100,070,.T.,.F.,.F.})
+AADD(aObjects,{100,100,.T.,.T.,.F.})
+
+aPosObj:=MsObjSize(aInfo,aObjects)
+
+DEFINE MSDIALOG oDlg TITLE cCadastro OF oMainWnd PIXEL FROM aSize[7],0 TO aSize[6],aSize[5]
+@ 01.3, 00.5 SAY OemToAnsi(STR0016) //'&N£mero:'
+@ 01.3, 05   MSGET SD7->D7_NUMERO 		WHEN .F.
+@ 01.3, 20   SAY OemToAnsi(STR0017) //'&Local'
+@ 01.3, 25   MSGET SD7->D7_LOCDEST  	WHEN .F.
+@ 02.4, 00.5 SAY OemToAnsi(STR0018)	 //'&Cod.Produto:'
+@ 02.4, 05   MSGET SD7->D7_PRODUTO 		WHEN .F.
+@ 02.4, 28   MSGET SB1->B1_DESC 		WHEN .F.
+@ 03.6, 00.5 SAY OemToAnsi(STR0019) //'&Unid.Medida:'
+@ 03.6, 05   MSGET SB1->B1_UM		  	WHEN .F.
+@ 03.6,12   SAY OemToAnsi(STR0020) // 'Lo&te:'
+@ 03.6,14   MSGET SD7->D7_LOTECTL	SIZE 129,009 WHEN .F.
+@ 03.6,36   SAY OemToAnsi(STR0027) //'&Sub-Lote:'
+@ 03.6,39   MSGET SD7->D7_NUMLOTE 	WHEN .F.
+@ 03.6,45   SAY OemToAnsi(STR0031) //"Potencia"
+@ 03.6,48   MSGET nPotenc175 		WHEN .F.
+@ 04.8, 00.5 SAY OemToAnsi(STR0021) //'Qtd.&Original:'
+@ 04.8, 05   MSGET aQtd[1] Picture cPicD7Qtde WHEN .F.
+@ 04.8, 12.5 SAY OemToAnsi(STR0022) //'Qtd.&Liberada:'
+@ 04.8, 18   MSGET nLib    Picture cPicD7Qtde WHEN .F.
+@ 04.8, 25.5 SAY OemToAnsi(STR0023) //'Qtd.&Rejeitada:'
+@ 04.8, 31   MSGET nRej    Picture cPicD7Qtde WHEN .F.
+// Adiciona o Get de saldo Transferido
+If lTranCQ
+	@ 04.8, 38.5 SAY OemToAnsi(STR0047) //'Qtd.&Transferida:'
+	@ 04.8, 44   MSGET nTrf    Picture cPicD7Qtde WHEN .F.
+	@ 04.8, 51   SAY OemToAnsi(STR0024) //'Saldo:'
+	@ 04.8, 54   MSGET aQtd[6] Picture cPicD7Qtde WHEN .F.
+Else
+	@ 04.8, 38.5 SAY OemToAnsi(STR0024) //'Saldo:'
+	@ 04.8, 41   MSGET aQtd[6] Picture cPicD7Qtde WHEN .F.
+EndIf	
+If lCliente
+	@ 05.9, 00.5 SAY OemToAnsi(STR0048) //'Cliente:'
+Else
+	@ 05.9, 00.5 SAY OemToAnsi(STR0028) //'Fornecedor:'
+EndIf
+@ 05.9, 05   MSGET cFornece WHEN .F.
+@ 05.9, 28   SAY OemToAnsi(STR0029) //'Loja:'
+@ 05.9, 31   MSGET cLoja WHEN .F.
+oGet := MSGetDados():New(aPosObj[2,1],aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],nOpc,,,'',,,,,MAXGETDAD)
+ACTIVATE MSDIALOG oDlg ON INIT EnchoiceBar(oDlg,{||nOpca:=1,oDlg:End()},{||nOpca:=1,oDlg:End()})
+
+RestArea(aAreaAnt)
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175LibEst³ Autor ³ Gilson do Nascimento  ³ Data ³ 09.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa exclusivo ao MATA175 para liberacao               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175LibEst(cAlias,nReg,nOpc)
+
+Local nOpcA      := 0
+Local nCnt       := 0
+Local nHdl       := 0
+Local nTipo      := 0
+Local nSeq       := 0
+Local nLib       := 0
+Local nRej       := 0
+Local nTrf       := 0
+Local nAt        := 0
+Local nAt1       := 0
+Local nX         := 0
+Local nCQPosNSeq := 0
+Local aAreaAnt   := GetArea()
+Local lRet       := .T.
+Local lRetPE     := .T.
+Local cEst       := ''
+Local cArqCQ     := ''
+Local cTexto     := ''
+Local cFornece   := ''
+Local cLoja      := ''
+Local oDlg
+Local oGetPot
+Local lPyme      := Iif(Type("__lPyme") <> "U",__lPyme,.F.)
+Local aObjects   := {}
+Local aPosObj    := {}
+Local aButtons   := {}
+LOCAL aUsrBut    := {}
+Local aCRotAut	 := {}
+Local aCPadrao	 := {}
+Local aValidGet  := {}
+Local aSize      := MsAdvSize()
+Local aInfo      := {aSize[1],aSize[2],aSize[3],aSize[4],3,3}
+Local lIntQie    := If(Type("__IntegraQie") <> "U",__IntegraQie,.F.)
+Local lIntACD    := SuperGetMV("MV_INTACD",.F.,"0") == "1"
+Local bPMSDlgNF	 := {|| IIf(n>nAColsIni,PmsDlgSD7(3,SD7->D7_NUMERO,aCols[n][1]),Nil)} // Chamada da Dialog de Gerenc. Projetos
+Local lCliente := .F.
+Local cPicD7Qtde	:= PesqPictQt("D7_QTDE",14)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ MV_A175VLD - Parametro utilizado para verificar se o usuario  |
+//|              podera realizar a alteração da data de validade  |
+//|              do lote atraves da rotina de Baixas do CQ.       |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local lA175Vld   :=	SuperGetMv("MV_A175VLD",.F.,.F.)	.And.;
+					Rastro(SD7->D7_PRODUTO)
+					
+
+Local lTranCQ    := IsTranCQ()
+Local nSaldoD1	:= 0
+Local nSaldoB8	:= 0
+Local aAreaSD1	:= {}
+Local aAreaSB8	:= {}
+Local cNrSEQ	:= '' 
+
+Private aQtd     := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Private aAlter   := {}
+Private oQtd1,oLib,oReg,oQtd6,oTrf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Array contendo os campos que podem ser alterados pelo GetDados³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !lEstorno
+
+	aAdd(aAlter, 'D7_DATA'   )
+	aAdd(aAlter, 'D7_TIPO'   )
+	aAdd(aAlter, 'D7_QTDE'   )
+	aAdd(aAlter, 'D7_OBS'    )
+	aAdd(aAlter, 'D7_QTSEGUM')
+	aAdd(aAlter, 'D7_MOTREJE')
+	aAdd(aAlter, 'D7_LOCDEST')
+	If Localiza(SD7->D7_PRODUTO,.T.)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Ativa tecla F4 para comunicacao com Saldos por localizacao   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		Set Key VK_F4 TO A175ShowF4()
+		aAdd(aAlter, 'D7_LOCALIZ')
+		aAdd(aAlter, 'D7_NUMSERI')
+		If	IntWMS(SD7->D7_PRODUTO)
+			aAdd(aAlter, 'D7_SERVIC')
+		EndIf
+	EndIf
+	If lA175Vld		
+		aAdd(aAlter, 'D7_DTVALID')
+	EndIf	
+Else
+	aAdd(aAlter, 'D7_DATA'   )
+	aAdd(aAlter, 'D7_ESTORNO')
+	aAdd(aAlter, 'D7_OBS'    )
+EndIf
+
+If lEstorno 					//se estorno posiciona na ultima sequencia para validar o saldo
+	cKey:= SD7->D7_FILIAL + SD7->D7_NUMERO + SD7->D7_PRODUTO + SD7->D7_LOCAL
+	dbSelectArea('SD7')
+	dbSetOrder(2)
+	dbSeek(cKey,.F.)
+	while !EOF() .and. SD7->D7_FILIAL + SD7->D7_NUMERO + SD7->D7_PRODUTO + SD7->D7_LOCAL = cKey
+		cNrSEQ:=SD7->D7_NUMSEQ
+		dbskip()
+	enddo
+	if !empty(cNrSEQ)
+		dbSeek(cKey+cNrSEQ,.F.)
+	EndiF
+EndIf
+
+dbSelectArea("SB2")
+DBSETORDER(1)	
+If dbSeek(xfilial("SB2") + SD7->D7_PRODUTO + SD7->D7_LOCDEST, .T.)
+	nSaldoB2 := SaldoSB2()
+EndIf	
+
+//-- Consiste Filial
+If SD7->D7_FILIAL # xFilial('SD7')
+	Help(' ',1,'A000FI')
+	Return .F.
+EndIf
+
+//-- N„o trata Movimenta‡”es Quality Celerina
+If !lIntQie
+	If Upper(Left(SD7->D7_TIPOCQ,1)) == 'Q' .And. (nOpc==3 .Or. nOpc==4) .And. (SD7->D7_ORIGLAN # 'PR')
+		Help(' ',1,'NOCELERINA')
+		Return .F.
+	EndIf
+EndIf
+
+aQtd := A175CalcQt(SD7->D7_NUMERO, SD7->D7_PRODUTO, SD7->D7_LOCAL)
+If aQtd[7] == 0
+	Return .F.
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Consiste se existe Quantidade a ser Movimentada          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lEstorno
+
+	If Rastro(SD7->D7_PRODUTO)
+		aAreaSB8 := SB8->(GetArea())
+		dbSelectArea("SB8")
+		DBSETORDER(3)
+		If dbSeek(xfilial("SB8")+SD7->D7_PRODUTO+SD7->D7_LOCDEST+SD7->D7_LOTECTL+SD7->D7_NUMLOTE, .T.)
+			nSaldoB8 := SB8->B8_SALDO
+			If QtdComp(nSaldoB8) < QtdComp(SD7->D7_QTDE)  
+				Help(' ',1,'SEMSALDO')
+				Return .F.
+			EndIf
+		EndIf
+		RestArea(aAreaSB8)	
+	Else
+		aAreaSD1 := SD1->(GetArea())
+		dbSelectArea("SD1")
+		DBSETORDER(1)
+		If dbSeek(xfilial("SD1")+SD7->(D7_DOC+D7_SERIE+D7_FORNECE+D7_LOJA+D7_PRODUTO) , .T.)
+			While !Eof()  .And. SD7->D7_PRODUTO = SD1->D1_COD
+				If SD7->(D7_LOCAL+D7_NUMERO) = SD1->(D1_LOCAL+D1_NUMCQ) 
+					nSaldoD1 += D1_QTDEDEV
+				EndIf
+				SD1->(dbSkip())
+			EndDo
+			If nSaldoD1 > QtdComp(aQtd[6])
+				Help(' ',1,'LIBERADO')
+				Return .F.
+			EndIf
+		EndIf
+		RestArea(aAreaSD1)	
+	EndIf
+
+
+	//-- Impede Estorno caso nao exista quantidade Liberada, Rejeitada ou Transferida
+	If QtdComp( (aQtd[2]-aQtd[4])+(aQtd[3]-aQtd[5])+(aQtd[10]-aQtd[11]) ) == QtdComp(0)
+		Help(' ',1,'A175EST')
+		Return .F.
+	EndIf
+	
+
+	//-- Impede a movimentação caso não haja saldo na SB2.	
+		If  nOpc != 4 .And. nSaldoB2 == 0 .And. GetMV("MV_ESTNEG") == "N"		
+			Help(' ',1,'SEMSALDO')
+			Return .F.
+		EndIf
+
+	//-- Impede estorno caso não haja saldo na SB2, nOpc 4 e D7_TIPO seja 1
+		If lEstorno .And. nSaldoB2 < SD7->D7_QTDE .And. lEstNeg == .F. .and. SD7->D7_TIPO == 1		
+			Help(' ',1,'SEMSALDO')
+			Return .F.
+		EndIf 
+
+Else
+	//-- Impede Libera‡ao/Rejei‡ao caso nao exista Saldo a Movimentar
+	If QtdComp(aQtd[6])==QtdComp(0) .Or. !Empty(SD7->D7_LIBERA)
+		Help(' ',1,'LIBERADO')
+		Return .F.
+	EndIf
+	
+
+	
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega o conte£do do arquivo MV_DIRCQ+CQ99999.TXT   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cTexto := ''
+If File(cDirCQ+(cArqCQ:='CQ'+SD7->D7_NUMERO+'.TXT')) .And. (nHdl:=fOpen(cDirCQ+cArqCQ,0+64))>0
+	If fClose(nHdl)
+		cTexto := MemoRead(cDirCQ+cArqCQ)
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa variaveis.                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private cA175Num   := SD7->D7_NUMERO
+Private cA175Prod  := SD7->D7_PRODUTO
+Private cA175Loc   := SD7->D7_LOCAL
+Private cA175OrigL := SD7->D7_ORIGLAN
+Private cA175Chave := SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA
+Private cA175UM    := SB1->B1_UM
+Private cA175LoteC := SD7->D7_NUMLOTE
+Private cA175LotCt := SD7->D7_LOTECTL
+Private nPotenc175 := GetPotenc()
+Private nPotencOri := SD7->D7_POTENCI
+Private aRatAFO	   := {}
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Posiciona Cli/fornec.                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SD7->D7_ORIGLAN == 'CP'
+	SD1->(dbSetOrder(2))
+	If SD1->(dbSeek(xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA, .F.))
+		cLoja := SD1->D1_LOJA
+		If SD1->D1_TIPO $ 'D|B' // Devolucao|Beneficiamento
+			lCliente := .T.
+			SA1->(dbSetOrder(1))
+			If SA1->(MsSeek(xFilial('SA1')+SD1->D1_FORNECE+SD1->D1_LOJA, .F.))
+				cFornece := Substr(SA1->A1_NOME,1,30)
+			EndIf
+		Else
+			SA2->(dbSetOrder(1))
+			If SA2->(MsSeek(xFilial('SA2')+SD1->D1_FORNECE+SD1->D1_LOJA, .F.))
+				cFornece := SubStr(SA2->A2_NOME,1,30)
+			EndIf
+		EndIf
+	EndIf
+Else
+	SD3->(dbSetOrder(3))
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta a entrada de dados do arquivo                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aTELA      := {0,0}
+Private aGETS      := {}
+Private lTab       := .F.
+Private aHeader    := {}
+Private aHeaderPro := {}
+Private aLocal     := {}
+Private Continua   := ''
+Private nNumLin    := 0
+Private nUsado     := 0
+Private nNCpox     := 0
+Private nPosSeq    := 0
+Private nPosTipo   := 0
+Private nPosDesc   := 0
+Private nPosLocLz  := 0
+Private nPosNuMSer := 0
+Private nPosService:= 0
+Private nPosDtVld  := 0
+
+Private nCQPosQtde := 0
+Private nCQPosLDes := 0
+Private nCQPosData := 0
+Private nCQPosEsto := 0
+Private nCQPosMRej := 0
+Private nCQPosObs  := 0
+Private nCQPosQtd2 := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica a existencia da variavel l175Auto                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( Type("l175Auto") == "U" )
+	Private l175Auto := .F.
+EndIf
+
+nCQPosNSeq := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta o cabecalho (aHeader)                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SX2->(dbSetOrder(1))
+SX2->(dbSeek('SD7', .F.))
+
+dbSelectArea('SX3')
+dbSetOrder(1)
+dbSeek('SD7')
+Do While !Eof() .And. X3_ARQUIVO == 'SD7'
+	If ! __lPyme .Or. (__lPyme .And. X3_PYME <> "N")
+		If (X3Uso(X3_USADO) .And. cNivel >= X3_NIVEL) .Or. (X3_PROPRI == 'U')
+			nUsado++
+			aAdd(aHeaderPro,{X3_CAMPO, X3_PROPRI} )
+			aAdd(aHeader,{AllTrim(X3Titulo()), X3_CAMPO, X3_PICTURE, X3_TAMANHO, X3_DECIMAL, X3_VALID, X3_USADO, X3_TIPO, X3_ARQUIVO, X3_CONTEXT})
+		EndIf
+	EndIf
+	If X3_PROPRI == 'U'
+		aAdd(aAlter, X3_CAMPO)
+	EndIf
+	dbSkip()
+EndDo
+If !l175Auto
+	ADHeadRec("SD7",aHeader)	// Walk-Thru
+EndIf
+
+nCnt := 0
+Private aCols := {}
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Posiciona ponteiro do arquivo cabeca e inicializa variaveis  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DbSelectArea('SD7')
+SD7->(DbSetOrder(1))
+SD7->(DbSeek(cSeek := xFilial('SD7')+cA175Num+cA175Prod+cA175Loc, .F.))
+
+Do While !SD7->(Eof()) .And. D7_FILIAL+D7_NUMERO+D7_PRODUTO+D7_LOCAL == cSeek
+
+	//-- Adiciona Linhas ao aCols
+	aAdd(aCols, {})
+	nCnt++
+	nUsado := 0
+
+	dbSelectArea('SX3')
+	dbSeek('SD7')
+	Do While !SX3->(Eof()) .And. X3_ARQUIVO == cAlias
+		If (X3Uso(X3_USADO) .And. cNivel >= x3_nivel) .Or. (X3_PROPRI == 'U')
+			//-- Adiciona Colunas ao aCols
+			aAdd(aCols[Len(aCols)], {})
+			nUsado++
+			nSeq       := 0
+			nTipo      := 0
+			cEst       := ''
+			If X3_CONTEXT # 'V'
+				aCOLS[nCnt, nUsado] := &(cAlias+'->'+X3_CAMPO)
+				If AllTrim(X3_CAMPO) == 'D7_SEQ'
+					nSeq := aCols[nCnt, nUsado]
+				ElseIf AllTrim(X3_CAMPO) == 'D7_ESTORNO'
+					cEst := aCols[nCnt, nUsado]
+				EndIf
+			ElseIf X3_CONTEXT == 'V'
+				aCOLS[nCnt, nUsado] := CriaVar(AllTRim(X3_CAMPO))
+				//-- Adiciona a Descricao do Tipo de Movimenta‡„o no CQ
+				If AllTRim(X3_CAMPO) == 'D7_DESCRT'
+					If SD7->D7_TIPO  == 0
+						aCols[nCnt, nUsado] := OemToAnsi(STR0007)	//'Qtd Original        '
+					ElseIf SD7->D7_TIPO == 1
+						aCols[nCnt, nUsado] := OemToAnsi(STR0008)	//'Liberado            '
+					ElseIf SD7->D7_TIPO == 2
+						aCols[nCnt, nUsado] := OemToAnsi(STR0009)	//'Rejeitado           '
+					ElseIf SD7->D7_TIPO == 3
+						aCols[nCnt, nUsado] := OemToAnsi(STR0010)	//'Transferido         '
+					ElseIf SD7->D7_TIPO == 4
+						aCols[nCnt, nUsado] := OemToAnsi(STR0011)	//'Estorno Transferencia'
+					ElseIf SD7->D7_TIPO == 5
+						aCols[nCnt, nUsado] := OemToAnsi(STR0046)	//'Alterar Dt.Validade '
+					ElseIf SD7->D7_TIPO == 6
+						aCols[nCnt, nUsado] := OemToAnsi(STR0012)	//'Estorno Liberacao   '
+					ElseIf SD7->D7_TIPO == 7
+						aCols[nCnt, nUsado] := OemToAnsi(STR0013)	//'Estorno Rejeicao    '
+					ElseIf SD7->D7_TIPO == 8
+						aCols[nCnt, nUsado] := OemToAnsi(STR0025)	//'Despesas Agregadas  '
+					ElseIf SD7->D7_TIPO == 9
+						aCols[nCnt, nUsado] := OemToAnsi(STR0026)	//'Estorno Despesas    '
+					EndIf
+				//-- Adiciona a Descricao do Motivo da Rejeicao ao aCols
+				ElseIf Upper(AllTRim(X3_CAMPO)) == 'D7_DESCREJ'
+					If SX5->(dbSeek(xFilial('SX5')+'43'+SD7->D7_MOTREJE,.F.))
+						aCols[nCnt,nUsado] := Left(X5Descri(),35)
+					EndIf
+				//-- Adiciona a Observa‡ao ao aCols
+				ElseIf AllTRim(X3_CAMPO) == 'D7_OBS'
+					cAcha := OemToAnsi(STR0014)+Str(SD7->D7_TIPO,1)+OemToAnsi(STR0015)+SD7->D7_SEQ+'/A]' //'[TIPO:'###'/SEQ:'
+					nAt   := At(cAcha,cTexto)
+					cAcha := OemToAnsi(STR0014)+Str(SD7->D7_TIPO,1)+OemToAnsi(STR0015)+SD7->D7_SEQ+'/Z]' //'[TIPO:'###'/SEQ:'
+					nAt1  := At(cAcha,cTexto)
+					aCols[nCnt, nUsado] := If(nAt>0.And.nAt1>0,SubStr(cTexto,nAt+20,nAt1-nAt-21),' ')
+				EndIf
+			EndIf
+		EndIf
+		SX3->(dbSkip())
+	EndDo
+	If !l175Auto
+		aAdd(aCols[nCnt], "SD7")
+		aAdd(aCols[nCnt], SD7->(RecNo()))
+	EndIf
+
+	//-- Adiciona o Elemento L¢gico que possibilita a Dele‡ao
+	aAdd(aCols[nCnt], .F.)
+
+	dbSelectArea('SD7')
+	SD7->(dbSkip())
+EndDo
+
+nAColsIni := Len(aCols)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Rotina Automatica da Baixa de CQ					  		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+A175RotAut(1,@aCRotAut,aAlter,lEstorno)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Forca o campo D7_ESTORNO na 2a. posicao do Acols        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+A175Acerta(@aHeader,@aCols)
+
+For nX := 1 to Len(aHeader)
+	If Upper(AllTrim(aHeader[nX, 2]))     == 'D7_TIPO'
+		nPosTipo := nX
+	ElseIf Upper(AllTrim(aHeader[nX, 2])) == 'D7_DESCREJ'
+		nPosDesc := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_TIPO'
+		nPosTipo := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_QTDE'
+		nCQPosQtde := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_LOCDEST'
+		nCQPosLDes := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_DATA'
+		nCQPosData := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_ESTORNO'
+		nCQPosEsto := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_MOTREJE'
+		nCQPosMRej := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_OBS'
+		nCQPosObs := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_QTSEGUM'
+		nCQPosQtd2 := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_NUMSEQ'
+		nCQPosNSeq := nX
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_LOCALIZ'
+		nPosLocLz  := nx
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_NUMSERI'
+		nPosNumSer := nx
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_SERVIC'
+		nPosService:= nx
+	ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_DTVALID'
+		nPosDtVld := nx
+	ElseIf Upper(AllTrim(aHeader[nX, 2])) == 'D7_SEQ'
+		nPosSeq   := Nx
+	EndIf
+Next nX
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Estorno da Baixa de CQ utilizando Rotina Automatica		³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If l175Auto .And. lEstorno
+	A175RotAut(2,,,lEstorno)
+EndIf
+
+dbSelectArea('SD7')
+dbSetOrder(1)
+dbSeek(xFilial('SD7')+cA175Num+cA175Prod+cA175Loc)
+
+//-- Posiciona no SB1 p/ achar a Descricao do produto
+SB1->(dbSetOrder(1))
+SB1->(MsSeek(xFilial('SB1')+SD7->D7_PRODUTO, .F.))
+
+AADD(aObjects,{100,070,.T.,.F.,.F.})
+AADD(aObjects,{100,100,.T.,.T.,.F.})
+
+aPosObj:=MsObjSize(aInfo,aObjects)
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia para processamento dos Gets                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Do While .T.
+	nLib := (aQtd[2]-aQtd[4])
+	nRej := (aQtd[3]-aQtd[5])
+    nTrf := (aQtd[10]-aQtd[11])
+
+	If !l175Auto
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Habilita botao para alterar potencia do lote         ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If QtdComp(nLib) == QtdComp(0) .And. QtdComp(nRej) == QtdComp(0) .And. PotencLote(SD7->D7_PRODUTO)
+			aButtons := {{'PESQUISA',{|| A175Potenc(oGetPot) },STR0032}} //"Alterar Potencia de Lote"
+		EndIf
+		If IntePMS() .And. ExisteSX2('AFO')
+			Aadd(aButtons , {'PROJETPMS',{||Eval(bPmsDlgNF)},STR0043,STR0044}) //"Gerenciamento de Projetos"
+		EndIf 
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ PE: MA175BUT 						                 ³   
+   	    //³ Permite a inclusao de botoes 		                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ         
+		If ExistBlock("MA175BUT" )
+	   	    If Valtype( aUsrBut := Execblock( "MA175BUT", .F., .F. ) ) == "A"
+  		       AEval( aUsrBut, { |x| AAdd( aButtons, x ) } )       
+  			EndIf
+		EndIf
+	
+		DEFINE MSDIALOG oDlg TITLE cCadastro OF oMainWnd PIXEL FROM aSize[7],0 TO aSize[6],aSize[5]
+		@ 1.3 ,0.5	SAY OemToAnsi(STR0016) //'&N£mero:'
+		@ 1.3 ,05 	MSGET SD7->D7_NUMERO 	WHEN .F.
+		@ 1.3 ,20 	SAY OemToAnsi(STR0017) //'&Local'
+		@ 1.3 ,25	MSGET SD7->D7_LOCDEST  	WHEN .F.
+
+		@ 2.4 ,0.5	SAY OemToAnsi(STR0018) //'&Cod.Produto:'
+		@ 2.4 ,05 	MSGET SD7->D7_PRODUTO 	WHEN .F.
+		@ 2.4 ,28   MSGET SB1->B1_DESC 		WHEN .F.
+
+		@ 3.6, 0.5 	SAY OemToAnsi(STR0019) //'&Unid.Medida:'
+		@ 3.6 ,05	MSGET SB1->B1_UM		WHEN .F.
+
+		@ 03.6,12 	SAY OemToAnsi(STR0020) // 'Lo&te:'
+		@ 03.6,14   MSGET SD7->D7_LOTECTL	SIZE 129,009 WHEN .F.
+		
+		@ 03.6,36   SAY OemToAnsi(STR0027) //'&Sub-Lote:'
+		@ 03.6,39   MSGET SD7->D7_NUMLOTE 	WHEN .F.
+		
+		@ 03.6,45   SAY OemToAnsi(STR0031) //"Potencia"
+		@ 03.6,48   MSGET oGetPot VAR nPotenc175		WHEN .F.
+		
+		@ 04.8, 00.5 SAY OemToAnsi(STR0021) //'Qtd.&Original:'
+		@ 04.8, 05   MSGET oQtd1 VAR aQtd[1] Picture cPicD7Qtde WHEN .F.
+		@ 04.8, 12.5 SAY OemToAnsi(STR0022) //'Qtd.&Liberada:'
+		@ 04.8, 18   MSGET oLib VAR nLib    Picture cPicD7Qtde WHEN .F.
+		@ 04.8, 25.5 SAY OemToAnsi(STR0023) //'Qtd.&Rejeitada:'
+		@ 04.8, 31   MSGET oReg VAR nRej    Picture cPicD7Qtde WHEN .F.
+		If lTranCQ
+			@ 04.8, 38.5 SAY OemToAnsi(STR0047) //'Qtd.&Transferida:'
+			@ 04.8, 44   MSGET oTrf VAR nTrf   Picture cPicD7Qtde WHEN .F.
+			@ 04.8, 51 SAY OemToAnsi(STR0024) //'Saldo:'
+			@ 04.8, 54   MSGET oQtd6 VAR aQtd[6] Picture cPicD7Qtde WHEN .F.
+		Else 
+			@ 04.8, 38.5 SAY OemToAnsi(STR0024) //'Saldo:'
+			@ 04.8, 41   MSGET oQtd6 VAR aQtd[6] Picture cPicD7Qtde WHEN .F.
+		EndIf
+		If lCliente
+			@ 05.9, 00.5 SAY OemToAnsi(STR0048) //'Cliente:'
+		Else
+			@ 05.9, 00.5 SAY OemToAnsi(STR0028) //'Fornecedor:'
+		EndIf
+		@ 05.9, 05   MSGET cFornece WHEN .F.
+		@ 05.9, 28   SAY OemToAnsi(STR0029) //'Loja:'
+		@ 05.9, 31   MSGET cLoja WHEN .F.       
+		  
+		  
+		
+		oGet := MSGetDados():New(aPosObj[2,1]+15,aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],nOpc,'A175LinOk','A175TudOk','+D7_SEQ',.T.,aAlter,1,.F.,MAXGETDAD,'A175GetDad()',,,'A175GetDad(.T.)')
+		ACTIVATE MSDIALOG oDlg ON INIT EnchoiceBar(oDlg,{|| If(oGet:TudoOK(),(nOpca:=1,oDlg:End()),nOpca:=0)},{||oDlg:End()},,If(Len(aButtons)>0,aButtons,NIL))
+	Else
+		If !lEstorno
+			aCols    := aClone(aCRotAut)
+			If ! SD7->(MsVldAcAuto(aValidGet,"A175LinOk(o)","A175TudOk(o)"))   // consiste o campos do Acols
+				Return .F.
+			EndIf
+		EndIf
+		nOpcA := 1
+	EndIf
+
+	If nOpcA == 1
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Integracao com o ACD - Acerto do CB0 no estorno do CQ via Protheus		  		  |
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lIntACD 
+			lRet:= CBMT175ATU()
+			If ValType(lRet) # 'L'
+				lRet:= .T.
+			EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Template acionando Ponto de Entrada       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		ElseIf ExistTemplate('MT175ATU')
+			lRet:= ExecTemplate('MT175ATU',.F.,.F.)
+			If ValType(lRet) # 'L'
+				lRet:= .T.
+			EndIf
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Execblock MT175ATU ap¢s Conf.da Lib/Reje (O Ret.pode ser L¢gico)  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lRet .And. ExistBlock('MT175ATU')
+			lRet := If(ValType(lRetPE:=ExecBlock('MT175ATU',.F.,.F.))=='L',lRetPE,.T.)
+		EndIf
+		nOpcA := If(lRet,1,3)
+	EndIf
+
+	If nOpcA == 1
+		A175Grava()
+	EndIf
+	Exit
+
+EndDo
+
+RestArea(aAreaAnt)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Desativa tecla F4 para comunicacao com Saldos por localizacao ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SET KEY VK_F4 TO
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Grava  ³ Autor ³Paulo Emidio de Barros³ Data ³ 21/11/02 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Realiza a Liberacao/Rejeicao do Material no CQ		      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Grava()
+Local cSeekPot  := ""
+Local bBlockPot := ""
+Local cSeek     := ""
+Local cSeekDupl := ""
+Local cNumeroDu := ""
+Local aRecnoPot := {}
+Local aMov      := {}
+Local lRemito   := .F.
+Local lRet      := .F.
+Local lIntACD	:= SuperGetMV("MV_INTACD",.F.,"0") == "1"
+Local aAreaSD7  := SD7->(GetArea())
+Local nCountDupl:= 0
+Local nCountDup3:= 0
+Local nTamSeek  := 0
+Local nX        := 0
+
+// Altera a Potencia do Lote cadastrado
+If nPotenc175 # nPotencOri
+	If Rastro(SD7->D7_PRODUTO,"S")
+		cSeekPot  := xFilial( "SB8" ) + SD7->D7_PRODUTO + SD7->D7_LOCAL + SD7->D7_LOTECTL + SD7->D7_NUMLOTE
+		bBlockPot := { || B8_FILIAL + B8_PRODUTO + B8_LOCAL + B8_LOTECTL + B8_NUMLOTE == cSeekPot }
+	Else
+		cSeekPot  := xFilial( "SB8" ) + SD7->D7_PRODUTO + SD7->D7_LOCAL + SD7->D7_LOTECTL
+		bBlockPot := { || B8_FILIAL + B8_PRODUTO + B8_LOCAL + B8_LOTECTL == cSeekPot }
+	EndIf
+	dbSelectArea("SB8")
+	dbSetOrder(3)
+	dbSeek(cSeekPot)
+	While !EOF() .And. Eval( bBlockPot )
+		AADD(aRecnoPot,Recno())
+		DbSelectArea("SB8")
+		dbSkip()
+	EndDo
+	A390PrcPot(nPotenc175,aRecnoPot)
+EndIf
+
+If SD7->D7_ORIGLAN == 'CP'
+	If cPaisLoc <> "BRA"
+		dbSelectArea('SCM')
+		dbSetOrder(5)
+		cSeek:=xFilial('SCM')+SD7->D7_DOC+SD7->D7_FORNECE+SD7->D7_LOJA
+		If !dbSeek(cSeek, .F.)
+			dbSelectArea('SD1')
+			dbSetOrder(2)
+			cSeek:=xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA
+			lRemito = .F.
+		Else
+			Do While !Eof() .And. cSeek == CM_FILIAL+CM_REMITO+CM_FORNECE+CM_LOJA
+				If Alltrim(SD7->D7_NUMERO) == Alltrim(CM_NUMCQ)
+					lRemito = .T.
+					Exit
+				Else
+					lRemito = .F.
+				EndIf
+				SCM->(dbSkip())
+			EndDo
+
+			If !lRemito
+				dbSelectArea('SD1')
+				dbSetOrder(2)
+				cSeek:=xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA
+				lRemito = .F.
+			EndIf
+		EndIf
+	Else
+		dbSelectArea('SD1')
+		dbSetOrder(2)
+		cSeek:=xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA
+		lRemito = .F.
+	EndIf
+Else
+	dbSelectArea('SD3')
+	dbSetOrder(3)
+	cSeek :=xFilial('SD3')+SD7->D7_PRODUTO+SD7->D7_LOCAL+SD7->D7_NUMSEQ
+	nTamSeek :=Len(D3_FILIAL)+Len(D3_COD)+Len(D3_LOCAL)+Len(D3_NUMSEQ)
+EndIf
+
+If dbSeek(cSeek, .F.)
+
+	If SD7->D7_ORIGLAN == 'CP'
+		If !lRemito
+			Do While !Eof() .And. cSeek == D1_FILIAL+D1_COD+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA
+				If SD7->D7_NUMERO # D1_NUMCQ
+					SD1->(dbSkip())
+					Loop
+				EndIf
+				Exit
+			EndDo
+		Else
+			Do While !Eof() .And. cSeek == CM_FILIAL+CM_REMITO+CM_FORNECE+CM_LOJA
+				If SD7->D7_NUMERO # CM_NUMCQ
+					SCM->(dbSkip())
+					Loop
+				EndIf
+				Exit
+			EndDo
+		EndIf
+	Else
+		dbSelectArea("SD7")
+		aAreaSD7  :=GetArea()
+		cSeekDupl :=D7_PRODUTO+D7_NUMSEQ
+		cNumeroDu :=D7_NUMERO
+		nCountDupl:=0
+		nCountDup3:=0
+		dbSetOrder(3)
+		dbSeek(xFilial("SD7")+cSeekDupl)
+		Do While !Eof() .And. xFilial("SD7")+cSeekDupl == D7_FILIAL+D7_PRODUTO+D7_NUMSEQ
+			If QtdComp(D7_SALDO) == QtdComp(aQtd[1])
+				nCountDupl++
+			EndIf
+			If D7_NUMERO == cNumeroDu
+				Exit
+			EndIf
+			dbSkip()
+		EndDo
+		RestArea(aAreaSD7)
+		dbSelectArea("SD3")
+		Do While !Eof() .And. Substr(cSeek,1,nTamSeek) == D3_FILIAL+D3_COD+D3_LOCAL+D3_NUMSEQ
+			If !((QtdComp(SD3->D3_QUANT) # QtdComp(aQtd[1])) .Or. SD3->D3_ESTORNO == "S")
+				nCountDup3++
+				If nCountDup3 == nCountDupl
+					Exit
+				EndIf
+			EndIf
+			SD3->(dbSkip())
+		EndDo
+	EndIf
+
+	//-- Formato do Array aMov:
+	//-- (Sua Montagem deve seguir a Ordem 1 :
+	//--  Filial+Numero+Produto+Local+Sequencia+Data)
+	//-- [n,01] = Tipo da Movimentacao (1 = Liberar / 2 = Rejeirar)
+	//-- [n,02] = Quantidade a ser Movimentada
+	//-- [n,03] = Local de Destino para a Movimenta‡„o
+	//-- [n,04] = Data da Movimenta‡„o
+	//-- [n,05] = Estornado (X = Estornado)
+	//-- [n,06] = Motivo da Rejei‡„o
+	//-- [n,07] = Observacao
+	//-- [n,08] = Quantidade na 2a Unidade de Medida
+	//-- [n,09] = Endereco Origem
+	//-- [n,10] = Numero de Serie Origem
+	//-- [n,11] = Servico - Utilizado na Integracao com DL
+	//-- [n,12] = Estrutura - Utilizado na Integracao com DL
+
+	aMov := {}
+	For nX := 1 to Len(aCols)
+		If (nX > If(lEstorno, 1, nAColsIni)) .And. !aCols[nX, Len(aCols[nX])]
+			aAdd(aMov, {})
+			aAdd(aMov[Len(aMov)], aCols[nX, nPosTipo])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosQtde])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosLDes])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosData])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosEsto])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosMRej])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosObs])
+			aAdd(aMov[Len(aMov)], aCols[nX, nCQPosQtd2])
+			aAdd(aMov[Len(aMov)], aCols[nX, nPosLocLz])
+			aAdd(aMov[Len(aMov)], aCols[nX, nPosNumSer])
+			If nPosService > 0
+				aAdd(aMov[Len(aMov)], aCols[nX, nPosService])
+			EndIf
+			If nPosDtVld > 0 
+				aAdd(aMov[Len(aMov)], aCols[nX, nPosDtVld])
+			EndIf
+		EndIf
+	Next nX
+
+	If (ExistBlock("A175CQ"))
+		var := ExecBlock("A175CQ",.F.,.F.)
+	EndIf
+
+	If Len(aMov) > 0
+		If lRemito
+			lRet := fGravaCQ(SD7->D7_PRODUTO, SD7->D7_NUMERO, lEstorno, aMov, If(SD7->D7_ORIGLAN=='CP', PegaCMCM(), PegaCMD3()), aHeaderPro,If(nPotenc175 # nPotencOri,nPotenc175,NIL))
+		Else
+			lRet := fGravaCQ(SD7->D7_PRODUTO, SD7->D7_NUMERO, lEstorno, aMov, If(SD7->D7_ORIGLAN=='CP',PegaCMD1(),PegaCMD3()), aHeaderPro,If(nPotenc175 # nPotencOri,nPotenc175,NIL))
+		EndIf
+		EvalTrigger()
+	EndIf
+	If lRet
+	 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Integracao com o ACD		  				 	  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lIntACD 
+			CBA175GRV()
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Pontos de Entrada 			 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		ElseIf (ExistTemplate("A175GRV"))
+			ExecTemplate("A175GRV",.F.,.F.)
+		EndIf
+		If (ExistBlock("A175GRV"))
+			ExecBlock("A175GRV",.F.,.F.)
+		EndIf
+	EndIf
+
+Else
+	Help(' ',1,'NOPRD1',,SD7->D7_PRODUTO)
+EndIf
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Libera ³ Autor ³ Gilson do Nascimento ³ Data ³ 09.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa exclusivo ao MATA175 para liberacao               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Libera(cAlias,nReg,nOpc)
+
+Local dDataFec   := MVUlmes()
+Local lRet       := .T.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se o usuario tem permissao de inclusao. ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If !(lRet := MaAvalPerm(1,{SD7->D7_PRODUTO,"MTA175",3}))
+	Help(,,1,'SEMPERM')
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verificar data do ultimo fechamento em SX6.                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. dDatabase <= dDataFec
+	Help ( ' ', 1, 'FECHTO')
+	lRet := .F.
+Else
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se o saldo do armazem esta bloqueado          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lRet .And. SldBlqSB2(SD7->D7_PRODUTO,SD7->D7_LOCAL)
+		lEstorno := .F.
+		A175LibEst(cAlias,nReg,nOpc)
+		// Execução automática de serviço WMS
+		If IntWMS()
+			WmsExeServ()			
+		EndIf
+	EndIf
+EndIf
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Estorna³ Autor ³ Gilson do Nascimento ³ Data ³ 09.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa exclusivo ao MatA175 para estorno                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Estorna(cAlias,nReg,nOpc)
+Local lRet := .T.
+Local dDataFec   := MVUlmes()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se o usuario tem permissao de exclusao. ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If !(lRet := MaAvalPerm(1,{SD7->D7_PRODUTO,"MTA175",5}))
+	Help(,,1,'SEMPERM')
+EndIf
+
+If lRet
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verificar data do ultimo fechamento em SX6.                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If dDatabase <= dDataFec
+		Help ( ' ', 1, 'FECHTO')
+		Return .F.
+	EndIf
+	
+	lEstorno := .T.
+	A175LibEst(cAlias,nReg,nOpc)
+EndIf
+	
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175LinOk ³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Critica se a linha digitada esta OK                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Mata175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175LinOk(o)
+Static lMT175LOK := ExistBlock("MT175LOK")
+Static lMT175FOK := ExistBlock("MT175FOK")
+Local nPosLoclz  := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_LOCALIZ'})
+Local nPosNumSer := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_NUMSERI'})
+Local nPosTipo   := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_TIPO'   })
+Local nPosNumSeq := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_NUMSEQ' })
+Local nPosQtde   := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_QTDE' })
+Local nPosNumLote:= 0
+Local lRet       := .T.
+Local nPosData   := 0
+Local nPosLocDest:= 0
+Local nPosEst    := 0
+Local nPosDtValid:= 0
+Local nPosSldTrf := 0
+Local i,nQtdValid:= 0
+Local dDataFec   := MVUlmes()
+Local cLocDest   := GdFieldGet('D7_LOCDEST',n)
+Local nSaldoEnd  := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ MV_A175VLD - Parametro utilizado para verificar se o usuario  |
+//|              podera realizar a alteração da data de validade  |
+//|              do lote atraves da rotina de Baixas do CQ.       |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local lA175Vld  := SuperGetMV("MV_A175VLD",.F.,.F.) .And. Rastro(SD7->D7_PRODUTO)
+Local lWmsNew   := SuperGetMV("MV_WMSNEW",.F.,.F.)
+
+dbSelectArea("SB2")
+dbSetOrder(1)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se algum produto esta sendo inventariado.           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nPosTipo > 0 .And. aCols[n,nPosTipo] > 0
+	If BlqInvent(SD7->D7_PRODUTO,SD7->D7_LOCAL)
+		Help("  ",1,"BLQINVENT",,SD7->D7_PRODUTO+STR0039+SD7->D7_LOCAL,1,11)
+		lRet := .F.
+	ElseIf BlqInvent(SD7->D7_PRODUTO,cLocDest)
+		Help("  ",1,"BLQINVENT",,SD7->D7_PRODUTO+STR0039+cLocDest,1,11)
+		lRet := .F.
+	ElseIf AvalBlqLoc(SD7->D7_PRODUTO,SD7->D7_LOCAL,Nil)
+		lRet := .F.
+	ElseIf AvalBlqLoc(SD7->D7_PRODUTO,cLocDest,Nil)
+		lRet := .F.
+	Else
+		If !lEstorno
+			//-- S¢ valida Novas Linhas do aCols Nao Deletadas
+			If n > nAColsIni .And. !aCols[n, Len(aCols[n])]
+				nPosTipo	:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_TIPO'   })
+				nPosQtde	:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_QTDE'   })
+				nPosData	:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_DATA'   })
+				nPosLocDest := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_LOCDEST'})
+				nPosDtValid := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_DTVALID'})
+
+				If nPosTipo>0 .And. nPosQtde>0 .And. nPosData>0
+					//-- Verifica Quantidade e Data Inv lidos
+					If lA175Vld .And. aCols[n, nPosTipo] == 5
+						If Empty(aCols[n, nPosDtValid])
+							Help(' ',1,'A175NDATA')
+							lRet := .F.
+						ElseIf !Empty(QtdComp(aCols[n, nPosQtde]))
+							Help(' ',1,'A175NQTDE')
+							lRet := .F.
+						ElseIf Empty(aCols[n, nPosLocDest])
+							Help(' ',1,'A175DEST')
+							lRet := .F.
+						Else
+							SB8->(dbSetOrder(3))
+							If !SB8->(dbSeek(xFilial("SB8")+SD7->D7_PRODUTO+aCols[n,nPosLocDest]+SD7->D7_LOTECTL+IIf(Rastro(SD7->D7_PRODUTO,'S'),SD7->D7_NUMLOTE,"")))
+								Help(' ',1,'A175NLOTE')
+								lRet := .F.
+							EndIf	
+						EndIf
+					Else
+						//-- Verifica Quantidade, Tipo e Data Inv lidos
+						If QtdComp(aCols[n, nPosQtde]) == QtdComp(0) .Or. ;
+							!StrZero(aCols[n, nPosTipo],1) $'1ú2' .Or. ;
+							aCols[n, nPosData] == CtoD('  /  /  ')
+							Help(' ',1,'A12006')
+							lRet := .F.
+						EndIf
+					EndIf	
+					//-- Nao permite Data Menor que a Inicial ou Data Base
+					If lRet .And. (aCols[n, nPosData] < aCols[1, nPosData])
+						Help(' ',1,'A175DATA')
+						lRet := .F.
+					EndIf
+					//-- Verificar data do ultimo fechamento em SX6
+					If lRet .And. aCols[n, nPosData] < dDataFec
+						Help (' ', 1, 'FECHTO')
+						lRet := .F.
+					EndIf
+				EndIf
+
+				//-- Nao permite Armazem destino que nao esteja cadastrado.
+				If !(lA175Vld .And. aCols[n, nPosTipo] == 5)
+					If nPosLocDest > 0 .And. !(lA175Vld .And. aCols[n, nPosTipo] == 5)
+						If lRet .And. (GetMV("MV_VLDALMO") == "S")
+							dbSelectArea("SB2")
+							dbSetOrder(1)
+							MsSeek(xFilial("SB2")+SD7->D7_PRODUTO+aCols[n, nPosLocDest])
+							If !Found()
+								If lMT175LOK
+									lRet := ExecBlock("MT175LOK",.F.,.F.)
+									If ValType(lRet)<>"L"
+										lRet := .F.
+									EndIf
+								Else
+								Help(" ",1,"A260LOCAL")
+								lRet:=.F.
+							   EndIf
+							EndIf
+						EndIf
+					EndIf
+	
+					// Verifica saldo do endereco
+					If lRet .And. nPosLoclz > 0 .And. nPosNumSer > 0 .And. nPosQtde > 0 .And. Localiza(cA175Prod,.T.)
+						If Empty(aCols[n,nPosLocLz]) .And. Empty(aCols[n,nPosNumSer])
+							Help(" ",1,"LOCALIZOBR")
+							lRet:=.F.
+						EndIf
+						For i:=nAcolsIni+1 to Len(aCols)
+							If aCols[i,nPosLocLz]+aCols[i,nPosNumSer] == aCols[n,nPosLocLz]+aCols[n,nPosNumSer]
+								If (Valtype(aCols[i,Len(aCols[i])]) == "L" .And. !aCols[i,Len(aCols[i])]) .Or. Valtype(aCols[i,Len(aCols[i])]) # "L"
+									nQtdValid+=aCols[i][nPosQtde]
+								EndIf
+							EndIf
+						Next i
+						If lRet
+							If lWmsNew .And. IntWMS(cA175Prod)
+								nSaldoEnd := WmsSldD14(cA175Loc,aCols[n,nPosLocLz],cA175Prod,aCols[n,nPosNumSer],cA175LotCt,cA175LoteC)
+							Else
+								nSaldoEnd := SaldoSBF(cA175Loc,aCols[n,nPosLocLz],cA175Prod,aCols[n,nPosNumSer],cA175LotCt,cA175LoteC)
+							EndIf
+							If QtdComp(nQtdValid) > QtdComp(nSaldoEnd)
+								Help(" ",1,"SALDOLOCLZ")
+								lRet := .F.
+							EndIf
+						EndIf
+					EndIf
+
+				EndIf	
+				// Efetua as validações do WMS
+				If lRet .And. IntWMS(cA175Prod)
+					lRet := WMSAvalSD7("1")
+				EndIf
+			EndIf
+		Else
+			//-- S¢ valida linhas Nao Deletadas
+			If !aCols[n, Len(aCols[n])]
+				nPosData   := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_DATA'	})
+				nPosEst    := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_ESTORNO'	})
+				nPosLocDest:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_LOCDEST'	})
+				nPosNumSeq := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_NUMSEQ' 	})
+				//-- Verificar data do ultimo fechamento em SX6 para Produtos Estornados
+				If nPosData>0 .And. nPosEst>0 .And. ;
+						aCols[n, nPosEst] == 'X' .And. aCols[n, nPosData] < dDataFec
+					Help (' ', 1, 'FECHTO')
+					lRet := .F.
+				EndIf
+				
+                //-- Verifica se a baixa de CQ esta amarrada a uma Ordem de Producao RE5, caso afirmativo valida se a OP esta encerrada.
+				If lRet
+					If !Empty(SD7->D7_DOC) .And. !Empty(SD7->D7_SERIE) .And. !Empty(SD7->D7_FORNECE) .And. !Empty(SD7->D7_LOJA)
+						SD1->(dbSetOrder(1))
+						If SD1->(dbSeek(xFilial('SD1')+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA)) .And. !Empty(SD1->D1_OP)
+							SD3->(dbSetOrder(3))
+							If SD3->(dbSeek(xFilial('SD3')+SD7->D7_PRODUTO+aCols[n,nPosLocDest]+aCols[n,nPosNumSeq]+"RE5"))
+								SC2->(dbSetOrder(1))
+								If SC2->(dbSeek(xFilial('SC2')+SD1->D1_OP)) .And. !Empty(SC2->C2_DATRF)
+									Help(' ', 1,'A175ENCER')
+                                  	lRet := .F.
+								EndIf
+							EndIf
+						EndIf
+					EndIf
+				EndIf
+
+				//Verifica saldo antes de estornar a rejeição   
+				If lRet
+					aAreaSB8 := SB8->(GetArea())
+					nPosNumLote:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_NUMLOTE'})
+					SB8->(dbSetOrder(3))					
+					If SB8->(dbSeek(xFilial("SB8")+SD7->D7_PRODUTO+aCols[n,nPosLocDest]+SD7->D7_LOTECTL+IIf(Rastro(SD7->D7_PRODUTO),aCols[n,nPosNumLote],"")))  
+						If Acols[n][nPosQtde] > SB8->B8_SALDO 
+							lRet := .F.
+							Help(' ',1,'SEMSALDO')
+						EndIf
+					EndIf
+					RestArea(aAreaSB8)
+				EndIf				
+			EndIf
+		EndIf
+	EndIf
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de entrada para complemento de validacao ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ   
+If lRet .And. lMT175FOK
+	lRet := ExecBlock("MT175FOK",.F.,.F.)
+	If ValType(lRet) <> "L"
+		lRet := .T.
+	EndIf
+EndIf
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175TudOk ³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Critica se todas as movimentacoes estao OK                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Mata175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175TudOk(o)
+
+Local aQtd       := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local lRet       := .T.
+Local nX         := 0
+Local nPosTipo   := 0
+Local nPosItem   := 0
+Local nPosQtde   := 0
+Local nPosData   := 0
+Local nLib       := 0
+Local nRej       := 0
+Local nTrf       := 0
+Local nSaldo     := 0
+local nPosDtValid:= 0
+Local lIntQie    := If(Type("__IntegraQie") <> "U",__IntegraQie,.F.)
+Local cPicD7Qtde	:= PesqPictQt("D7_QTDE",14)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ MV_A175VLD - Parametro utilizado para verificar se o usuario  |
+//|              podera realizar a alteração da data de validade  |
+//|              do lote atraves da rotina de Baixas do CQ.       |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local lA175Vld   :=	SuperGetMv("MV_A175VLD",.F.,.F.)	.And.;
+					Rastro(SD7->D7_PRODUTO)
+Local lTranCQ    := IsTranCQ()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica a existencia da variavel l175Auto                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( Type("l175Auto") == "U" )
+	Private l175Auto := .F.
+EndIf
+
+If !lEstorno .And. Len(aCols) > nAColsIni
+	nPosItem    := AScan(aHeader,{|x| Alltrim(x[2]) == "D7_SEQ"    })
+	nPosTipo    := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_TIPO'   })
+	nPosQtde    := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_QTDE'   })
+	nPosData    := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_DATA'   })
+	nPosDtValid := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_DTVALID'})
+	AFN->(dbSetOrder(2))
+	SD1->(dbSetOrder(4))
+
+	If nPosTipo>0 .And. nPosQtde>0 .And. nPosData>0
+		//-- Consiste Linha a Linha (somente linhas novas)
+		For nX := (nAcolsIni+1) to Len(aCols)
+			//-- S¢ valida linhas Nao Deletadas
+			If !aCols[nX, Len(aCols[nX])]
+				//-- Verifica Quantidade e Data Inv lidos
+				If lA175Vld .And. aCols[n, nPosTipo] == 5
+					If aCols[n, nPosData] == CtoD('  /  /  ')
+						Help(' ',1,'A12006') 
+						lRet := .F.
+					EndIf
+					If !Empty(QtdComp(aCols[n, nPosQtde]))
+						Help(' ',1,'A12006') //-- Mudar Help
+						lRet := .F.
+					EndIf
+				Else
+					//-- Consiste Quantidade, Tipo e Data Inv lidos
+					If QtdComp(aCols[nX, nPosQtde]) == QtdComp(0)  .Or. ;
+							!StrZero(aCols[nX, nPosTipo],1) $'1ú2' .Or. ;
+							aCols[nX, nPosData] == CtoD('  /  /  ')
+						Help(' ',1,'A12006')
+						lRet := .F.
+					EndIf
+                EndIf
+				//-- Nao permite Data Menor que a Inicial ou Data Base
+				If lRet .And. (aCols[nX, nPosData] < aCols[1, nPosData])
+					Help(' ',1,'A175DATA')
+					lRet := .F.
+				EndIf
+
+				If lRet .And. IntePMS() .And. ExisteSX2('AFO').And. aCols[nX, nPosTipo] == 1 .And. Type('aRatAFO') == 'A' 
+					SD1->(MsSeek(xFilial('SD1')+SD7->D7_NUMSEQ))
+					If AFN->(MsSeek(xFilial('AFN')+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_ITEM))
+						If !(lRet	:=	(aScan(aRatAFO,{|x| x[1] == aCols[nX][nPosItem]}) > 0))							
+							Help(' ',1,'A175RATAFO',,'Item : '+Alltrim(Str(nX)),5,1)
+						EndIf
+					EndIf
+				EndIf
+
+			EndIf
+
+		Next nX
+
+		// Valida a movimentacao com ligacao a ordem de producao
+		If lRet .And. !(lA175Vld .And. aCols[n, nPosTipo] == 5) .And. SD7->D7_ORIGLAN == 'CP'
+			SD1->(dbSetOrder(2))
+			If SD1->(dbSeek(xFilial('SD1')+SD7->D7_PRODUTO+SD7->D7_DOC+SD7->D7_SERIE+SD7->D7_FORNECE+SD7->D7_LOJA, .F.)) .And. !Empty(SD1->D1_OP)
+				SC2->(dbSetOrder(1))
+				If SC2->(dbSeek(xFilial("SC2")+SD1->D1_OP)) .And. !Empty(SC2->C2_DATRF)
+					If Aviso(STR0036,STR0040,{STR0041,STR0042},,,2) == 2 //"Ao movimentar este item, o produto sera requisitado para uma OP encerrada. Confirma movimento ?"###"Sim"###"Nao"
+						lRet:=.F.
+					EndIf
+				EndIf
+			EndIf
+		EndIf
+
+	EndIf
+
+EndIf
+
+//-- Atualiza Rodap‚
+If lRet .And. !lIntQie
+	aQtd := A175ACols(Len(aCols), .T.)
+	If If(!lEstorno,aQtd[7]>nAColsIni,.T.) .And. !l175Auto
+		nLib   := (aQtd[2]-aQtd[4])-aQtd[8]
+		nRej   := (aQtd[3]-aQtd[5])-aQtd[9] 
+		nTrf   := (aQtd[10]-aQtd[11])
+		nSaldo := aQtd[6]
+		@ 04.8, 05 MSGET oQtd1 VAR aQtd[1] Picture cPicD7Qtde WHEN .F. //-- Qtd Orig
+		@ 04.8, 18 MSGET oLib  VAR nLib    Picture cPicD7Qtde WHEN .F. //-- Liberados
+		@ 04.8, 31 MSGET oReg  VAR nRej    Picture cPicD7Qtde WHEN .F. //-- Estornados
+		@ 04.8, 44 MSGET oTrf  VAR nTrf    Picture cPicD7Qtde WHEN .F. //-- Tranferido
+		If lTranCQ
+			@ 04.8, 54 MSGET oQtd6 VAR nSaldo  Picture cPicD7Qtde WHEN .F. //-- Saldo
+		Else
+			@ 04.8, 41 MSGET oQtd6 VAR nSaldo  Picture cPicD7Qtde WHEN .F. //-- Saldo
+		EndIf
+	EndIf
+EndIf
+
+/// Ponto de Entrada MT175TOK //
+if ExistBlock('MT175TOK')
+	 uRetTok:=ExecBlock('MT175TOK',.F.,.F.,{lRet})
+	 if ValType(uRetTok)=='L'
+	     lRet:=uRetTok
+     EndIf
+EndIf                        
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175GetDad³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Verifica campo a campo da Getdados                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Mata175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175GetDad(lDeleta)
+
+Local aAreaAnt   := GetArea()
+Local aAreaAnt1  := {}
+Local nPosEst    := 0
+Local nTipo      := 0
+Local nSaldoLote := 0
+Local nQtde      := 0
+Local nQtde2     := 0
+Local cVar       := ReadVar()
+Local lRet       := .T.
+Local cEst       := ''
+Local cNumLote   := ''
+Local cChave     := ''
+Local cLocal     := ''
+Local cNumSeq    := ''
+Local cSequencia := ''
+Local cLoteCtl   := SD7->D7_LOTECTL
+Local lRe5       := .F.
+Local nX
+Local nTamD3Doc  := TamSX3("D3_DOC")[1]
+Local lWmsNew    := SuperGetMV("MV_WMSNEW",.F.,.F.)
+
+lDeleta := If(lDeleta==Nil,.F.,lDeleta)
+
+If !lEstorno
+
+	//-- Nao permite altera‡”es em Dados j  existentes
+	If lDeleta
+		If n <= nAcolsIni
+			lRet := .F.
+		Else
+			lRet := .T.
+		EndIf
+	Else
+		If n <= nAColsIni
+			Help(' ',1,'A175NAO')
+			lRet := .F.
+		EndIf
+
+	EndIf
+
+Else
+
+	If lDeleta
+		lRet := .F.
+	Else
+
+		If !cVar $'M->D7_ESTORNOúM->D7_DATA'
+			Help(' ',1,'A175NAO')
+			lRet := .F.
+		EndIf
+
+		If lRet
+			For nX := 1 to Len(aHeader)
+				If AllTrim(aHeader[nX][2])     == 'D7_TIPO'    //-- Tipo
+					nTipo := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX][2]) == 'D7_NUMLOTE' //-- Lote
+					cNumLote := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX][2]) == 'D7_ESTORNO' //-- Estorno
+					cEst    := aCols[n, nX]
+					nPosEst := nX
+				ElseIf AllTrim(aHeader[nX, 2]) == 'D7_NUMSEQ'  //-- Numero Seq
+					cNumSeq := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX, 2]) == 'D7_LOCDEST' //-- Local
+					cLocal  := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX, 2]) == 'D7_QTDE'    //-- Quantidade Mov
+					nQtde   := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX, 2]) == 'D7_QTSEGUM' //-- Quantidade 2A um
+					nQtde2  := aCols[n, nX]
+				ElseIf AllTrim(aHeader[nX, 2]) == 'D7_SEQ' //-- Sequencia
+					cSequencia := aCols[n, nX]
+				EndIf
+			Next nX
+		EndIf
+
+		If lRet .And. (nTipo<1.Or.nTipo>2)
+			If nTipo == 3
+				Help(' ',1,'A175NOEST')
+			Else
+				Help(' ',1,'A175EST')
+			EndIF	
+			lRet := .F.
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica se o saldo do armazem esta bloqueado          ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lRet
+			lRet := SldBlqSB2(SD7->D7_PRODUTO,cLocal)
+		EndIf
+
+		If lRet
+			If cVar == 'M->D7_ESTORNO'
+
+				//-- Verifica se o produto possui um movimento RE5 no SD3
+				SD3->(dbSetOrder(2))
+				SD3->(DbSeek(xFilial("SD3")+Padr(SD7->D7_NUMERO,nTamD3Doc)+SD7->D7_PRODUTO))
+				While !Eof() .And. xFilial("SD3")+Padr(SD7->D7_NUMERO,nTamD3Doc)+SD7->D7_PRODUTO == SD3->D3_FILIAL+SD3->D3_DOC+SD3->D3_COD
+					If SD3->D3_CF == "RE5" .And. !Empty(SD3->D3_OP) .And. SD7->D7_NUMSEQ+SD7->D7_LOTECTL == SD3->D3_IDENT+SD3->D3_LOTECTL
+						lRe5 := .T.
+						Exit
+					EndIf
+					SD3->(dbSkip())
+				EndDo
+
+				If Upper(cEst) == 'X'
+					aCols[n, nPosEst] := ' '
+					M->D7_ESTORNO 		:= ' '
+				ElseIf Empty(cEst)
+					//-- Verifica se o produto possui Saldo para o Estorno
+					aAreaAnt1 := GetArea()
+					If ExistBlock("M175VSLD")
+						lRet := ExecBlock("M175VSLD",.F.,.F.)
+					ElseIf lWmsNew .And. IntWMS(SD7->D7_PRODUTO)
+						// Posiciona na SD7 da linha que se deseja estornar para validar no WMS
+						SD7->(DbSetOrder(1)) //D7_FILIAL, D7_NUMERO, D7_PRODUTO, D7_LOCAL, D7_SEQ
+						SD7->(DbSeek(xFilial("SD7")+SD7->D7_NUMERO+SD7->D7_PRODUTO+SD7->D7_LOCAL+cSequencia))
+						lRet := WMSAvalSD7("2")
+					ElseIf Localiza(SD7->D7_PRODUTO)
+						dbSelectArea('SDA')
+						dbSetOrder(1)
+						cChave := xFilial('SDA')+SD7->D7_PRODUTO+cLocal+cNumSeq+SD7->D7_NUMERO
+						If dbSeek(cChave, .F.)
+							If QtdComp(SDA->DA_QTDORI) # QtdComp(SDA->DA_SALDO)
+								Help(' ',1,'SDAJADISTR')
+								lRet := .F.
+							EndIf
+						EndIf
+					ElseIf Rastro(SD7->D7_PRODUTO) .And. !lRe5
+						nSaldoLote := 0
+						aArray     := SldPorLote(SD7->D7_PRODUTO, cLocal, nQtde,nQtde2, cLoteCtl, cNumLote,,,,.F.,,Nil)
+						For nX := 1 to Len(aArray)
+							nSaldoLote += aArray[nX, 5]
+						Next nX
+						If QtdComp(nSaldoLote) < QtdComp(nQtde)
+							Help(' ',1,'A175MOVLOT')
+							lRet := .F.
+						EndIf
+					ElseIf !lEstNeg
+						//-- Verifica o saldo se o produto nao tem RE5
+						If !lRe5
+							dbSelectArea('SB2')
+							dbSetOrder(1)
+							If MsSeek(xFilial('SB2') + SD7->D7_PRODUTO + cLocal, .F.)
+								If QtdComp(SaldoSB2()) == 0 //Julyane
+									Help(' ', 1, 'SEMSALDO')
+									lRet := .F.
+								EndIf
+							EndIf
+						EndIf
+					EndIf
+					RestArea(aAreaAnt1)
+
+					If lRet
+						aCols[n, nPosEst] := 'X'
+						M->D7_ESTORNO		:= 'X'
+					EndIf
+
+				Else
+					Help(' ',1,'A175EST')
+					lRet := .F.
+				EndIf
+			ElseIf aCols[n, nPosEst] # 'X' //-- S¢ altera a Data se for Estornar
+				Help(' ',1,'A175EST')
+				lRet := .F.
+			EndIf
+		EndIf
+
+	EndIf
+
+EndIf
+
+RestArea(aAreaAnt)
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Quant ³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Verifica a quantidade digitada e o Tipo digitado            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Mata175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Quant()
+Local nPosLoclz := aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_LOCALIZ'})
+Local nPosNumSer:= aScan(aHeader,{|x| Alltrim(x[2]) == 'D7_NUMSERI'})
+Local nTipoQuant := If(ReadVar()=='M->D7_QTSEGUM',2,1)
+Local nQuant     := 0
+Local nQuant2    := 0
+Local nX         := 0
+Local nSaldo     := 0
+Local nSaldoEnd  := 0
+Local nPosQt     := 0
+Local nPosQtSeg  := 0
+Local nPosSaldo  := 0
+Local nPosSaldo2 := 0
+Local nPosTipo   := 0
+Local nConv      := 0
+Local aQtd       := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local aQtd2      := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local lRet       := .T.      
+Local nTamQtd    := TamSX3("D7_QTDE")[2]
+Local lWmsNew    := SuperGetMV("MV_WMSNEW",.F.,.F.)
+
+If n > nAColsIni
+
+	If lEstorno
+		Help(' ',1,'A175F4')
+		lRet := .F.
+	EndIf
+
+	If lRet
+
+		For nX := 1 to Len(aHeader)
+			If Trim(aHeader[nX][2])     == 'D7_TIPO'    //-- Tipo
+				nPosTipo  := nX
+			ElseIf Trim(aHeader[nX][2]) == 'D7_SALDO'   //-- Saldo
+				nPosSaldo := nX
+			ElseIf Trim(aHeader[nX][2]) == 'D7_QTSEGUM' //-- Quantidade 2a UM
+				nPosQtSeg := nX
+			ElseIf Trim(aHeader[nX][2]) == 'D7_SALDO2'  //-- Saldo 2a UM
+				nPosSaldo2 := nX
+			ElseIf Trim(aHeader[nX][2]) == 'D7_QTDE'    //-- Quantidade
+				nPosQt := nX
+			EndIf
+		Next nX
+
+		aQtd    := A175ACols(Len(aCols), .F.,1)
+		aQtd2   := A175ACols(Len(aCols), .F.,2)
+
+		// Validacao para o Tipo 5
+		If aCols[n, nPosTipo] == 5
+	    	If QtdComp(&(ReadVar())) <> QtdComp(0)
+				Help(' ',1,'A175NQTDE')
+	    		lRet := .F.
+	    	EndIf
+	    EndIf
+		
+		If lRet
+			//Valor da Quantidade
+			If nTipoQuant==1
+				nQuant  := &(ReadVar())
+			Else
+				nConv := ConvUm(cA175Prod,0,&(ReadVar()),1)
+				If nConv>0	
+					nQuant  := nConv
+				Else
+					nQuant  := aCols[n, nPosQt]
+				EndIf
+			EndIf
+	
+			//Quantidade segunda unidade de medida
+			If nTipoQuant==1
+				nConv := ConvUm(cA175Prod,&(ReadVar()),0,2)
+				If nConv>0
+					nQuant2  := nConv
+				Else
+					nQuant2  := aCols[n, nPosQtSeg]
+				EndIf
+			Else
+				nQuant2  := &(ReadVar())
+			EndIf
+	
+			If (Round(QtdComp(nQuant),nTamQtd) > Round(QtdComp(aQtd[6]),nTamQtd))
+				Help(' ',1,'A175LIB')
+				lRet := .F.
+			EndIf
+	
+			If lRet
+				nSaldo  := Round( (aQtd[1] -(aQtd[2] - aQtd[4])-(aQtd[3] - aQtd[5])-(aQtd[10]-  aQtd[11]) + (aQtd[8] - aQtd[9]) ),nTamQtd) - nQuant
+				nSaldo2 := Round( (aQtd2[1]-(aQtd2[2]-aQtd2[4])-(aQtd2[3]-aQtd2[5])-(aQtd2[10]-aQtd2[11]) + (aQtd2[8]-aQtd2[9]) ),nTamQtd) - nQuant2
+				//Verifica se os Saldos da 1UM e 2UM estão negativos
+				If lRet
+					If (Round(QtdComp(nSaldo),nTamQtd)< 0) .Or.(Round(QtdComp(nSaldo2),nTamQtd)< 0)
+						Help(' ',1,'A175LIB')
+						lRet := .F.
+					EndIf  
+				EndIf	
+				
+				If nTipoQuant == 2
+					aCols[n, nPosQt]    := nQuant
+				Else
+					aCols[n, nPosQtSeg] := nQuant2
+				EndIf
+				
+				// Verifica saldo do endereco
+				If nPosLoclz > 0 .And. nPosNumSer > 0 .And. Localiza(cA175Prod,.T.)
+					If lWmsNew .And. IntWMS(cA175Prod)
+						nSaldoEnd := WmsSldD14(cA175Loc,aCols[n,nPosLocLz],cA175Prod,aCols[n,nPosNumSer],cA175LotCt,cA175LoteC)
+					Else
+						nSaldoEnd := SaldoSBF(cA175Loc,aCols[n,nPosLocLz],cA175Prod,aCols[n,nPosNumSer],cA175LotCt,cA175LoteC)
+					EndIf
+					If QtdComp(nQuant) > QtdComp(nSaldoEnd)
+						Help(' ',1,'A175LIB')
+						lRet := .F.
+					EndIf
+				EndIf   
+				
+				//Atualiza o Saldo se passou pelas consistências anteriores
+				If lRet
+					aCols[n, nPosSaldo]  := nSaldo
+					aCols[n, nPosSaldo2] := nSaldo2
+				EndIf
+
+			EndIf
+        EndIf
+	EndIf
+EndIf
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Tipo  ³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Verifica o tipo digitado e critica os movimentos            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Mata175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Tipo()
+Local nPosLDest  := 0
+Local nPosDesMot := 0
+Local nPosTipo   := 0
+Local nTipoAnt   := 0
+Local nTipo      := &(ReadVar())
+Local lRet       := .T.
+Local cLocCQ     := GetMvNNR('MV_CQ','98')
+Local cLocPad    := IIF(SD7->D7_ORIGLAN=="PR",SB1->B1_LOCPAD,If(cLocCQ == SD7->D7_LOCDEST,SB1->B1_LOCPAD,SD7->D7_LOCDEST))
+Local cLocPE	 := ""
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ MV_A175VLD - Parametro utilizado para verificar se o usuario  |
+//|              podera realizar a alteração da data de validade  |
+//|              do lote atraves da rotina de Baixas do CQ.       |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local lA175Vld   :=	SuperGetMv("MV_A175VLD",.F.,.F.)	.And.;
+					Rastro(SD7->D7_PRODUTO)  
+
+If n > nAColsIni .And. !aCols[n, Len(aCols[n])]
+
+	If ReadVar() == 'M->D7_TIPO'
+		If lA175Vld
+			lRet := Pertence("1,2,5")
+		Else
+			lRet := Pertence("1,2")
+		EndIf	
+	Else
+		Help(' ',1,'D7_TIPO')
+		lRet := .F.
+	EndIf
+	
+	If lA175Vld
+		If lRet .And. !(nTipo == 1 .Or. nTipo == 2 .Or. nTipo == 5)
+			Help(' ',1,'D7_TIPO')
+			lRet := .F.
+		EndIf
+	Else
+		If lRet .And. !(nTipo == 1 .Or. nTipo == 2)
+			Help(' ',1,'D7_TIPO')
+			lRet := .F.
+		EndIf
+	EndIf	
+
+	nPosDesMot := aScan(aHeader, {|x| Upper(AllTrim(x[2])) == 'D7_DESCRT' })
+	nPosLDest  := aScan(aHeader, {|x| Upper(AllTrim(x[2])) == 'D7_LOCDEST'})
+	nPosTipo   := aScan(aHeader, {|x| Upper(AllTrim(x[2])) == 'D7_TIPO'   })
+	nPosDtValid:= aScan(aHeader, {|x| Upper(AllTrim(x[2])) == 'D7_DTVALID'})
+
+	If lRet .And. nPosTipo>0 .And. nPosLDest>0 .And. nPosTipo>0
+
+		nTipoAnt := aCols[n, nPosTipo]
+
+		//-- Preenche a Descricao do Movimento
+		If nTipo == 1
+			aCols[n, nPosDesMot] := OemToAnsi(STR0008) //'Liberado            '
+		ElseIf nTipo == 2
+			aCols[n, nPosDesMot] := OemToAnsi(STR0009) //'Rejeitado           '
+		ElseIf nTipo == 5
+			aCols[n, nPosDesMot] := OemToAnsi(STR0046) //'Alterar Dt.Validade '
+		EndIf
+
+		//-- Atualiza o campo de data de validade
+		If nPosDtValid > 0 .And. nTipo # nTipoAnt
+			aCols[n, nPosDtValid] := CTOD('  /  /  ')
+		EndIf
+		
+		If ExistBlock("A175ALMO")
+			cLocPe := ExecBlock("A175ALMO",.F.,.F.,{cLocPad})
+			If ValType(cLocPe) == 'C'
+				cLocPad := cLocPe
+			EndIf
+		EndIf
+
+		//-- Preenche o Local de Destino Padrao
+		If nTipo # nTipoAnt .And. (Empty(aCols[n, nPosLDest])    .Or. ;
+				nTipoAnt==1 .And. aCols[n, nPosLDest] == cLocPad .Or. ;
+				nTipoAnt==2 .And. aCols[n, nPosLDest] == cLocCQ)
+			aCols[n, nPosLDest] := If(nTipo==1,cLocPad,cLocCQ)
+		EndIf
+
+	EndIf
+
+EndIf
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175CalcQt³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Calcula o saldo das movimentacoes do SD7                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Mata175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175CalcQt(cNumero, cProduto, cLocal)
+
+Local aAreaAnt   := GetArea()
+Local aAreaSD7   := SD7->(GetArea())
+Local aQtd       := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local cSeek      := ''
+Local cSeqZero   := Replicate('0', Len(SD7->D7_SEQ)-1) + '1'
+
+//  Posicao do Array - aQtd
+//  1 - Quantidade Original
+//  2 - Quantidade Liberada
+//  3 - Quantidade Rejeitada
+//  4 - Quantidade Liberada Estornada
+//  5 - Alterar data de validade do lote
+//  6 - Saldo
+//  7 - Numero de movimentacoes
+//  8 - Quantidade Liberada marcada para estorno
+//  9 - Quantidade Rejeitada marcada para estorno
+// 10 - Quantidade Liberada Devolvida
+// 11 - Quantidade Rejeitada Devolvida
+// 12 - Soma dos saldos de todos movimentos 
+
+dbSelectArea('SD7')
+dbSetOrder(1)
+If dbSeek(cSeek := xFilial('SD7') + cNumero + cProduto + cLocal, .F.)
+	Do While !Eof() .And. D7_FILIAL+D7_NUMERO+D7_PRODUTO+D7_LOCAL == cSeek
+		If SD7->D7_TIPO == 0 .And. SD7->D7_SEQ == cSeqZero //-- Saldo Original
+			aQtd[01] := SD7->D7_SALDO
+		ElseIf SD7->D7_TIPO == 1 //-- Liberada
+			aQtd[02] += SD7->D7_QTDE
+		ElseIf SD7->D7_TIPO == 2 //-- Rejeitada
+			aQtd[03]  += SD7->D7_QTDE
+		ElseIf SD7->D7_TIPO == 3 //-- Transferido
+			aQtd[10]  += SD7->D7_QTDE
+		ElseIf SD7->D7_TIPO == 4 //-- Estorno Transferencia
+			aQtd[11]  += SD7->D7_QTDE
+		ElseIf SD7->D7_TIPO == 6 //-- Estorno Liberacao
+			aQtd[04] += SD7->D7_QTDE
+		ElseIf SD7->D7_TIPO == 7 //-- Estorno Rejeicao
+			aQtd[05] += SD7->D7_QTDE
+		EndIf
+		aQtd[7] ++ //-- Numero de Movimentos
+		dbSkip()
+	EndDo
+EndIf
+
+aQtd[6] := aQtd[1] 			   		//-- Saldo Original
+aQtd[6] -= (aQtd[2] - aQtd[4] )	//-- Subtrai as Libera‡oes
+aQtd[6] -= (aQtd[3] - aQtd[5] )	//-- Subtrai as Rejei‡oes
+aQtd[6] -= (aQtd[10] - aQtd[11] )	//-- Subtrai as Transferencias
+RestArea(aAreaSD7)
+RestArea(aAreaAnt)
+
+Return aQtd
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175ACols ³ Autor ³ Cristina M. Ogura     ³ Data ³ 04.11.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Calcula o saldo das movimentacoes no Acols()                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Mata175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175ACols( nTam , lRodape , UnMed )
+Local nX         := 0
+Local nY         := 0
+Local nTipo      := 0
+Local nSaldoIni  := 0
+Local nLibAtu    := 0
+Local nRejAtu    := 0
+Local nPosTP     := 0
+Local nPosQuant  := 0
+Local nPosSaldo  := 0
+Local nPosEst    := 0
+Local nPosLocDes := 0
+Local nTamIni    := If(Type('nAColsIni')#'N', nTam, nAColsIni)
+Local aQtd       := {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+Local cEstorno   := ''
+Local cSaldo     := ''
+Local cQtd       := ''
+
+Default UnMed    := 1
+
+If UnMed==1
+	cQtd   := 'D7_QTDE'
+	cSaldo := 'D7_SALDO'
+Else
+	cQtd   := 'D7_QTSEGUM'
+	cSaldo := 'D7_SALDO2'
+EndIf
+
+lRodape := If(lRodape==Nil,.T.,lRodape)
+
+//  Posicao do Array - aQtd
+//  1 - Quantidade Original
+//  2 - Quantidade Liberada
+//  3 - Quantidade Rejeitada
+//  4 - Quantidade Liberada Estornada
+//  5 - Alterar data de validade do lote
+//  6 - Saldo
+//  7 - Numero de movimentacoes
+//  8 - Quantidade Liberada marcada para estorno
+//  9 - Quantidade Rejeitada marcada para estorno
+// 10 - Quantidade Liberada Devolvida
+// 11 - Quantidade Rejeitada Devolvida
+
+For nX := 1 to Len(aHeader)
+	If Alltrim(aHeader[nX, 2]) == 'D7_TIPO'
+		nPosTP := nX
+	ElseIf Alltrim(aHeader[nX, 2]) == cQtd
+		nPosQuant := nX
+	ElseIf Alltrim(aHeader[nX, 2]) == cSaldo
+		nPosSaldo := nX
+	ElseIf Alltrim(aHeader[nX, 2]) == 'D7_ESTORNO'
+		nPosEst := nX
+	ElseIf Alltrim(aHeader[nX, 2]) == 'D7_LOCDEST'
+		nPosLocDes := nX
+	EndIf
+Next nX
+
+If nPosTP>0 .And. nPosQuant>0 .And. nPosSaldo>0 .And. nPosEst>0 .And. nPosLocDes>0
+	For nY := 1 to nTam
+		nTipo		:= aCols[nY, nPosTP]
+		cEstorno	:= aCols[nY, nPosEst]
+		//-- Nao Considera Itens Estornados ou com Tipo 0 incorreto
+		If aCols[nY, Len(aCols[nY])] .Or. (nY > 1 .And. nTipo == 0) .Or. (nY > 1 .And. nTipo == 5)
+			Loop
+		EndIf
+		//-- Nao Considera a Linha Corrente no Calculo
+		If !lRodape .And. nY == n
+			Loop
+		EndIf
+		If nTipo == 0 .And. nY == 1 //-- Saldo Inicial
+			aQtd[1] := aCols[nY, nPosSaldo]
+			nSaldoIni := aQtd[1]
+		ElseIf nTipo == 1 //-- Liberados
+			aQtd[2] += aCols[nY, nPosQuant]
+			If Empty(cEstorno)
+				If nY > nTamIni
+					nLibAtu += aCols[nY, nPosQuant]
+				Else
+					nSaldoIni -= aCols[nY, nPosQuant]
+				EndIf
+			EndIf
+		ElseIf nTipo == 2 //-- Rejeitados
+			aQtd[3] += aCols[nY, nPosQuant]
+			If Empty(cEstorno)
+				If nY > nTamIni
+					nRejAtu   += aCols[nY, nPosQuant]
+				Else
+					nSaldoIni -= aCols[nY, nPosQuant]
+				EndIf
+			EndIf
+		ElseIf nTipo == 6 //-- Estorno da Libera‡ao
+			aQtd[4] += aCols[nY, nPosQuant]
+		ElseIf nTipo == 7 //-- Estorno da Rejei‡ao
+			aQtd[5] += aCols[nY, nPosQuant]
+		ElseIf nTipo == 3 //-- Devolu‡Æo da Libera‡ao
+			aQtd[10] += aCols[nY][nPosQuant]
+		ElseIf nTipo == 4 //-- Devolu‡Æo da Rejei‡ao
+			aQtd[11] += aCols[nY][nPosQuant]
+		EndIf
+		If lEstorno .And. cEstorno == 'X'
+			If nTipo == 1 //-- Liberado Marcado para Estorno
+				aQtd[8] += aCols[nY][nPosQuant]
+			ElseIf nTipo == 2 //-- Rejeitado Marcado para Estorno
+				aQtd[9] += aCols[nY][nPosQuant]
+			EndIf
+		EndIf
+		aQtd[7] ++ //-- Numero de Movimenta‡oes
+	Next nY
+EndIf
+aQtd[6] := nSaldoIni           //-- Saldo Atual
+aQtd[6] -= nLibAtu             //-- Subtrai do Saldo as Libera‡oes Atuais
+aQtd[6] -= nRejAtu             //-- Subtrai do Saldo as Rejei‡oes Atuais
+aQtd[6] += (aQtd[8] + aQtd[9]) //-- Soma ao Saldo os Estornos Atuais
+Return aQtd
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Acerta³ Autor ³    Marcos Simidu      ³ Data ³ 07.04.97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Corrige posicao do campo D7_ESTORNO.                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³MATA175                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A175Acerta(aHeader,aCols)
+Local nPosEst    := 0
+Local nX         := 0
+Local cAux       := ''
+Local aAux       := {}
+
+If lEstorno
+	nPosEst := aScan(aHeader, {|x| AllTRim(x[2]) == 'D7_ESTORNO'})
+	If nPosEst > 0 .And. nPosEst # 2 .And. Len(aHeader) > 2
+		//-- Acerta aHeader
+		aAux             := aClone(aHeader[nPosEst])
+		aHeader[nPosEst] := aHeader[2]
+		aHeader[2]       := aAux
+
+		//-- Acerta aCols
+		For nX := 1  To Len(aCols)
+			cAux := aCols[nX, nPosEst]
+			aCols[nX, nPosEst] := aCols[nX, 2]
+			aCols[nX, 2]       := cAux
+		Next nX
+	EndIf
+EndIf
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175SHOWF4³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 29/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada da funcao F4LOTE                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA240                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A175ShowF4(a,b,c)
+Local cCampo:=AllTrim(Upper(ReadVar()))
+If cCampo == "M->D7_LOCALIZ" .Or. cCampo == "M->D7_NUMSERI"
+	F4Localiz(,,,"A175",,,,cCampo)
+EndIf
+Return NIL
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Potenc³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 08/07/02 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada da funcao para alteracao da potencia do lote       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A175Potenc(oObj)
+Local oDlg2
+Local nPotencia:=nPotenc175
+Local aArea:=GetArea(),aAreaSX3:=SX3->(getArea()),cPotPict:="@E 999.99"
+dbSelectArea("SX3")
+dbSetOrder(2)    // ordem por campo
+If dbSeek("D7_POTENCI")
+	cPotPict := TRIM(X3_PICTURE)
+EndIf
+RestArea(aAreaSX3)
+DEFINE MSDIALOG oDlg2 TITLE STR0032 From 130,70 To 210,360 OF oMainWnd PIXEL
+@ 05,13 TO 23,122 LABEL "" OF oDlg2  PIXEL
+@ 010,035 Say OemtoAnsi(STR0031) SIZE 30,7 OF oDlg2 PIXEL
+@ 010,070 MSGET nPotencia Picture cPotPict SIZE 20,09 OF oDlg2 PIXEL
+DEFINE SBUTTON FROM 27,042 TYPE 1 Action ((nPotenc175:=nPotencia,oObj:Refresh()),oDlg2:End()) ENABLE OF oDlg2 PIXEL
+DEFINE SBUTTON FROM 27,069 TYPE 2 ACTION oDlg2:End() ENABLE OF oDlg2 PIXEL
+ACTIVATE MSDIALOG oDlg2
+RestArea(aArea)
+Return .T.
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175Legenda³ Autor ³ Larson Zordan        ³ Data ³ 16.09.02 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Cria uma janela contendo a legenda da mBrowse              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A175Legenda()
+Local aLegenda := { {"ENABLE"	,STR0034},;		//"Liberado"
+					{"DISABLE"	,STR0035} }		//"Rejeitado"
+BrwLegenda(cCadastro,STR0033 ,aLegenda)			//"Legenda"
+Return .T.
+
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A175RotAut ³ Autor ³ Marcos V. Ferreira   ³ Data ³ 13.06.05 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajusta aCols para uso da Rotina Automatica				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function A175RotAut(nOpc,aCRotAut,aAlter,lEstCQ)
+Local nPosAlter  := 0
+Local nContRot	 := 0
+Local nPsEstor	 := 0
+Local nPsData	 := 0
+Local nPsObs	 := 0
+Local nCQPsEsto  := 0
+Local nCQPsData  := 0
+Local nCQPsObs   := 0
+Local nCQPsTipo  := 0
+Local aRotTrb1 	 := {}
+Local aRotTrb2 	 := {}
+Local aArrayAux  := {}
+Local cCampo	 := ""
+Local nY   		 := 0
+Local nX 		 := 0
+
+Default aCRotAut := {}
+Default aAlter 	 := {}
+Default nOpc 	 := 1
+Default lEstCQ	 := .F.
+
+If l175Auto //Rotina Automatica
+
+	If nOpc == 1 .And. !lEstCQ  //Liberacao e Rejeicao CQ
+
+		aCPadrao:= aClone(aCols)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Valida o conteudo do array aRotAuto com o array aAlter para  |
+		//| limpar os campos que nao podem entrar no aAutoItens.		 |                                   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nX := 1 to len(aRotAuto)
+			For nY := 1 to len(aRotAuto[nX])
+				nPosAlter  := aScan(aAlter,{|x| Alltrim(x) == AllTrim(aRotAuto[nX][nY][1])})
+				If nPosAlter == 0
+					aRotAuto[nX][nY][2] := Nil //Limpa o conteudo do campo
+				EndIf
+			Next
+		Next
+
+		//Array auxiliar com os campos passados pela rotina automatica
+		For nX	:= 1 to Len(aRotAuto[1])
+			aAdd(aArrayAux,AllTrim(Upper(aRotAuto[1][nX][1])))
+		Next
+
+		//Gera array de trabalho baseado no aCols
+		aRotTrb2 := {}
+		For nX := 1 to Len(aCols)
+			aRotTrb1 := {}
+			For nY := 1 to Len(aArrayAux)
+				nPosAlter  := aScan(aHeader,{|x| Alltrim(x[2]) == aArrayAux[nY]})
+				If nPosAlter > 0
+					aAdd(aRotTrb1,{aArrayAux[nY],aCols[nX][nPosAlter],""})
+				EndIf
+			Next
+			aAdd(aRotTrb2,aRotTrb1)
+		Next
+
+		//Soma aRotAuto com aCols para gerar aRotAuto atualizado
+		For nX := 1 to Len(aRotAuto)
+			aAdd(aRotTrb2,aRotAuto[nX])
+		Next
+
+		aRotAuto := aClone(aRotTrb2)
+
+		//Gera aAutoitens
+		For nX := 1 To Len(aRotAuto)
+			aadd(aAutoItens,SD7->(MSArrayXDB(aRotAuto[nX]))) 
+		Next
+
+		//Inicializa campos do aCols
+		aCols := {}
+		aAdd(aCols,Array(Len(aHeader)+1))
+		For nX:=1 to Len(aHeader)
+			cCampo:=Alltrim(aHeader[nX,2])
+			If aHeader[nX,8] == "C"
+				aCOLS[1][nX] := SPACE(aHeader[nX,4])
+			ElseIF aHeader[nX,8] == "N"
+				aCOLS[1][nX] := 0
+			ElseIF aHeader[nX,8] == "D"
+				aCOLS[1][nX] := dDataBase
+			ElseIF aHeader[nX,8] == "D"
+				aCOLS[1][nX] := CriaVar("D7_DATA")
+			ElseIF aHeader[nX,8] == "M"
+				aCOLS[1][nX] := ""
+			Else
+				aCOLS[1][nX] := .F.
+			EndIf
+			If aHeader[nX,10] == "V"
+				aCOLS[1][nX] := CriaVar(cCampo)
+			EndIf
+		Next
+		aCOLS[1][Len(aHeader)+1] := .F.
+
+		MsAuto2aCols() 	//Carrega aCols.
+
+		//Acerta a sequencia da coluna D7_SEQ
+		For nX := 1 to len(aCols)
+			If Empty(aCols[nX][1])
+				aCols[nX][1] := StrZero(nX,3)
+			EndIf
+		Next
+
+		aCRotAut := aClone(aCols)		// aCols da Rotina Automatica
+		aCols	 := aClone(aCPadrao)	// aCols Padrao 
+	EndIf
+
+	If nOpc == 2 .And. lEstCQ //Estorno de CQ
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Recuperando posicoes dos campos utilizados para Estorno de CQ |
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nX := 1 To Len(aRotAuto[1])
+			If AllTrim(Upper(aRotAuto[1][nX][1])) == "D7_ESTORNO"
+				nPsEstor := nX
+			ElseIf AllTrim(Upper(aRotAuto[1][nX][1])) == "D7_DATA"
+				nPsData := nX
+			ElseIf AllTrim(Upper(aRotAuto[1][nX][1])) == "D7_OBS"
+				nPsObs := nX
+			EndIf
+		Next
+		For nX := 1 to Len(aHeader)
+			If Upper(AllTRim(aHeader[nX, 2])) == 'D7_TIPO'
+				nCQPsTipo := nX
+			ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_DATA'
+				nCQPsData := nX
+			ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_ESTORNO'
+				nCQPsEsto := nX
+			ElseIf Upper(AllTRim(aHeader[nX, 2])) == 'D7_OBS'
+				nCQPsObs := nX
+			EndIf
+		Next nX
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Ajusta aCols com aRotAuto para Estorno do CQ				  |
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		nContRot := 1
+		For nX := 1 to Len(aCols)
+			If Empty(AllTrim(aCols[nX][nCQPsEsto])) .And. aCols[nX][nCQPsTipo] != 0 //Campo Estorno em branco ou diferente de Zero
+				If nPsEstor > 0
+					aCols[nX][nCQPsEsto] := Upper(aRotAuto[nContRot][nPsEstor][2])
+				Else
+					Return .F.
+				EndIf
+				If !Empty(aRotAuto[nContRot][nPsData][2]) .And. nPsData > 0
+					aCols[nX][nCQPsData] := aRotAuto[nContRot][nPsData][2]
+				EndIf
+				If nPsObs > 0
+					aCols[nX][nCQPsObs]  := aRotAuto[nContRot][nPsObs][2]
+				EndIf
+				nContRot++
+				//Verifica se a qtde de registros aRotAuto e menor que as linhas de estorno do aCols
+				If Len(aRotAuto) < nContRot
+					nX  := Len(aCols)
+				EndIf
+			EndIf
+		Next
+
+		//Acerta sequencia da coluna D7_SEQ
+		For nX := 1 to len(aCols)
+			If Empty(aCols[nX][1])
+				aCols[nX][1] := StrZero(nX,3)
+			EndIf
+		Next
+
+	EndIf
+
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Fabio Alves Silva     ³ Data ³07/11/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±
+±±³          ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Array com opcoes da rotina.                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³    1 - Pesquisa e Posiciona em um Banco de Dados           ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function MenuDef()
+PRIVATE aRotina	:= {	{STR0003, 'AxPesqui'	, 0, 1, 0, .F.}, ;		//'Pesquisar'
+						{STR0004, 'A175Visual'	, 0, 2, 0, .F.}, ;		//'Visualizar'
+						{STR0005, 'A175Libera'	, 0, 4, 0, nil}, ;		//'Liberar/Rejeitar'
+						{STR0006, 'A175Estorna'	, 0, 6, 0, nil}, ;		//'Estornar'
+						{STR0033, 'A175Legenda'	, 0, 2, 0, .F.}}		//'Legenda'
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de entrada utilizado para inserir novas opcoes no array aRotina  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("MTA175MNU")
+	ExecBlock("MTA175MNU",.F.,.F.)
+EndIf
+Return(aRotina)
+
+/*ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao    ³ GetPotenc ³ Autor ³ Materiais            ³ Data ³17/05/2016³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Retorna a pontencia padrao de um determinado produto       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA175                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function GetPotenc()
+
+Local nRet		:= CriaVar("D3_POTENCI")
+Local aArea		:= GetArea()
+Local aAreaSB8	:= SB8->(GetArea())
+
+dbSelectArea("SB8")
+dbSetOrder(3) // B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL+B8_NUMLOTE
+
+If Rastro(SD7->D7_PRODUTO) .And. MsSeek(xFilial("SB8") + SD7->D7_PRODUTO + SD7->D7_LOCAL + SD7->D7_LOTECTL + SD7->D7_NUMLOTE)
+	nRet := SB8->B8_POTENCI
+EndIf
+
+RestArea(aAreaSB8)
+RestArea(aArea)
+
+Return nRet

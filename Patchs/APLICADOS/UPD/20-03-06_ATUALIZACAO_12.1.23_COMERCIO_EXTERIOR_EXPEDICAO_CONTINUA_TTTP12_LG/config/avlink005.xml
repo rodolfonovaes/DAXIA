@@ -1,0 +1,143 @@
+<EASYLINK>
+	<SERVICE>
+		<ID>005</ID>
+		<!-- Arquivo XML habilitado para vinculacao de adiantamentos vinculados parcialmente aos Embarques -->
+		<!-- Aviso: Nao remover o identificador abaixo, caso contrario a vinculacao parcial sera desabilitada -->
+		<!--  ID: "ADIANTAMENTO_PARCIAL" -->
+		<DATA_SELECTION>
+			<CMD>If(Type('nValorBaixa') # 'N', nValorBaixa:= EEQ->EEQ_EQVL, )</CMD>
+			<FIN_SEND>
+				<FIN_IT>
+					<FIN_ELE1>'E1_FILIAL'</FIN_ELE1>
+					<E1_FILIAL>xFilial('SE1')</E1_FILIAL>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_NUM'</FIN_ELE1>
+					<E1_NUM>SE1->E1_NUM</E1_NUM>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_PREFIXO'</FIN_ELE1>
+					<E1_PREFIXO>SE1->E1_PREFIXO</E1_PREFIXO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_SERIE'</FIN_ELE1>
+					<E1_SERIE>SE1->E1_SERIE</E1_SERIE>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_PARCELA'</FIN_ELE1>
+					<E1_PARCELA>SE1->E1_PARCELA</E1_PARCELA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_TIPO'</FIN_ELE1>
+					<E1_TIPO>SE1->E1_TIPO</E1_TIPO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_CLIENTE'</FIN_ELE1>
+					<E1_CLIENTE>SE1->E1_CLIENTE</E1_CLIENTE>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_LOJA'</FIN_ELE1>
+					<E1_LOJA>SE1->E1_LOJA</E1_LOJA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTVALREC'</FIN_ELE1>
+					<E1_VALOR>If(FindFunction('AF200AutValRec'),AF200AutValRec(),nValorBaixa)</E1_VALOR>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTDESCONT'</FIN_ELE1>
+					<E1_VALOR>If(FindFunction('AF200AutDescon'),AF200AutDescon(),If(If(!GetMv('MV_EEC0056',.T.), GetMv('MV_AVG0214',,.F.), GetMv('MV_EEC0056',,.F.)), EEQ->EEQ_CGRAFI * If(FindFunction('AF200VlTx'),AF200VlTx(),EEQ->EEQ_TX), 0) + (EEQ->EEQ_DESCON * EEQ->EEQ_TX))</E1_VALOR>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTTXMOEDA'</FIN_ELE1>
+					<E1_TXMOEDA>If(FindFunction('AF200VlTx'),AF200VlTx(),EEQ->EEQ_TX)</E1_TXMOEDA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTMOTBX'</FIN_ELE1>
+					<AUTMOTBX>EECGetMotBx()</AUTMOTBX>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>				
+				<FIN_IT>
+					<FIN_ELE1>'AUTDTBAIXA'</FIN_ELE1>
+					<AUTDTBAIXA>If(FindFunction('AF200DtBaixa'),AF200DtBaixa(),EEQ->EEQ_PGT)</AUTDTBAIXA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTDTCREDITO'</FIN_ELE1>
+					<AUTDTBAIXA>If(FindFunction('AF200DtBaixa'),AF200DtBaixa(),EEQ->EEQ_PGT)</AUTDTBAIXA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTBANCO'</FIN_ELE1>
+					<E1_PORTADO>If(FindFunction('AF200Banco'),AF200Banco('1'),EEQ->EEQ_BANC)</E1_PORTADO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTAGENCIA'</FIN_ELE1>
+					<E1_AGEDEP>If(FindFunction('AF200Banco'),AF200Banco('2'),EEQ->EEQ_AGEN)</E1_AGEDEP>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'AUTCONTA'</FIN_ELE1>
+					<E1_CONTA>If(FindFunction('AF200Banco'),AF200Banco('3'),EEQ->EEQ_NCON)</E1_CONTA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<!-- //NCF - 04/08/2015
+				<FIN_IT>
+					<FIN_ELE1>'AUTDECRESC'</FIN_ELE1>
+					<E1_VALOR>0</E1_VALOR>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				-->	
+				<FIN_IT>
+					<FIN_ELE1>'AUTHIST'</FIN_ELE1>
+					<AUTHIST>If(FindFunction('AF200HisEmb'),AF200HisEmb(),'Emb.:' + EEC->EEC_PREEMB)</AUTHIST>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E1_NATUREZ'</FIN_ELE1>
+					<!-- RRC - 22/08/2013 - Criado Parâmetro para o código da natureza do cliente no SIGAESS-->		
+					<E1_NATUREZ>If(!Empty(SE1->E1_NATUREZ), SE1->E1_NATUREZ, If(cModulo=="ESS",GetMv("MV_ESS0018",,"EASY"),GetMv("MV_AVG0178",, "AVG")))</E1_NATUREZ>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+                <FIN_IT>
+			       <FIN_ELE1>'AUTACRESC'</FIN_ELE1>
+			       <E1_ACRESC>SE1->E1_ACRESC</E1_ACRESC>
+			       <FIN_ELE3>''</FIN_ELE3>
+		        </FIN_IT>
+		        <FIN_IT>
+			       <FIN_ELE1>'AUTDECRESC'</FIN_ELE1>
+			       <E1_DECRESC>SE1->E1_DECRESC</E1_DECRESC>
+			       <FIN_ELE3>''</FIN_ELE3>
+		        </FIN_IT>
+		        <FIN_IT>
+			       <FIN_ELE1>'AUTMULTA'</FIN_ELE1>
+			       <E1_VALOR>If( AVFLAGS("ACR_DEC_DES_MUL_JUROS_CAMBIO_EXP"), EEQ->EEQ_MULTA * EEQ->EEQ_TX, 0)</E1_VALOR>
+			       <FIN_ELE3>''</FIN_ELE3>
+		        </FIN_IT>
+		        <FIN_IT>
+			       <FIN_ELE1>'AUTJUROS'</FIN_ELE1>
+			       <E1_VALOR>If( AVFLAGS("ACR_DEC_DES_MUL_JUROS_CAMBIO_EXP"), EEQ->EEQ_JUROS * EEQ->EEQ_TX, 0)</E1_VALOR>
+			       <FIN_ELE3>''</FIN_ELE3>
+		        </FIN_IT>
+
+			</FIN_SEND>
+		</DATA_SELECTION>
+		<DATA_SEND>
+			<SEND>EECINFIN(#TAG FIN_SEND#, 'SE1', 'BAIXA')</SEND>
+		</DATA_SEND>
+		<DATA_RECEIVE>
+			<SRV_STATUS>.T.</SRV_STATUS>
+		</DATA_RECEIVE>
+	</SERVICE>
+</EASYLINK>

@@ -1,0 +1,17 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Advpl Debug",
+			"type": "advpl",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceRoot}",
+			"programRun": "${command:AskForProgramName}",
+			"stopOnEntry": false,
+			"enviromentInfo": "${command:GetEnvInfos}",
+			"workspace": "${workspaceFolder}/",
+			"smartclientBin": "C:\\Protheus\\Protheus\\bin\\smartclient\\smartclient.exe"
+		}
+	]
+}

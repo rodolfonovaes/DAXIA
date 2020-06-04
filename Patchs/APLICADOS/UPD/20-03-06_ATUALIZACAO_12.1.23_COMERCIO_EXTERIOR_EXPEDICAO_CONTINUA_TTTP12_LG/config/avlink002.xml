@@ -1,0 +1,80 @@
+<EASYLINK>
+<SERVICE>
+<ID>002</ID>
+<DATA_SELECTION>
+   <FIN_NUM>EEQ->EEQ_FINNUM</FIN_NUM>
+   <FIN_SEND>
+      <FIN_IT>
+         <FIN_ELE1>'E1_NUM'</FIN_ELE1>
+         <E1_NUM>AvKey(#TAG FIN_NUM#,"E1_NUM")</E1_NUM>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+      <FIN_IT>
+         <FIN_ELE1>'E1_PREFIXO'</FIN_ELE1>
+         <E1_PREFIXO>AvKey("EEC","E1_PREFIXO")</E1_PREFIXO>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+      <FIN_IT>
+         <FIN_ELE1>'E1_PARCELA'</FIN_ELE1>
+         <E1_PARCELA>AvKey("","E1_PARCELA")</E1_PARCELA>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+      <FIN_IT>
+         <FIN_ELE1>'E1_TIPO'</FIN_ELE1>
+         <E1_TIPO>AvKey(If(FindFunction("TETpTitEEQ"), TETpTitEEQ("EEQ"),'RA'),"E1_TIPO")</E1_TIPO>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+      <FIN_IT>
+         <FIN_ELE1>'E1_CLIENTE'</FIN_ELE1>
+         <E1_CLIENTE>AvKey(EEQ->EEQ_IMPORT,"E1_CLIENTE")</E1_CLIENTE>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+      <FIN_IT>
+         <FIN_ELE1>'E1_LOJA'</FIN_ELE1>
+         <E1_LOJA>AvKey(EEQ->EEQ_IMLOJA,"E1_LOJA")</E1_LOJA>
+         <FIN_ELE3>''</FIN_ELE3>
+      </FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'CBCOAUTO'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_PORTADO'),EEQ->EEQ_BANC)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'CAGEAUTO'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_AGEDEP'),EEQ->EEQ_AGEN)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'CCTAAUTO'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_CONTA'),EEQ->EEQ_NCON)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'E1_PORTADO'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_PORTADO'),EEQ->EEQ_BANC)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'E1_AGEDEP'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_AGEDEP'),EEQ->EEQ_AGEN)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+	<FIN_IT>
+		<FIN_ELE1>'E1_CONTA'</FIN_ELE1>
+		<E1_BCOCLI>IF(FindFunction("EasyIntegAdiant"),EasyIntegAdiant('E1_CONTA'),EEQ->EEQ_NCON)</E1_BCOCLI>
+		<FIN_ELE3>''</FIN_ELE3>
+	</FIN_IT>
+   </FIN_SEND>
+</DATA_SELECTION>
+
+<DATA_SEND>
+   <SEND>EECINFIN(#TAG FIN_SEND#, 'SE1', 'EXCLUIR')</SEND>
+   <CMD>EEQ->(RECLOCK("EEQ",.F.))</CMD>
+   <CMD>EEQ->EEQ_FINNUM := Space(AvSx3('EEQ_FINNUM', 3))</CMD>
+</DATA_SEND>
+
+<DATA_RECEIVE>
+   <SRV_STATUS>.T.</SRV_STATUS>
+</DATA_RECEIVE>
+</SERVICE>
+</EASYLINK>

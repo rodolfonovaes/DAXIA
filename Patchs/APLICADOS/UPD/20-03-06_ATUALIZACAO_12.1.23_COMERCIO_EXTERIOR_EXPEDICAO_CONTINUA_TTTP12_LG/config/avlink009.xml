@@ -1,0 +1,48 @@
+<EASYLINK>
+   <SERVICE>
+      <ID>009</ID>
+      <DATA_SELECTION>
+         <FIN_NUM>EEQ->EEQ_FINNUM</FIN_NUM>
+         <FIN_SEND>
+            <FIN_IT>
+               <FIN_ELE1>'E2_NUM'</FIN_ELE1>
+               <E2_NUM>AvKey(#TAG FIN_NUM#, "E2_NUM")</E2_NUM>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_PREFIXO'</FIN_ELE1>
+               <E2_PREFIXO>If('ESS'$cModulo .And. !Empty(EEQ->EEQ_PREFIX),AvKey(EEQ->EEQ_PREFIX,"E2_PREFIXO"),AvKey(cModulo, "E2_PREFIXO"))</E2_PREFIXO>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_PARCELA'</FIN_ELE1>
+               <E2_PARCELA>If('ESS'$cModulo,Int101Parc(EEQ->EEQ_PARC),AvKey(' ','E2_PARCELA'))</E2_PARCELA>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_TIPO'</FIN_ELE1>
+               <E2_TIPO>AvKey("NF", "E2_TIPO")</E2_TIPO>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_FORNECE'</FIN_ELE1>
+               <E2_FORNECE>AvKey(EEQ->EEQ_FORN, 'E2_FORNECE')</E2_FORNECE>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+            <FIN_IT>
+               <FIN_ELE1>'E2_LOJA'</FIN_ELE1>
+               <E2_LOJA>AvKey(EEQ->EEQ_FOLOJA, 'E2_LOJA')</E2_LOJA>
+               <FIN_ELE3>''</FIN_ELE3>
+            </FIN_IT>
+         </FIN_SEND>
+      </DATA_SELECTION>
+      <DATA_SEND>
+         <SEND>EECINFIN(#TAG FIN_SEND#, 'SE2', 'EXCLUIR')</SEND>
+		 <CMD>EEQ->(RecLock('EEQ', .F.))</CMD>
+		 <CMD>EEQ->EEQ_FINNUM := Space(AvSx3('EEQ_FINNUM', 3))</CMD>
+      </DATA_SEND>
+      <DATA_RECEIVE>
+         <SRV_STATUS>.T.</SRV_STATUS>
+      </DATA_RECEIVE>
+   </SERVICE>
+</EASYLINK>

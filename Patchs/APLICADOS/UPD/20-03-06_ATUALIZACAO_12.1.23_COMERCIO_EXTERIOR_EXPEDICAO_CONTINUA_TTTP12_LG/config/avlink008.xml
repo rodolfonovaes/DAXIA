@@ -1,0 +1,120 @@
+<EASYLINK>
+	<SERVICE>
+		<ID>008</ID>
+		<DATA_SELECTION>
+			<FIN_NUM>EECGetFinN("SE2")</FIN_NUM>
+			<CMD>If(Type('cNatureza') # 'C' .Or. Empty(cNatureza), cNatureza:= Posicione("SA2", 1, xFilial("SA2")+EEQ->(EEQ_FORN+EEQ_FOLOJA), "A2_NATUREZ"), cNatureza)</CMD>
+			<CMD>If(Type('cNatureza') # 'C' .Or. Empty(cNatureza), cNatureza:= GetMv("MV_AVG0178",, ""), cNatureza)</CMD>
+			<FIN_SEND>
+				<FIN_IT>
+					<FIN_ELE1>'E2_NUM'</FIN_ELE1>
+					<E2_NUM>#TAG FIN_NUM#</E2_NUM>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_PREFIXO'</FIN_ELE1>
+					<E2_PREFIXO>cModulo</E2_PREFIXO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_PARCELA'</FIN_ELE1>
+					<E2_PARCELA>If('ESS' $ cModulo ,Int101Parc(EEQ->EEQ_PARC),AvKey(' ','E2_PARCELA'))</E2_PARCELA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_TIPO'</FIN_ELE1>
+					<E2_TIPO>'NF'</E2_TIPO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<!-- MCF - 07/06/2016 - Alterado a posição do E2_NATUREZ para criação do titulo CID -->
+				<FIN_IT>
+					<FIN_ELE1>'E2_NATUREZ'</FIN_ELE1>
+					<!-- RRC - 22/08/2013 - Criado Parâmetro para o código da natureza do fornecedor no SIGAESS-->		
+					<E2_NATUREZ>If(Type('cNatureza') # 'C', If(cModulo=="ESS",If(!Empty(Posicione("SA2", 1, xFilial("SA2")+EEQ->(EEQ_FORN+EEQ_FOLOJA), "A2_NATUREZ")),Posicione("SA2", 1, xFilial("SA2")+EEQ->(EEQ_FORN+EEQ_FOLOJA), "A2_NATUREZ"),GetMv("MV_ESS0019",,"EASY")),GetMv("MV_AVG0178",, "")), cNatureza)</E2_NATUREZ>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_FORNECE'</FIN_ELE1>
+					<E2_FORNECE>EEQ->EEQ_FORN</E2_FORNECE>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_LOJA'</FIN_ELE1>
+					<E2_LOJA>EEQ->EEQ_FOLOJA</E2_LOJA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_EMISSAO'</FIN_ELE1>
+					<E2_EMISSAO>If(FindFunction('AF200DtEmissa'),AF200DtEmissa(),EEC->EEC_DTEMBA)</E2_EMISSAO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_VENCTO'</FIN_ELE1>
+					<E2_VENCTO>EEQ->EEQ_VCT</E2_VENCTO>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_VENCREA'</FIN_ELE1>
+					<E2_VENCREA>DataValida(EEQ->EEQ_VCT, .T.)</E2_VENCREA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_VENCORI'</FIN_ELE1>
+					<E2_VENCORI>EEQ->EEQ_VCT</E2_VENCORI>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_VALOR'</FIN_ELE1>
+					<E2_VALOR>EEQ->EEQ_VL</E2_VALOR>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_EMIS1'</FIN_ELE1>
+					<E2_EMIS1>If(FindFunction('AF200DtEmissa'),AF200DtEmissa(),EEC->EEC_DTEMBA)</E2_EMIS1>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_VLCRUZ'</FIN_ELE1>
+					<E2_VLCRUZ>EEQ->EEQ_VL*(BuscaTaxa(EEQ->EEQ_MOEDA,If(FindFunction('AF200DtEmissa'),AF200DtEmissa(),dDataBase)))</E2_VLCRUZ>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_MOEDA'</FIN_ELE1>
+					<E2_MOEDA>Posicione('SYF', 1, xFilial('SYF')+EEQ->EEQ_MOEDA, 'YF_MOEFAT')</E2_MOEDA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_TXMOEDA'</FIN_ELE1>
+					<E2_TXMOEDA>If(FindFunction('AF200DtEmissa'),BuscaTaxa(EEQ->EEQ_MOEDA,AF200DtEmissa()),0)</E2_TXMOEDA>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_HIST'</FIN_ELE1>
+					<E2_HIST>If(FindFunction('AF200HisEmb'),AF200HisEmb(),'Emb.:' + EEC->EEC_PREEMB)</E2_HIST>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+					<FIN_ELE1>'E2_ORIGEM'</FIN_ELE1>
+					<E2_ORIGEM>INT101RetMod()</E2_ORIGEM>
+					<FIN_ELE3>''</FIN_ELE3>
+				</FIN_IT>
+				<FIN_IT>
+			       <FIN_ELE1>'E2_ACRESC'</FIN_ELE1>
+			       <E1_ACRESC>If( AVFLAGS("ACR_DEC_DES_MUL_JUROS_CAMBIO_EXP"), EEQ->EEQ_ACRESC, 0)</E1_ACRESC>
+			       <FIN_ELE3>''</FIN_ELE3>
+		        </FIN_IT>
+		        <FIN_IT>
+			       <FIN_ELE1>'E2_DECRESC'</FIN_ELE1>
+			       <E1_DECRESC>If( AVFLAGS("ACR_DEC_DES_MUL_JUROS_CAMBIO_EXP"), EEQ->EEQ_DECRES, 0)</E1_DECRESC>
+			       <FIN_ELE3>''</FIN_ELE3>
+	            </FIN_IT>
+			</FIN_SEND>
+		</DATA_SELECTION>
+		<DATA_SEND>
+			<SEND>EECINFIN(#TAG FIN_SEND#, 'SE2', 'INCLUIR',,,#TAG FIN_NUM#)</SEND>
+		</DATA_SEND>
+		<DATA_RECEIVE>
+			<SRV_STATUS>.T.</SRV_STATUS>
+		</DATA_RECEIVE>
+	</SERVICE>
+</EASYLINK>

@@ -1,0 +1,350 @@
+#INCLUDE "MATC060.CH"
+#INCLUDE "PROTHEUS.CH"
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATC060  ³ Autor ³ Rodrigo de a. Sartorio³ Data ³ 04/11/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Saldos por Lote.	                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function MATC060()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aCampos  		:= {}
+Local aCpoView 		:= {}
+Local aReg     		:= {}
+Local aIndice		:= {}
+Local i				:= 0
+Local cSeek			:= ""
+Local nI,nX			:= 0
+Local lEmpPrev		:= If(SuperGetMV("MV_QTDPREV")== "S",.T.,.F.)
+Local lContinua		:= .T.
+Local aAreaAnt		:= GetArea()
+Local aAreaSIX		:= SIX->(GetArea()) 
+Local nFcount		:= 0
+Local nIndex		:= 0
+Local oTempTable	:= NIL
+Local cQuery		:= ""
+Local cAliasSB8		:= GetNextAlias()
+Local cSelect		:= ""
+Local aChaves		:= {} //armazena todas as chaves lidas no SIX
+Local oBrowse
+Local nField		:= 0
+Local aIndices		:= {}
+Local cIndTitle		:= ""
+Local aFields		:= {}
+Local aSeek			:= {}
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                     ³
+//³ mv_par01     // Do Produto                               ³
+//³ mv_par02     // Ate Produto                              ³
+//³ mv_par03     // Do Armazem                               ³
+//³ mv_par04     // Ate Armazem                              ³
+//³ mv_par05     // Exibir Lotes Zerados ? (S)im (N)ao       ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Pergunte("MTC060",.T.)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Define Array contendo as Rotinas a executar do programa      ³
+	//³ ----------- Elementos contidos por dimensao ------------     ³
+	//³ 1. Nome a aparecer no cabecalho                              ³
+	//³ 2. Nome da Rotina associada                                  ³
+	//³ 3. Usado pela rotina                                         ³
+	//³ 4. Tipo de Transa‡„o a ser efetuada                          ³
+	//³    1 -Pesquisa e Posiciona em um Banco de Dados              ³
+	//³    2 -Simplesmente Mostra os Campos                          ³
+	//³    3 -Inclui registros no Bancos de Dados                    ³
+	//³    4 -Altera o registro corrente                             ³
+	//³    5 -Estorna registro selecionado gerando uma contra-partida³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Private aRotina := MenuDef()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Define o cabecalho da tela de atualizacoes                   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Private cCadastro := OemToAnsi(STR0003)	//"Saldos por Lote"
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Cria array para gerar arquivo de trabalho                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SB8")
+	aCampos:=DbStruct()
+	SB8->(dbCloseArea()) //-- Fecha arquivo SB8 para poder criar SB8 como TEMPORARIO
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Cria arquivo de trabalho                                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oTempTable := FWTemporaryTable():New("SB8")
+	oTempTable:SetFields(aCampos)
+
+
+	dbSelectArea("SIX")
+	dbSetOrder(1)
+	If dbSeek("SB8")
+		Do While SIX->(!Eof()) .And. AllTrim(SIX->INDICE) == "SB8"
+			aFields := {}
+			aChave := StrTokArr(SIX->CHAVE,"+")
+
+			For nI:=1 to Len(aChave)
+				aChave[nI]:= StrTran(aChave[nI],"DTOS(","")
+				aChave[nI]:= StrTran(aChave[nI],")","")
+				aChave[nI]:= AllTrim(aChave[nI])
+
+				SX3->(dbSetOrder(2)) //dbSetOrder colocado dentro do laço pois a função X3Picture desposiciona o indice
+
+				nField := AScan(aCampos,{|x| AllTrim(x[1]) == aChave[nI]})
+				If nField > 0
+					aAdd(aFields,{})
+					SX3->(DbSeek(aCampos[nField][1]))
+					aAdd(aFields[nI],SX3->X3_F3)
+					aAdd(aFields[nI],aCampos[nField,2])
+					aAdd(aFields[nI],aCampos[nField,3])
+					aAdd(aFields[nI],aCampos[nField,4])
+					aAdd(aFields[nI],AllTrim(X3Titulo()))
+					aAdd(aFields[nI],X3Picture())
+
+				EndIf
+			Next nI
+
+			cIndTitle := AllTrim(SX3->(RetTitle("B8_FILIAL"))) + "+" + SIX->(SixDescricao())
+
+			If AScan(aChaves,{|x| AllTrim(SIX->CHAVE) $ x}) == 0
+				aIndices := {}
+				aAdd(aChaves,Alltrim(SIX->CHAVE))
+				oTempTable:AddIndex(RetSqlName(SIX->INDICE)+SIX->ORDEM, aChave )
+				aAdd(aIndices,cIndTitle)
+				aAdd(aIndices,aFields)
+				aAdd(aIndices,Len(aChaves))
+				aAdd(aSeek,aIndices)
+			EndIf
+			SIX->(dbSkip())
+		EndDo
+	EndIf		
+
+	oTempTable:Create()
+	SET DATE FORMAT "dd/mm/yy" //Grava dados no arquivo de Trabalho
+	
+	aCampos:=DbStruct()
+	
+	For i:=1 to len(aCampos)
+		If aCampos[i][2] == "M"
+	  		cSelect += "ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),"+aCampos[i][1]+")),'') AS " + aCampos[i][1]
+		Else
+	    	cSelect += aCampos[i][1]
+	    EndIf
+	    
+	    If i <> len(aCampos)
+	        cSelect += " , "
+	    EndIf
+	Next i 
+
+	cQuery := "SELECT " + cSelect + " "
+	cQuery += "FROM " + RetSqlName("SB8") + " "
+	cQuery += "WHERE B8_FILIAL = '" + xFilial("SB8") + "'"
+	cQuery += "AND B8_PRODUTO >= '" + mv_par01 + "' "
+	cQuery += "AND B8_PRODUTO <= '" + mv_par02 + "' "  
+	cQuery += "AND B8_LOCAL >= '" + mv_par03 + "' " 
+	cQuery += "AND B8_LOCAL <= '" + mv_par04 + "' "
+	cQuery += "AND D_E_L_E_T_ = ' '"
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSB8,.T.,.T.)
+	
+	For nX := 1 To Len(aCampos)
+		If aCampos[nX][2] <> "C"
+			TcSetField(cAliasSB8,aCampos[nX][1],aCampos[nX][2],aCampos[nX][3],aCampos[nX][4])
+		EndIf
+	Next nX
+		
+	Do While !Eof()
+		
+		If MV_PAR05 == 2 .And. SB8SALDO(,,,,cAliasSB8,lEmpPrev,,,.T.) == 0 //-- Nao considerar Lotes/SubLotes com saldo zerado na consulta.
+			(cAliasSB8)->(dbSkip())
+			Loop					
+		EndIf
+	
+		cSeek:=xFilial("SB8")+B8_PRODUTO+B8_LOCAL+B8_LOTECTL
+		Do While !Eof() .And. B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL == cSeek
+			If !(SB8->(dbSeek(xFilial("SB8")+SB8->B8_LOTECTL+SB8->B8_PRODUTO+SB8->B8_LOCAL)))
+				aReg:={}
+				For i:=1 to FCount()
+					AADD(aReg,FieldGet(i))
+				Next i			
+				Reclock("SB8",.T.)
+				For i:=1 to FCount()
+					FieldPut(i,aReg[i])
+				Next i
+				MsUnlock()
+			Else
+				Reclock("SB8",.F.)
+				Replace B8_QTDORI	With B8_QTDORI +(cAliasSB8)->B8_QTDORI
+				Replace B8_SALDO	With B8_SALDO  +SB8SALDO(,,,,cAliasSB8,lEmpPrev,,,.T.)
+				Replace B8_QTDORI2	With B8_QTDORI2+(cAliasSB8)->B8_QTDORI2
+				Replace B8_SALDO2	With B8_SALDO2 +SB8SALDO(,,,.T.,cAliasSB8,lEmpPrev,,,.T.)
+				Replace B8_EMPENHO  With B8_EMPENHO+SB8SALDO(.T.,,,,cAliasSB8,lEmpPrev,,,.T.)
+				Replace B8_QEMPPRE	With B8_QEMPPRE+(cAliasSB8)->B8_QEMPPRE
+				Replace B8_QACLASS  With B8_QACLASS+(cAliasSB8)->B8_QACLASS
+				Replace B8_NUMLOTE  With Criavar("B8_NUMLOTE",.F.)
+				MsUnlock()
+			EndIf	
+			dbSelectArea(cAliasSB8)
+			(cAliasSB8)->(dbSkip())
+		EndDo
+	EndDo 
+
+	SX3->(dbSetOrder(1))
+	SX3->(dbSeek("SB8"))
+	While SX3->(!Eof()) .And. AllTrim(SX3->X3_ARQUIVO) == "SB8" 
+		If SX3->X3_BROWSE # "N" .And. SX3->X3_CONTEXTO # "V" 
+			aAdd(aCpoView,{SX3->X3_TITULO,SX3->X3_CAMPO,SX3->X3_TIPO,SX3->X3_TAMANHO,SX3->X3_DECIMAL,SX3->X3_PICTURE})
+		EndIf
+		SX3->(dbSkip())
+	EndDo
+
+	If lContinua
+		oBrowse := FWMBrowse():New()
+
+		oBrowse:SetAlias("SB8")
+		oBrowse:SetDescription(STR0003)
+		oBrowse:SetSeek(.T.,aSeek)
+
+		oBrowse:Activate()
+	EndIf
+	oTempTable:Delete()
+	ChkFile("SB8")
+EndIf
+RestArea(aAreaSIX)
+RestArea(aAreaAnt)
+Return Nil
+
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³C060Pesqui³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 04/11/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Pesquisa por lote+produto+local                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ C060Pesqui(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATC060                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function C060Pesqui(cAlias,nReg,nOpc)
+Local cCampo :=CriaVar("B8_LOTECTL")+CriaVar("B8_PRODUTO")+CriaVar("B8_LOCAL")
+Local nOpca  :=0
+Local aOrd   := {}
+Local oCBOX
+Local cOrd	 :=	STR0010 // "Lote Controle + Produto + Almoxarifado"
+Local cOrd1  := STR0011 // "Produto"
+Local lContinua:= .T.
+
+Aadd(aOrd,cOrd)
+Aadd(aOrd,cOrd1)
+
+DEFINE MSDIALOG oDlg FROM 5, 5 TO 14, 50 TITLE OemToAnsi(STR0005)	//"Pesquisa"
+@ 0.6,1.3 COMBOBOX oCBX VAR cOrd ITEMS aOrd  SIZE 165,44 OF oDlg FONT oDlg:oFont
+@ 2.1,1.3 MSGET cCampo SIZE 165,10
+DEFINE SBUTTON FROM 055,122	TYPE 1 ACTION (nOpca := 1,oDlg:End()) ENABLE OF oDlg
+DEFINE SBUTTON FROM 055,149.1 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+ACTIVATE MSDIALOG oDlg CENTERED
+
+If nOpca == 0
+	lContinua:= .F.
+ElseIf !Empty(cCampo) .And. cOrd <> STR0011
+	dbSetOrder(1)
+	dbSeek(xFilial("SB8")+cCampo,.T.)
+Else
+	dbSetOrder(2)
+	dbSeek(xFilial("SB8")+Trim(cCampo))
+EndIf
+If lContinua .And. Eof()
+	dbGoto(nReg)
+	Help(" ",1,"PESQ01")
+EndIf
+Return
+    
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³C060Visual³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 04/11/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Visualizacao dos Saldos por Lote                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ C060Visual(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATC060                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function C060Visual(cAlias,nReg,nOpc)
+dbSelectArea("SB1")
+If SB8->B8_PRODUTO # B1_COD
+	dbSeek(xFilial('SB1')+SB8->B8_PRODUTO)
+EndIf
+dbSelectArea(cAlias)
+nOpca := AxVisual(cAlias,nReg,nOpc,,4,SB1->B1_DESC)
+Return 
+    
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Fabio Alves Silva     ³ Data ³05/10/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±
+±±³          ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Array com opcoes da rotina.                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³	  1 - Pesquisa e Posiciona em um Banco de Dados    		  ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/  
+Static Function MenuDef()
+
+Private aRotina	:= {	{STR0002,"C060Visual", 0 , 2,0,nil}}	//"Visualizar" 
+
+If ExistBlock ("MTC060MNU")							    
+	ExecBlock ("MTC060MNU",.F.,.F.)
+Endif	
+return (aRotina)
