@@ -4,8 +4,8 @@ Local aParam      := {}
 Local aRet        := {}
 Local nImc		  := 0
 
-aAdd(aParam, {1, "Altura"   	, SC5->C5_PESOL  ,  ,, ,, 60, .F.} )
-aAdd(aParam, {1, "Peso"   		, SC5->C5_PESOL ,  ,, ,, 60, .F.} )
+aAdd(aParam, {1, "Altura"   	, 100  ,  ,, ,, 60, .F.} )
+aAdd(aParam, {1, "Peso"   		, 100 ,  ,, ,, 60, .F.} )
 
 If ParamBox(aParam,'Parâmetros',aRet)
     nImc := aRet[2] / (aRet[1] * aRet[1])
