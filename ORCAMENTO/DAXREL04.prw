@@ -193,7 +193,7 @@ Gerar relatório de Contribuicoes em Atraso
         
         While (cAliasQry)->( ! Eof() )
             nLinha += 50
-            If nLinha >= 2900 //Se atingir o tamanho máximo imprime nova folha
+            If nLinha >= 2200 //Se atingir o tamanho máximo imprime nova folha
                 oPrint:EndPage()
                 oPrint:StartPage()			
                 //Imprime quadro da folha
@@ -211,14 +211,14 @@ Gerar relatório de Contribuicoes em Atraso
             oPrint:Say(nLinha, 0800     	, Transform((cAliasQry)->RECEBIDO /*+ (cAliasQry)->RECEBIDO1*/ ,PesqPict("SF2","F2_VALMERC"))		, oFont10 )
             oPrint:Say(nLinha, 1050     	, Transform((cAliasQry)->ATRASO ,PesqPict("SF2","F2_VALMERC"))		    , oFont10 )
             oPrint:Say(nLinha, 1350     	, Transform((cAliasQry)->COMISSAO ,PesqPict("SF2","F2_VALBRUT"))		, oFont10 )
-            oPrint:Say(nLinha, 1750     	, Transform((((cAliasQry)->COMISSAO + (cAliasQry)->CATRAS) / (cAliasQry)->RECEBIDO) * 100  ,"@E 999,999.999")		        , oFont10 )
+            oPrint:Say(nLinha, 1750     	, Transform((((cAliasQry)->COMISSAO + (cAliasQry)->CATRAS) / (cAliasQry)->FAT) * 100  ,"@E 999,999.999")		        , oFont10 )
             oPrint:Say(nLinha, 2000     	, Transform((cAliasQry)->CRECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
             oPrint:Say(nLinha, 2300     	, Transform((cAliasQry)->CATRAS + (cAliasQry)->CATRAS1 ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
             oPrint:Say(nLinha, 2600     	, Transform((cAliasQry)->CARECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
 
             nTotFat   += (cAliasQry)->FAT
             nTotRec   += (cAliasQry)->RECEBIDO 
-            nTotAtr   += (cAliasQry)->FAT - (cAliasQry)->RECEBIDO 
+            nTotAtr   += (cAliasQry)->ATRASO
             nTotCom   += (cAliasQry)->COMISSAO
             //If (cAliasQry)->MEDIA > 0
                 nTotPCom  += ((cAliasQry)->COMISSAO / (cAliasQry)->RECEBIDO1) * 100

@@ -195,7 +195,6 @@ cQuery += " ( SELECT TOP 1((SUM(EI2_CIF+EI2_DESPES) / SM2.M2_MOEDA2) / SUM(EI2_Q
 cQuery += " ( SELECT TOP 1 SUM(W7_QTDE) FROM SW7010 SW7A WHERE SW7A.D_E_L_E_T_ = '' AND  W2_PO_NUM = SW7A.W7_PO_NUM AND SW7A.W7_FILIAL = '" + xFilial('SW7') + "'  	 )AS QUANT,
 cQuery += " W7_PRECO AS VUNIT,
 cQuery += " W2_FOB_TOT AS VTOTAL,
-//cQuery += " ((SELECT SUM(WH_VALOR)    FROM SWH010 SWH    WHERE WH_PO_NUM = SW2.W2_PO_NUM    AND REPLICATE('0',(4 -LEN(WH_NR_CONT)))+CAST(WH_NR_CONT AS VARCHAR(4)) = SW7.W7_POSICAO    AND WH_FILIAL = '" + xFilial('SWH') + "'    AND SWH.D_E_L_E_T_ = ' '    AND WH_PO_NUM = SW2.W2_PO_NUM	AND WH_DESPESA IN (SELECT WH_DESPESA FROM SWH010 WHERE                         SWH.D_E_L_E_T_ = ' ' AND WH_DESPESA BETWEEN '101' AND '899'						AND WH_DESPESA NOT IN (SELECT WH_DESPESA FROM SWH010 WHERE SWH.D_E_L_E_T_ = ' ' AND WH_DESPESA BETWEEN '201' AND '299'						AND WH_DESPESA NOT IN ('104')))		)/W7_QTDE) AS CUSTOEST " 
 cQuery += " ((SELECT SUM(ZH_VALOR)    FROM SZH010 SZH    WHERE ZH_PO_NUM = SW2.W2_PO_NUM    AND REPLICATE('0',(4 -LEN(ZH_NR_CONT)))+CAST(ZH_NR_CONT AS VARCHAR(4)) = SW7.W7_POSICAO    AND ZH_FILIAL = '" + xFilial('SZH') + "'    AND SZH.D_E_L_E_T_ = ' '    AND ZH_PO_NUM = SW2.W2_PO_NUM	AND ZH_DESPESA IN (SELECT ZH_DESPESA FROM SZH010 WHERE                         SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '101' AND '899'						AND ZH_DESPESA NOT IN (SELECT ZH_DESPESA FROM SZH010 WHERE SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '201' AND '299'						AND ZH_DESPESA NOT IN ('104')))		)/W7_QTDE) AS CUSTOEST " 
 cQuery += "  FROM " + RetSqlName("SW2") + " SW2 "
 cQuery += " INNER JOIN "  + RetSqlName("SW6") + " SW6 ON W2_PO_NUM = W6_PO_NUM  "
@@ -296,9 +295,10 @@ While TMPREL->(!EOF())
     TRBREL->DIASDESEMB  := nDesemb
     TRBREL->TRANSTOT    := nBook + nDesemb + nTTime
     If cPoOld == TMPREL->PO
-        TRBREL->QUANT := '-'
-        TRBREL->VTOTAL := '-'
-        TRBREL->QTCONT := '-'
+        TRBREL->QUANT   := '-'
+        TRBREL->VTOTAL  := '-'
+        TRBREL->QTCONT  := '-'
+        TRBREL->TIPO    := '-'
     Else
         TRBREL->QUANT       := Alltrim(STR(TMPREL->QUANT))
         TRBREL->VTOTAL       := Alltrim(TRANSFORM(TMPREL->VTOTAL,"@E 999,999,999,999.99"))
@@ -344,44 +344,39 @@ oBrowse:SetFieldFilter(aFieFilter)
 oBrowse:DisableDetails()
 
 //Detalhes das colunas que serï¿½o exibidas
-oBrowse:SetColumns(MontaColunas("W2_PO_NUM"	    ,"Nro PO"			,01,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("W2_NR_PRO" 	,"Documento"		,02,"@!",0,010,0))
-oBrowse:SetColumns(MontaColunas("W2_FORNDES"	,"Fornecedor"		,03,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("YA_DESCR"	    ,"Pais"     		,03,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("W2_FORN"	    ,"Nome Fornecedor"	,04,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("W6_HOUSE"	    ,"HBL\BL"		    ,05,"@!",1,020,0))
-oBrowse:SetColumns(MontaColunas("W2_AGENTE"	    ,"Agente"		    ,06,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("Y4_NOME"	    ,"Nome Agente"	    ,06,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("W9_FRETEIN"	,"Valor Frete"		,07,"@!",1,005,0))
-oBrowse:SetColumns(MontaColunas("TRANSITTIM"	,"Transit Time"		,27,"@!",1,020,0))	
-oBrowse:SetColumns(MontaColunas("W8_COD_I"	    ,"Cod Produto"		,08,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("DESCRICAO"	    ,"Nome Produto"		,09,"@!",1,040,0))
-oBrowse:SetColumns(MontaColunas("W7_PESO"	    ,"Volume"			,10,"@!",2,005,0))
-oBrowse:SetColumns(MontaColunas("QTCONT"	    ,"Qtd Container"	,11,"@!",1,010,0))
-oBrowse:SetColumns(MontaColunas("TIPO"	        ,"Tipo Container"	,15,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("PORTODEST"	    ,"Porto Dest"		,16,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("FRETNEG"	    ,"Frete Negociado"  ,17,"@E 9,999,999.99",2,020,0))	
-oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("FREETIM"      ,"Free Time"	        ,29,"@!",1,020,0))	
-oBrowse:SetColumns(MontaColunas("W7_PRECO_R"	,"Valor Processo U$",17,"@E 9,999,999.99",2,020,0))	
-oBrowse:SetColumns(MontaColunas("W2_PO_DT"      ,"Emissao PO"		,18,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W2_DT_PRO"	    ,"Dt Proforma"		,19,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("B1_ANUENTE"	,"Anuente"  		,20,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W6_DT_ETD"	    ,"ETD"      		,21,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W6_DT_EMB"	    ,"Embarque" 		,22,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W6_DT_ETA"	    ,"ETA"      		,23,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W6_DTREG_D"	,"Desembaraço"		,24,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("ESTOQUE"	    ,"Estoque"  		,25,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("BOOK"	        ,"Book"     		,26,"@!",1,020,0))		
-oBrowse:SetColumns(MontaColunas("W2_INCOTER"	,"Incoterm"     		,27,"@!",1,TAMSX3('W2_INCOTER')[1],0))		
-oBrowse:SetColumns(MontaColunas("DIASDESEMB"	,"Dias Desembaraço"	,28,"@!",1,020,0))			
-//oBrowse:SetColumns(MontaColunas("QUANT"         ,"Quantidade"	    ,30,"@!",2,020,0))	
-oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.99",2,020,0))	
-oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))	
-oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))		
-oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))		
-oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))		
-oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))		
+oBrowse:SetColumns(MontaColunas("W2_PO_NUM"	    ,"Nro PO"			,01,"@!",1,010,0))//1
+oBrowse:SetColumns(MontaColunas("W2_NR_PRO" 	,"Documento"		,02,"@!",0,010,0))//2
+oBrowse:SetColumns(MontaColunas("W2_FORNDES"	,"Fornecedor"		,03,"@!",1,010,0))//3
+oBrowse:SetColumns(MontaColunas("W2_FORN"	    ,"Nome Fornecedor"	,04,"@!",1,010,0))//4
+oBrowse:SetColumns(MontaColunas("YA_DESCR"	    ,"Pais"     		,03,"@!",1,010,0))//5
+oBrowse:SetColumns(MontaColunas("W6_HOUSE"	    ,"HBL\BL"		    ,05,"@!",1,020,0))//6
+oBrowse:SetColumns(MontaColunas("W2_AGENTE"	    ,"Agente"		    ,06,"@!",1,010,0))//7
+oBrowse:SetColumns(MontaColunas("Y4_NOME"	    ,"Nome Agente"	    ,06,"@!",1,010,0))//8
+oBrowse:SetColumns(MontaColunas("FRETNEG"	,"Valor Frete"		,07,"@!",1,005,0))//9 ANTIGO W9_FRETEIN
+oBrowse:SetColumns(MontaColunas("FREETIM"       ,"Free Time"	    ,29,"@!",1,020,0))//10
+oBrowse:SetColumns(MontaColunas("TRANSITTIM"	,"Transit Time"		,27,"@!",1,020,0))//11
+oBrowse:SetColumns(MontaColunas("W8_COD_I"	    ,"Cod Produto"		,08,"@!",1,010,0))//12
+oBrowse:SetColumns(MontaColunas("DESCRICAO"	    ,"Nome Produto"		,09,"@!",1,040,0))//13
+oBrowse:SetColumns(MontaColunas("W7_PESO"	    ,"Volume"			,10,"@!",2,005,0))//14
+oBrowse:SetColumns(MontaColunas("QTCONT"	    ,"Qtd Container"	,11,"@!",1,010,0))//15
+oBrowse:SetColumns(MontaColunas("TIPO"	        ,"Tipo Container"	,15,"@!",1,020,0))//16		
+oBrowse:SetColumns(MontaColunas("PORTODEST"	    ,"Porto Dest"		,16,"@!",1,020,0))//17		
+oBrowse:SetColumns(MontaColunas("W2_INCOTER"	,"Incoterm"     		,27,"@!",1,TAMSX3('W2_INCOTER')[1],0)) //18
+oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.99",2,020,0))	//19
+oBrowse:SetColumns(MontaColunas("W7_PRECO_R"	,"Valor Processo U$",17,"@E 9,999,999.99",2,020,0))	//20
+oBrowse:SetColumns(MontaColunas("W2_PO_DT"      ,"Emissao PO"		,18,"@!",1,020,0))//21	
+oBrowse:SetColumns(MontaColunas("B1_ANUENTE"	,"Anuente"  		,20,"@!",1,020,0))//22		
+oBrowse:SetColumns(MontaColunas("W6_DT_ETD"	    ,"ETD"      		,21,"@!",1,020,0))//23		
+oBrowse:SetColumns(MontaColunas("W6_DT_ETA"	    ,"ETA"      		,23,"@!",1,020,0))//24				
+oBrowse:SetColumns(MontaColunas("ESTOQUE"	    ,"Estoque"  		,25,"@!",1,020,0))//25		
+oBrowse:SetColumns(MontaColunas("BOOK"	        ,"Book"     		,26,"@!",1,020,0))//26		
+oBrowse:SetColumns(MontaColunas("DIASDESEMB"	,"Dias Desembaraço"	,28,"@!",1,020,0))//27				
+oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020,0))//28	
+oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))//29
+oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))//30
+oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))//31		
+oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//32		
+oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//33		
 oBrowse:Activate()
 
 If !Empty(cArqTrb)
@@ -451,40 +446,37 @@ oFWMsExcel:AddworkSheet("RESUMO")
 oFWMsExcel:AddTable("RESUMO","ITENS")
 oFWMsExcel:AddColumn("RESUMO","ITENS","Nro PO",1)               //1
 oFWMsExcel:AddColumn("RESUMO","ITENS","Documento",1)            //2
-oFWMsExcel:AddColumn("RESUMO","ITENS","Fornecedor",1)           //3
-oFWMsExcel:AddColumn("RESUMO","ITENS","Pais",1)                 //4
-oFWMsExcel:AddColumn("RESUMO","ITENS","Cod Fornecedor",1)       //5
+oFWMsExcel:AddColumn("RESUMO","ITENS","Cod Fornecedor",1)       //3
+oFWMsExcel:AddColumn("RESUMO","ITENS","Nome Fornecedor",1)      //4
+oFWMsExcel:AddColumn("RESUMO","ITENS","Pais",1)                 //5
 oFWMsExcel:AddColumn("RESUMO","ITENS","HBL\BL",1)               //6
 oFWMsExcel:AddColumn("RESUMO","ITENS","Agente",1)               //7
 oFWMsExcel:AddColumn("RESUMO","ITENS","Nome Agente",1)          //8
 oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Frete"		,1)     //9
-oFWMsExcel:AddColumn("RESUMO","ITENS","Cod Produto"	,1)         //10
-oFWMsExcel:AddColumn("RESUMO","ITENS","Nome Produto",1)         //11
-oFWMsExcel:AddColumn("RESUMO","ITENS","Volume",2)               //12
-oFWMsExcel:AddColumn("RESUMO","ITENS","Qtd Container"	,1)     //13
-oFWMsExcel:AddColumn("RESUMO","ITENS","Tipo Container",1)       //14
-oFWMsExcel:AddColumn("RESUMO","ITENS","Porto Dest",1)           //15
-oFWMsExcel:AddColumn("RESUMO","ITENS","Frete Negociado",1)      //16
-oFWMsExcel:AddColumn("RESUMO","ITENS","Transit Time",1)         //17
-oFWMsExcel:AddColumn("RESUMO","ITENS","Free Time",1)            //18
+oFWMsExcel:AddColumn("RESUMO","ITENS","Free Time",1)            //10
+oFWMsExcel:AddColumn("RESUMO","ITENS","Transit Time",1)         //11
+oFWMsExcel:AddColumn("RESUMO","ITENS","Cod Produto"	,1)         //12
+oFWMsExcel:AddColumn("RESUMO","ITENS","Nome Produto",1)         //13
+oFWMsExcel:AddColumn("RESUMO","ITENS","Volume",2)               //14
+oFWMsExcel:AddColumn("RESUMO","ITENS","Qtd Container"	,1)     //15
+oFWMsExcel:AddColumn("RESUMO","ITENS","Tipo Container",1)       //16
+oFWMsExcel:AddColumn("RESUMO","ITENS","Porto Dest",1)           //17
+oFWMsExcel:AddColumn("RESUMO","ITENS","Incoterm"    ,1)         //18
 oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Unitario",2)       //19
 oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Processo U$",2)    //20
 oFWMsExcel:AddColumn("RESUMO","ITENS","Emissao PO",1)           //21
 oFWMsExcel:AddColumn("RESUMO","ITENS","Anuente" ,1)             //22
 oFWMsExcel:AddColumn("RESUMO","ITENS","ETD"     ,1)             //23
-oFWMsExcel:AddColumn("RESUMO","ITENS","Embarque" 	,1)         //24
-oFWMsExcel:AddColumn("RESUMO","ITENS","ETA"    ,1)              //25
-oFWMsExcel:AddColumn("RESUMO","ITENS","Incoterm"    ,1)         //26
-oFWMsExcel:AddColumn("RESUMO","ITENS","Desembaraço",1)          //27
-oFWMsExcel:AddColumn("RESUMO","ITENS","Estoque"  ,1)            //28
-oFWMsExcel:AddColumn("RESUMO","ITENS","Book"  ,1)               //29
-oFWMsExcel:AddColumn("RESUMO","ITENS","Dias Desembaraço"	,1) //30
-oFWMsExcel:AddColumn("RESUMO","ITENS","Transito Total",1)       //31
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Total",2)          //32
-oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Estimado",2)       //33
-oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Efetivo"	,2)     //34
-oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //35
-oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //36
+oFWMsExcel:AddColumn("RESUMO","ITENS","ETA"    ,1)              //24
+oFWMsExcel:AddColumn("RESUMO","ITENS","Estoque"  ,1)            //25
+oFWMsExcel:AddColumn("RESUMO","ITENS","Book"  ,1)               //26
+oFWMsExcel:AddColumn("RESUMO","ITENS","Dias Desembaraço"	,1) //27
+oFWMsExcel:AddColumn("RESUMO","ITENS","Transito Total",1)       //28
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Total",2)          //29
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Estimado",2)       //30
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Efetivo"	,2)     //31
+oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //32
+oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //33
 
 TRBREL->(DbGoTop()) 		
 While TRBREL->(!Eof())
@@ -492,39 +484,36 @@ While TRBREL->(!Eof())
     TRBREL->W2_PO_NUM       ,;  //1
     TRBREL->W2_NR_PRO       ,;//2
     TRBREL->W2_FORN         ,;//3
-    TRBREL->YA_DESCR        ,;//4
-    TRBREL->W2_FORNDES      ,;//5
+    TRBREL->W2_FORNDES      ,;//4
+    TRBREL->YA_DESCR        ,;//5
     TRBREL->W6_HOUSE        ,;//6
     TRBREL->W2_AGENTE       ,;//7
     TRBREL->Y4_NOME         ,;//8
-    TRBREL->W9_FRETEIN      ,;//9
-    TRBREL->W8_COD_I        ,;//10
-    TRBREL->DESCRICAO       ,;//11
-    TRBREL->W7_PESO         ,;//12
-    TRBREL->QTCONT          ,;//13
-    TRBREL->TIPO            ,;//14
-    TRBREL->PORTODEST       ,;//15
-    TRBREL->FRETNEG         ,;//16
-    TRBREL->TRANSITTIM      ,;//17
-    TRBREL->FREETIM         ,;//18
+    TRBREL->FRETNEG         ,;//9
+    TRBREL->FREETIM         ,;//10
+    TRBREL->TRANSITTIM      ,;//11
+    TRBREL->W8_COD_I        ,;//12
+    TRBREL->DESCRICAO       ,;//13
+    TRBREL->W7_PESO         ,;//14
+    TRBREL->QTCONT          ,;//15
+    TRBREL->TIPO            ,;//16
+    TRBREL->PORTODEST       ,;//17
+    TRBREL->W2_INCOTER      ,;//18
     TRBREL->VUNIT           ,;//19
     TRBREL->W7_PRECO_R      ,;//20
     TRBREL->W2_PO_DT        ,;//21
     TRBREL->B1_ANUENTE      ,;//22
     TRBREL->W6_DT_ETD       ,;//23
-    TRBREL->W6_DT_EMB       ,;//24
-    TRBREL->W6_DT_ETA       ,;//25
-    TRBREL->W2_INCOTER      ,;//26
-    TRBREL->W6_DTREG_D      ,;//27
-    TRBREL->ESTOQUE         ,;//28
-    TRBREL->BOOK            ,;//29
-    TRBREL->DIASDESEMB      ,;//30
-    TRBREL->TRANSTOT        ,;//31
-    TRBREL->VTOTAL          ,;//32
-    TRBREL->CUSTOEST        ,;//33
-    TRBREL->CUSTOEFT        ,;//34
-    TRBREL->VARIACAO        ,;//35
-    TRBREL->W6_DTRECDO      ; //36
+    TRBREL->W6_DT_ETA       ,;//24
+    TRBREL->ESTOQUE         ,;//25
+    TRBREL->BOOK            ,;//26
+    TRBREL->DIASDESEMB      ,;//27
+    TRBREL->TRANSTOT        ,;//28
+    TRBREL->VTOTAL          ,;//29
+    TRBREL->CUSTOEST        ,;//30
+    TRBREL->CUSTOEFT        ,;//31
+    TRBREL->VARIACAO        ,;//32
+    TRBREL->W6_DTRECDO      ; //33
     })
     TRBREL->(dbSkip())
 EndDo

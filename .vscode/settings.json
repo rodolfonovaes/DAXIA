@@ -92,7 +92,7 @@
             "name": "DAXIA__EXTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "suporte",
+            "environment": "rodolfo",
             "includeList": "C:\\include\\",
             "server": "177.8.172.34",
             "port": "2325",
@@ -144,7 +144,7 @@
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "producao",
+            "environment": "rodolfo",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8001",
@@ -180,7 +180,7 @@
         }
     ],
     // Chave de compilação
-    "advpl.debug_multiThread": false,
+    "advpl.debug_multiThread": true,
     "advpl.debug_ignoreSourceNotFound": true,
     "advpl.alpha_compile": true,
     "files.encoding": "windows1252",

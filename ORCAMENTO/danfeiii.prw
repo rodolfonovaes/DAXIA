@@ -1111,7 +1111,6 @@ local nxlin			:= 0
 Local cFCI			:= ""
 lOCAL cMsgPad 		:= ""
 
-Local aItensAux2     := {}
 Local nPos2			 := 0
 
 
@@ -1150,6 +1149,8 @@ Private nAjustaDad    := 0
 Private nAjustaDest   := 0
 Private nAjustaISSQN  := 0
 Private nAjustaNat    := 0
+
+Private aItensAux2     := {}
 
 oBrush              := TBrush():New( , CLR_BLACK )
 
@@ -1712,18 +1713,7 @@ For nZ := 1 To nLenDet
 	AADD(aAux, AllTrim(TransForm(nValICMST,TM(nValICMST,TamSX3("D2_VALICM")[1],TamSX3("D2_VALICM")[2]))))
 	AADD(aAux, AllTrim(TransForm(nValIPI,TM(nValIPI,TamSX3("D2_VALIPI")[1],TamSX3("D2_BASEIPI")[2]))))
 	
-	//Rodolfo - Tratamento para aglutinar produto e lote iguais
 	
-	SD2->(dbSetOrder(3))
-	SD2->(MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+oDet[nX]:_Prod:_cProd:TEXT+SPACE(TAMSX3("D2_COD")[1]-LEN(oDet[nX]:_Prod:_cProd:TEXT))+STRZERO(nX,TAMSX3("D2_ITEM")[1])))					
-	
-	nPos2 := aScan(aItensAux2,{|x| AllTrim(x[1])==Alltrim(oDet[nX]:_Prod:_cProd:TEXT + SD2->D2_LOTECTL)}) 
-	/*If nPos2 > 0
-		aItens[nPos2][7] :=   AllTrim(TransForm(Val(aItens[nPos2][7]) + nQtd,TM(nQtd,TamSX3("D2_QUANT")[1],TamSX3("D2_QUANT")[2])))
-		aItens[nPos2][9] :=   AllTrim(TransForm(Val(aItens[nPos2][9]) + nVTotal,TM(nVTotal,TamSX3("D2_TOTAL")[1],TamSX3("D2_TOTAL")[2])))
-		aItens[nPos2][11] :=   AllTrim(TransForm(Val(aItens[nPos2][11]) + nValIPI,TM(nValIPI,TamSX3("D2_VALIPI")[1],TamSX3("D2_BASEIPI")[2])))
-	Else*/
-
 	aadd(aItens,{;
 		SubStr(oDet[nX]:_Prod:_cProd:TEXT,1,nMaxCod),;
 		SubStr(NoChar(oDet[nX]:_Prod:_xProd:TEXT,lConverte),1,nMaxDes),;
@@ -1746,6 +1736,33 @@ For nZ := 1 To nLenDet
 		AllTrim(TransForm(nPIPI,"@r 99.99%"));
 	})
 
+	//Rodolfo - Tratamento para aglutinar produto e lote iguais
+	
+	SD2->(dbSetOrder(3))
+	SD2->(MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+oDet[nX]:_Prod:_cProd:TEXT+SPACE(TAMSX3("D2_COD")[1]-LEN(oDet[nX]:_Prod:_cProd:TEXT))+STRZERO(nX,TAMSX3("D2_ITEM")[1])))					
+
+	aadd(aItensAux2,{;
+		PADR(oDet[nX]:_Prod:_cProd:TEXT,TAMSX3('D2_COD')[1]) + SD2->D2_LOTECTL ,;
+		SubStr(NoChar(oDet[nX]:_Prod:_xProd:TEXT,lConverte),1,nMaxDes),;
+		IIF(ValAtrib("oDet[nPrivate]:_Prod:_NCM")=="U","",oDet[nX]:_Prod:_NCM:TEXT),;
+		cSitTrib,;
+		oDet[nX]:_Prod:_CFOP:TEXT,;
+		oDet[nX]:_Prod:_uCom:TEXT,;
+		SubStr(aAux[1], 1, PosQuebrVal(aAux[1])),;
+		SubStr(aAux[2], 1, PosQuebrVal(aAux[2])),;
+		SubStr(aAux[3], 1, PosQuebrVal(aAux[3])),;
+		SubStr(aAux[4], 1, PosQuebrVal(aAux[4])),;
+		SubStr(aAux[5], 1, PosQuebrVal(aAux[5])),;
+		SubStr(aAux[6], 1, PosQuebrVal(aAux[6])),;
+		SubStr(aAux[7], 1, PosQuebrVal(aAux[7])),;
+		SubStr(aAux[8], 1, PosQuebrVal(aAux[8])),;
+		SubStr(aAux[9], 1, PosQuebrVal(aAux[9])),;
+		SubStr(aAux[10], 1, PosQuebrVal(aAux[10])),;
+		SubStr(aAux[11], 1, PosQuebrVal(aAux[11])),;
+		AllTrim(TransForm(nPICM,"@r 99.99%")),;
+		AllTrim(TransForm(nPIPI,"@r 99.99%"));
+	})
+	//
 	If lUf_MG
 		aadd(aItensAux,{;
 			SubStr(oDet[nX]:_Prod:_cProd:TEXT,1,nMaxCod),;
@@ -1806,6 +1823,28 @@ For nZ := 1 To nLenDet
 			"";
 		})
 
+		aadd(aItensAux2,{;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;
+			cUnTrib,;
+			SubStr(aAuxCom[1], 1, PosQuebrVal(aAuxCom[1])),;
+			SubStr(aAuxCom[2], 1, PosQuebrVal(aAuxCom[2])),;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;
+			"",;									
+			"",;
+			"";
+		})		
+
 	Endif
 	
 	cAuxItem := AllTrim(SubStr(oDet[nX]:_Prod:_cProd:TEXT,nMaxCod+1))
@@ -1828,6 +1867,29 @@ For nZ := 1 To nLenDet
 		nMaxCod := MaxCod(cAuxItem, MAXCODPRD)
 		
 		aadd(aItens,{;
+			SubStr(cAuxItem,1,nMaxCod),;
+			SubStr(cAux,1,nMaxDes),;
+			"",;
+			"",;
+			"",;
+			"",;
+			SubStr(aAux[1], 1, PosQuebrVal(aAux[1])),;
+			SubStr(aAux[2], 1, PosQuebrVal(aAux[2])),;
+			SubStr(aAux[3], 1, PosQuebrVal(aAux[3])),;
+			SubStr(aAux[4], 1, PosQuebrVal(aAux[4])),;
+			SubStr(aAux[5], 1, PosQuebrVal(aAux[5])),;
+			SubStr(aAux[6], 1, PosQuebrVal(aAux[6])),;
+			SubStr(aAux[7], 1, PosQuebrVal(aAux[7])),;
+			SubStr(aAux[8], 1, PosQuebrVal(aAux[8])),;
+			SubStr(aAux[9], 1, PosQuebrVal(aAux[9])),;
+			SubStr(aAux[10], 1, PosQuebrVal(aAux[10])),;
+			SubStr(aAux[11], 1, PosQuebrVal(aAux[11])),;		
+			"",;
+			"";
+		})
+
+
+		aadd(aItensAux2,{;
 			SubStr(cAuxItem,1,nMaxCod),;
 			SubStr(cAux,1,nMaxDes),;
 			"",;
@@ -1924,6 +1986,27 @@ For nZ := 1 To nLenDet
 				"";
 			})
 
+			aadd(aItensAux2,{;
+				"",;
+				SubStr(cAux, 1, nMaxDes),;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"";
+			})
 			If lUf_MG
 				aadd(aItensAux,{;
 					"",;
@@ -1976,6 +2059,28 @@ For nZ := 1 To nLenDet
 			"-",;
 			"-"; 
 		})
+
+		aadd(aItensAux2,{;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-",;
+			"-"; 
+		})		
 		If lUf_MG
 			aadd(aItensAux,{;
 				"-",;
@@ -2075,11 +2180,55 @@ If lUf_MG
 					aArray[19];
 				} )
 
+				aadd( aItensAux2, {; 
+					aArray[01],;
+					aArray[02],;
+					aArray[03],;
+					aArray[04],;
+					aArray[05],;
+					aArray[06],;
+					aArray[07],;
+					aArray[08],;
+					aArray[09],;
+					aArray[10],;
+					aArray[11],;
+					aArray[12],;
+					aArray[13],;
+					aArray[14],;
+					aArray[15],;
+					aArray[16],;
+					aArray[17],;
+					aArray[18],;
+					aArray[19];
+				} )
+
 				nSubTotal += aItensAux[nX,21]
 
 			Else
 				
 				aadd(aItens,{;
+					"",;
+					"SUB-TOTAL",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					AllTrim(TransForm(nSubTotal,TM(nSubTotal,TamSX3("D2_TOTAL")[1],TamSX3("D2_TOTAL")[2]))),;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"";
+				})
+
+				aadd(aItensAux2,{;
 					"",;
 					"SUB-TOTAL",;
 					"",;
@@ -2122,6 +2271,28 @@ If lUf_MG
 					"",;
 					"";
 				})
+
+				aadd(aItensAux2,{;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"",;
+					"";
+				})				
 				
 				cCfop 		:= aItensAux[nX,05]
 				nSubTotal 	:= aItensAux[nX,21]
@@ -2147,6 +2318,28 @@ If lUf_MG
 					aArray[18],;
 					aArray[19];
 				} )
+
+				aadd( aItensAux2, {; 
+					aArray[01],;
+					aArray[02],;
+					aArray[03],;
+					aArray[04],;
+					aArray[05],;
+					aArray[06],;
+					aArray[07],;
+					aArray[08],;
+					aArray[09],;
+					aArray[10],;
+					aArray[11],;
+					aArray[12],;
+					aArray[13],;
+					aArray[14],;
+					aArray[15],;
+					aArray[16],;
+					aArray[17],;
+					aArray[18],;
+					aArray[19];
+				} )				
 
 			Endif
 			
@@ -2174,7 +2367,29 @@ If lUf_MG
 				"",;
 				"",;
 				"";
-			})		
+			})	
+
+			aadd(aItensAux2,{;
+				"",;
+				"SUB-TOTAL",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				AllTrim(TransForm(nSubTotal,TM(nSubTotal,TamSX3("D2_TOTAL")[1],TamSX3("D2_TOTAL")[2]))),;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"",;
+				"";
+			})					
 		
 		Endif
 		
@@ -3070,51 +3285,74 @@ aTamCol := RetTamCol(aAuxCabec, aAux, oDanfe, oFont08N:oFont, oFont07:oFont)
 aColProd := {}
 DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)
 
-nFolha++
-nLinha    := nLine+478
-nL:=0  
+lPag1 := .T.
+lPag2 := .F.
+lPagX := .F.
+lInfoAd:= .F.
 
-lVerso := MV_PAR05 == 1
+nFolha++
+nLinha := nLine+478
+nL:=0  
 
 For nY := 1 To nLenItens
 	nL++
-	
-	If nY > nMaxItem
-		nAjustaPro := 0
-	endif 
-
-	if nL > nMaxItem
-		if nPosMsg > 0 .and. nPosMsg <= Len(aMensagem) 
-			nMaxItem := MAXITEMP2 // 22 itens
-		else 
-			nMaxItem := MAXITEMP2F // 44 itens
-		endif
-		if lVerso // Imprime no verso?
-			if (nFolha % 2==0) // Somente folha par
-				nMaxItem := MAXITEMP3 // 22 itens
-			endif
-		endif
-
+	If lPag1
+		If nL > MAXITEM .And. nFolha == 2
 			oDanfe:EndPage()
 			oDanfe:StartPage()
 			nLinha    	:=	181
 
 			DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)			
 			DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)
-			
-			if nPosMsg > 0 .and. (!lVerso .or. (nFolha % 2 !=0) ) // Impressão no verso somente em folha par e sem mensagem complementar.
+			If nPosMsg > 0
 				DanfeInfC(oDanfe,aMensagem,@nBaseTxt,@nBaseCol,@nLine,@nPosMsg,nFolha)
-			EndIf
-
-			nL := 0
+				lInfoAd := .T.
+			EndIf	
+			nL :=0
+			lPag1 := .F.
+			lPag2 := .T.
 			nLinha := 169
-			nFolha++   
+		Endif           
 	Endif
 
-	If aAux[1][1][nY] == "-"
-		oDanfe:Say(nLinha+nAjustaPro, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+	If lPag2  .And. lInfoAd
+		If	nL > MAXITEMP4
+			nFolha++
+			oDanfe:EndPage()
+			oDanfe:StartPage()
+			nColLim		:=	Iif(!(nfolha-1)%2==0 .And. MV_PAR05==1,435,865)
+			nLinha    	:=	181
+			
+			DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)			
+			DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)  
+			nLinha := 169
+	
+			nL:=0
+			lPag2 := .F.
+			lPagX := .T.      
+			lInfoAd:= .F.
+		EndIf
 	Else
-		
+		If	nL >= MAXITEMP2
+			nFolha++
+			oDanfe:EndPage()
+			oDanfe:StartPage()
+			nColLim		:=	Iif(!(nfolha-1)%2==0 .And. MV_PAR05==1,435,865)
+			nLinha    	:=	181
+			
+			DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)			
+			DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)
+			nLinha := 169
+	
+			nL:=0		
+		EndIf
+	EndIf
+	
+	If aAux[1][1][nY] == "-"
+		oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		lLenOdet := .T.
+	Else
+
 		 If lLenOdet .Or. nP == 0 .Or. nXFolha < nFolhas
 		 	nLenOdet++
 		  	nxlin:=0
@@ -3175,18 +3413,29 @@ For nY := 1 To nLenItens
 		
 		nAuxH2 := len(aAux[1][14][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][14][nY], oFont07:oFont, oDanfe)))
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][14][nY], oFont07:oFont)
-	Endif
-		if nxlin == 0
+	EndIf	
+	if nxlin == 0
 		nLinha := nLinha + 12
 	else 
 		nLinha := nLinha + 12
 	endif		
 Next nY 
-If nPosMsg > 0 
+
+If nL <= MAXITEM .And. Len(aMensagem) > MAXMSG .And. nFolha == 2 .And. nLenItens <= MAXMSG
 	oDanfe:EndPage()
 	oDanfe:StartPage()
-	nLinha    	:=	181 - 20                
+	nLinha    	:=	181 -20               
 	DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)
+	DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)
+	If nPosMsg > 0
+		DanfeInfC(oDanfe,aMensagem,@nBaseTxt,@nBaseCol,@nLine,@nPosMsg,nFolha)
+	EndIf
+elseif nPosMsg > 0 
+	oDanfe:EndPage()
+	oDanfe:StartPage()
+	nLinha    	:=	181-20                
+	DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)
+	
 	DanfeInfC(oDanfe,aMensagem,@nBaseTxt,@nBaseCol,@nLine,@nPosMsg,nFolha,.T.)
 Endif
 
@@ -4843,8 +5092,44 @@ cProd := aProd[nLenOdet][1]
 
 Return
 
-//Função feita pra ser chamada no DANFEII
-User Function DxImpDet(oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
-nMaxItem :=  MAXITEM
-ImpDet(@oDanfe,oNFe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
-Return
+//Aglutina os itens que foram quebrados no WMS
+Static Function AglutItens(aItens)
+Local aRetorno  := {}
+Local aItensAux  := {}
+Local nPos		:= 0
+Local nPosAitens:= 0
+Local n			:= 0
+Local nItem		:= 0
+
+For n := 1 to Len(aItens)
+	if Len(Alltrim(aItens[n][1])) > 2
+		nItem ++
+	EndIf
+
+	DbSelectArea("SD2")
+	dbSetOrder(3)//SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_COD+SD2->D2_ITEM)
+	If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(aItensAux2[n][1],TamSX3('D2_COD')[1])+STRZERO(nItem,TAMSX3("D2_ITEM")[1]))
+		nPos := aScan(aItensAux,{|x| AllTrim(x[1])==Alltrim(SD2->D2_COD + SD2->D2_LOTECTL)})
+		If nPos > 0
+			nPosAitens := aItensAux[nPos][2]
+		Else
+			Aadd(aItensAux,{Alltrim(SD2->D2_COD + SD2->D2_LOTECTL),Len(aItensAux) + 1})
+			nPosAitens := 0
+		EndIf
+	Else
+		nPosAitens := 0
+	EndIf
+	
+	If nPosAitens > 0 .And. Len(Alltrim(aItens[n][1])) > 2
+		aRetorno[nPosAitens][4] 	:=   AllTrim((Val(aRetorno[nPosAitens][4]) 	+ Val(aItens[n][4])))
+		aRetorno[nPosAitens][9] 	:=   AllTrim((Val(aRetorno[nPosAitens][9]) 	+ Val(aItens[n][9])))
+		aRetorno[nPosAitens][11] 	:=   AllTrim((Val(aRetorno[nPosAitens][11]) 	+ Val(aItens[n][11]))) //VLR ICMS
+		aRetorno[nPosAitens][12] 	:=   AllTrim((Val(aRetorno[nPosAitens][12]) 	+ Val(aItens[n][12]))) //Vlr IPI
+		aRetorno[nPosAitens][13] 	:=   AllTrim((Val(aRetorno[nPosAitens][13]) 	+ Val(aItens[n][13]))) //Aliq ICMS
+	Else
+		Aadd(aRetorno,aItens[n])
+	EndIf		
+Next
+Return aRetorno
+
+
