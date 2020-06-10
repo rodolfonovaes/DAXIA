@@ -424,6 +424,15 @@ local lCodLan	:= .F.
 LOCAL lC5Msg 	:= .F.
 // CICERO CRUZ - FIM    - TRATAMENTO DA  REPETIÇÃO DA MENSAGEM
 
+
+//Rodolfo - Aglutinação dos itens
+Local aProdAgrup	:= {}
+Local aICMSAgrup	:= {}
+Local aIPIAgrup		:= {}
+Local aPISAgrup		:= {}
+Local aCOFINSAgr	:= {}
+//-Fim
+
 //Declaração de Arrays
 Private aUF     	:= {}
 Private aCSTIPI 	:= {}
@@ -1676,15 +1685,15 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 								SD2.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
 								SD2.%NotDel%
 								GROUP BY D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_CF,
-								,D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
+								D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
 								D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_ICMSRET,D2_VALPS3,
-								D2_ORIGLAN,D2_VALCF3,D2_VALIPI,D2_VALACRS,D2_PICM,D2_PDV									
+								D2_ORIGLAN,D2_VALCF3,D2_VALIPI,D2_VALACRS,D2_PICM,D2_PDV	%Exp:cField% 									
 								ORDER BY D2_FILIAL,D2_DOC,D2_SERIE,D2_CLIENTE,D2_LOJA,D2_ITEM,D2_COD
 						EndSql
 					Else
 						BeginSql Alias cAliasSD2
 							SELECT D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_CF,
-							,D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
+							D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
 							D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_ICMSRET,D2_VALPS3,
 							D2_ORIGLAN,D2_VALCF3,D2_VALIPI,D2_VALACRS,D2_PICM,D2_PDV ,
 								(SELECT SUM(SD2A.D2_QUANT) FROM SD2010 SD2A 
@@ -1797,9 +1806,9 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 							SD2.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
 							SD2.%NotDel%
 							GROUP BY D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_CF,
-							,D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
+							D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
 							D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_ICMSRET,D2_VALPS3,
-							D2_ORIGLAN,D2_VALCF3,D2_VALIPI,D2_VALACRS,D2_PICM,D2_PDV							
+							D2_ORIGLAN,D2_VALCF3,D2_VALIPI,D2_VALACRS,D2_PICM,D2_PDV %Exp:cField% 							
 							ORDER BY D2_FILIAL,D2_DOC,D2_SERIE,D2_CLIENTE,D2_LOJA,D2_ITEM,D2_COD
 						EndSql
 
@@ -6133,6 +6142,17 @@ If !Empty(aNota)
 	cString += NfeLocalRetirada(aRetirada)
 	cString += NfeLocalEntrega(aEntrega)
 	cMensBKP := cMensFis
+
+	//Rodolfo - Aglutinação de itens com o mesmo codigo de produto e lote
+	/*u_fAgrupaItens(aProd,@aProdAgrup,aICMS,@aICMSAgrup,aIPI,@aIPIAgrup,aPIS,@aPISAgrup,aCOFINS,@aCOFINSAgrup,cTipo)
+
+	aProd := aProdAgrup
+	aICMS := aICMSAgrup
+	aIPI  := aIPIAgrup
+	aPis  := aPISAgrup
+	aCOFINS := aCOFINSAgrup*/
+
+	//
 	For nX := 1 To Len(aProd)
 		If nLenaIpi > 0
 			If  nCstIpi <= nLenaIpi
@@ -11175,3 +11195,123 @@ if !empty(cUF) .and. !empty(cCST)
 endif
 
 return cCodlan
+
+
+
+//*************************
+User Function fAgrupaItens(aProd,aProdAgrup,aICMS,aICMSAgrup,aIPI,aIPIAgrup,aPIS,aPISAgrup,aCOFINS,aCOFINSAgrup,cTipo)
+//*************************
+Local nQuant:=nTotal:=nQuant:=nValFre:=nSeguro:=nDesconto:=nBCICMS:=0
+
+Local nVTICMS:=nQTICMS:=nBCIPI:=0     // Base Calculo IPI [6]
+Local nVTIPI,nQTIPI:=0     // QTrib IPI        [7]
+
+Local nBCPIS:=0     // Base Calculo PIS [2]
+Local nVTPIS:=0     // Vl Trib PIS       [4]
+Local nQTPIS:=0     // QTrib PIS        [5]
+
+Local nBCCOFINS:=0 // Base Calculo COFINS [2]
+Local nVTCOFINS:=0 // Vl Trib COFINS       [4]
+Local nQTCOFINS:=0 // QTrib COFINS        [5]
+
+Local wX:=1
+
+// ordem produto+Unid Med + Preco + CFOP
+
+if cTipo="1" // nf saida
+	aProd := aSort(aProd,,,{|x,y| x[2] + x[20] < y[2] + y[20]})
+endif   
+
+do while wX <= Len(aProd)
+    nQuant+=aProd[wX][9]
+    nTotal+=aProd[wX][10]
+    nQuant2+=aProd[wX][11]
+    nValFre+=aProd[wX][13]
+    nSeguro+=aProd[wX][14]
+    nDesconto+=aProd[wX][15]
+
+    if len(aICMS[1]) > 0
+       nBCICMS+=aICMS[aProd[wX][1]][5] // aProd[wX][1] = Item correspondente no aProd
+       nVTICMS+=aICMS[aProd[wX][1]][7]
+       nQTICMS+=aICMS[aProd[wX][1]][9]
+    endif
+    //                 1 2 3 4            5            6             7             8             9               10
+    // ATail(aIPI) := {"","",0,"999",CD2->CD2_CST,CD2->CD2_BC,CD2->CD2_QTRIB,CD2->CD2_PAUTA,CD2->CD2_ALIQ,CD2->CD2_VLTRIB,CD2->CD2_MODBC,CD2->CD2_PREDBC}
+
+//     cString += '<vBC>' +ConvType(aIPIAgrup[06],15,2)+'</vBC>'        // CD2->CD2_BC,
+//     cString += '<aliquota>'+ConvType(aIPIAgrup[09],5,2)+'</aliquota>' // CD2->CD2_ALIQ,
+//     cString += '<vlTrib>'+ConvType(aIPIAgrup[08],15,4)+'</vlTrib>'    // CD2->CD2_PAUTA,
+//     cString += '<qTrib>'+ConvType(aIPIAgrup[07],16,4)+'</qTrib>'      // CD2->CD2_QTRIB,
+//     cString += '<valor>'+ConvType(aIPIAgrup[10],15,2)+'</valor>'      // CD2->CD2_VLTRIB,
+                                      
+
+    if len(aIPI[1]) > 0
+       nBCIPI +=aIPI[aProd[wX][1]][6]
+       nVTIPI +=aIPI[aProd[wX][1]][10]
+       nQTIPI +=aIPI[aProd[wX][1]][7]
+    endif
+    if len(aPIS[1]) > 0
+       nBCPIS +=aPIS[aProd[wX][1]][2]
+       nVTPIS +=aPIS[aProd[wX][1]][4]
+       nQTPIS +=aPIS[aProd[wX][1]][5]
+    endif   
+    if len(aCOFINS[1]) > 0
+       nBCCOFINS +=aCOFINS[aProd[wX][1]][2]
+       nVTCOFINS +=aCOFINS[aProd[wX][1]][4]
+       nQTCOFINS +=aCOFINS[aProd[wX][1]][5]
+    endif   
+    
+// aProd[wX][19] == aProd[wX+1][19] .and.;   B1_GRUPO,,alguns produtos estão em branco no arquivo,,então não pode participar
+
+
+    if (cTipo="1".and.aProd[wX][23]="PA" .and.wX < Len(aProd).and.;
+          subs(aProd[wX][2],1,4) == subs(aProd[wX+1][2],1,4).and.;
+          aProd[wX][19] == aProd[wX+1][19] ) //Lote
+       wX++
+       loop
+    endif    
+
+	aadd(aProdAgrup,aProd[wX])                   
+
+    aProdAgrup[Len(aProdAgrup)][9] := nQuant
+    aProdAgrup[Len(aProdAgrup)][10] := nTotal
+    aProdAgrup[Len(aProdAgrup)][11] := nQuant2
+    aProdAgrup[Len(aProdAgrup)][13] := nValFre
+    aProdAgrup[Len(aProdAgrup)][14] := nSeguro
+    aProdAgrup[Len(aProdAgrup)][15] := nDesconto
+
+    if len(aICMS[1]) > 0
+       aadd(aICMSAgrup,{aICMS[wX][1],aICMS[wX][2],aICMS[wX][3],aICMS[wX][4],nBCICMS,aICMS[wX][6],nVTICMS,;
+                        aICMS[wX][8],nQTICMS,aICMS[wX][10]})
+    else
+       aadd(aICMSAgrup,{})
+    endif              
+
+    if len(aIPI[1]) > 0
+       aadd(aIPIAgrup,{aIPI[wX][1],aIPI[wX][2],aIPI[wX][3],aIPI[wX][4],aIPI[wX][5],nBCIPI,nQTIPI,;
+                      aIPI[wX][8],aIPI[wX][9],nVTIPI,aIPI[wX][11],aIPI[wX][12]})
+    else
+       aadd(aIPIAgrup,{})    
+    endif
+
+    if len(aPIS[1]) > 0
+       aadd(aPISAgrup,{aPIS[wX][1],nBCPIS,aPIS[wX][3],nVTPIS,nQTPIS,aPIS[wX][6]})
+    else
+       aadd(aPISAgrup,{})    
+    endif
+
+    if len(aCOFINS[1]) > 0
+       aadd(aCOFINSAgrup,{aCOFINS[wX][1],nBCCOFINS,aCOFINS[wX][3],nVTCOFINS,nQTCOFINS,aCOFINS[wX][6]})
+    else
+       aadd(aCOFINSAgrup,{})    
+    endif
+
+    nQuant:=0 ; nTotal:=0 ; nQuant2:=0 ; nValFre:=0 ; nSeguro:=0 ; nDesconto:=0
+    nBCICMS:=0 ; nVTICMS:=0 ; nQTICMS:=0
+    nBCIPI:=0 ; nVTIPI:=0 ; nQTIPI:=0
+    nBCPIS:=0 ; nVTPIS:=0 ; nQTPIS:=0     
+    nBCCOFINS:=0 ; nVTCOFINS:=0 ; nQTCOFINS:=0
+
+    wX++
+enddo
+Return

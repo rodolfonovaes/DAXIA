@@ -32,6 +32,8 @@ Private aSituacao  := ChkBoxSit( "A1_XSITUA " )
 Private aMotivos   := {}
 Private cA1_XSIT   := ""
 Private cMotivos   := ""
+Private aColunas   := {11,14,18,4,7,8,9,10,2,19,13,17,15,16,3,5}      
+Private aOrders    := {.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.,.F.}
 
 If _PrmBox() 
 
@@ -64,7 +66,8 @@ If _PrmBox()
       | @ 020, 010 Say OEMToANSI( "Qtde. Itens por Pï¿½gina: " ) + cCfgPag Pixel FONT oFonte | (reservado para mensagens)
       +-----------------------------------------------------------------------------------*/
       oBrwGA := TCBrowse():New( 010, 005, 590, 190,,,, oDlgCons,,,,,,,,,,,,.F.,,.T.,,.F.,,,)
-      oBrwGA:bLDblClick := { || iIf( oBrwGA:ColPos==15, MarcaSN(), .F. ) }
+      oBrwGA:bLDblClick := { || iIf( oBrwGA:ColPos==1, MarcaSN(), .F. ) }
+      /*
       oBrwGA:AddColumn( TCColumn():New( "Orcamento"      , { || aGrAtv[oBrwGA:nAt,14] },,,,, 25, .F., .F.,,,, .F., ) )
       oBrwGA:AddColumn( TCColumn():New( "Emissao"        , { || aGrAtv[oBrwGA:nAt,18] },,,,, 25, .F., .F.,,,, .F., ) )
       oBrwGA:AddColumn( TCColumn():New( "Motivo"         , { || aGrAtv[oBrwGA:nAt,02] },,,,, 25, .F., .F.,,,, .F., ) )
@@ -80,11 +83,32 @@ If _PrmBox()
       oBrwGA:AddColumn( TCColumn():New( "Qtde.Produto"   , { || aGrAtv[oBrwGA:nAt,09] }, "@E 99,999,999.99",,,, 45, .F., .F.,,,, .F., ) )
       oBrwGA:AddColumn( TCColumn():New( "Valor Total"    , { || aGrAtv[oBrwGA:nAt,10] }, "@E 999,999,999.99",,,, 45, .F., .F.,,,, .F., ) )
       oBrwGA:AddColumn( TCColumn():New( "Gera Atividade?", { || iIf( aGrAtv[oBrwGA:nAt,11], oOk, oNo ) },,,,,20, .T., .F.,,,, .F., ) )
+      */                                                                                                                              
+      oBrwGA:AddColumn( TCColumn():New( "Gera Atividade?", { || iIf( aGrAtv[oBrwGA:nAt,11], oOk, oNo ) },,,,,20, .T., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Orcamento"      , { || aGrAtv[oBrwGA:nAt,14] },,,,, 25, .F., .F.,,,, .F., ) )      
+      oBrwGA:AddColumn( TCColumn():New( "Emissao"        , { || aGrAtv[oBrwGA:nAt,18] },,,,, 25, .F., .F.,,,, .F., ) )      
+      oBrwGA:AddColumn( TCColumn():New( "Cliente"        , { || aGrAtv[oBrwGA:nAt,04] },,,,, 50, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Cod.Produto"    , { || aGrAtv[oBrwGA:nAt,07] },,,,, 45, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Produto"        , { || aGrAtv[oBrwGA:nAt,08] },,,,, 45, .F., .F.,,,, .F., ) )                   
+      oBrwGA:AddColumn( TCColumn():New( "Qtde.Produto"   , { || aGrAtv[oBrwGA:nAt,09] }, "@E 99,999,999.99",,,, 45, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Valor Total"    , { || aGrAtv[oBrwGA:nAt,10] }, "@E 999,999,999.99",,,, 45, .F., .F.,,,, .F., ) )                  
+      oBrwGA:AddColumn( TCColumn():New( "Motivo"         , { || aGrAtv[oBrwGA:nAt,02] },,,,, 25, .F., .F.,,,, .F., ) )
+ 	  oBrwGA:AddColumn( TCColumn():New( "Justificativa"  , { || aGrAtv[oBrwGA:nAt,19] },,,,, 80, .F., .F.,,,, .F., ) )   
+      oBrwGA:AddColumn( TCColumn():New( "Vendedor"       , { || aGrAtv[oBrwGA:nAt,13] },,,,, 40, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Regiao"         , { || aGrAtv[oBrwGA:nAt,17] },,,,, 50, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Estado"         , { || aGrAtv[oBrwGA:nAt,15] },,,,, 50, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Municipio"      , { || aGrAtv[oBrwGA:nAt,16] },,,,, 50, .F., .F.,,,, .F., ) )                              
+      oBrwGA:AddColumn( TCColumn():New( "Cod. Cliente"   , { || SUBSTR(aGrAtv[oBrwGA:nAt,03],1,TamSX3('A1_COD')[1]) },,,,, 50, .F., .F.,,,, .F., ) )
+      oBrwGA:AddColumn( TCColumn():New( "Situacao"       , { || aGrAtv[oBrwGA:nAt,05] },,,,, 40, .F., .F.,,,, .F., ) )      
+   
+            
       oBrwGA:SetArray( aGrAtv )
-      oBrwGA:bWhen := { || Len( aGrAtv ) > 0 }
+      oBrwGA:bWhen := { || Len( aGrAtv ) > 0 }    
+      
+      oBrwGA:bHeaderClick := {|o, nCol| Ordena(nCol)}
 
       oBtnTds    := tButton():New( 210, 310, "Marca Todos"  , oDlgCons, { || MrkTodos()    }, 40, 12,,,, .T.,,,, { || },, )
-      oBtnInv    := tButton():New( 210, 370, "Inverte"     , oDlgCons, { || InvMrk()    }, 40, 12,,,, .T.,,,, { || },, )
+      oBtnInv    := tButton():New( 210, 370, "Desmarcar"    , oDlgCons, { || InvMrk()    }, 40, 12,,,, .T.,,,, { || },, )
       oBtnLote   := tButton():New( 210, 430, "Automatico"  , oDlgCons, { || GerAut()    }, 40, 12,,,, .T.,,,, { || },, )
       oBtnOk     := tButton():New( 210, 490, "Editar",       oDlgCons, { || GravarGA() }, 40, 12,,,, .T.,,,, { || },, )
       oBtnCancel := tButton():New( 210, 550, "Cancelar", oDlgCons, { || ::End()    }, 40, 12,,,, .T.,,,, { || },, )
@@ -121,85 +145,85 @@ nQtSit_ := Len( aSituacao ) // Variavel private de quantidade de situacoes do cl
 | Parametro "Data de? / Data ate?"                     |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Data de",  CtoD( Space( 8 ) ), "", "", "", "", 50, .F. } ) // Data de? MV_PAR01
-aAdd( aParamBox, { 1, "Data atÃ©", CtoD( Space( 8 ) ), "", "", "", "", 50, .F. } ) // Data ate? MV_PAR02
+aAdd( aParamBox, { 1, "Data até", CtoD( Space( 8 ) ), "", "", "", "", 50, .F. } ) // Data ate? MV_PAR02
 
 /*-----------------------------------------------------+
 | Parametro "Vendedor de? / Vendedor ate?"             |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Vendedor de",  Space( TamSX3("A3_COD")[1] ),          "", "", "SA3", "", TamSX3("A3_COD")[1], .F. } ) // Vendedor de? MV_PAR03
-aAdd( aParamBox, { 1, "Vendedor ate", Replicate( "Z", TamSX3("A3_COD")[1] ), "", "", "SA3", "", TamSX3("A3_COD")[1], .F. } ) // Vendedor ate? MV_PAR04
+aAdd( aParamBox, { 1, "Vendedor até", Replicate( "Z", TamSX3("A3_COD")[1] ), "", "", "SA3", "", TamSX3("A3_COD")[1], .F. } ) // Vendedor ate? MV_PAR04
 
 /*-----------------------------------------------------+
 | Parametro "Equipe de? / Equipe ate?"                 |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Equipe de",  Space( TamSX3("ACA_GRPREP")[1] ),          "", "", "ACA", "", TamSX3("ACA_GRPREP")[1], .F. } ) // Equipe de? MV_PAR05
-aAdd( aParamBox, { 1, "Equipe atÃ©", Replicate( "Z", TamSX3("ACA_GRPREP")[1] ), "", "", "ACA", "", TamSX3("ACA_GRPREP")[1], .F. } ) // Equipe ate? MV_PAR06
+aAdd( aParamBox, { 1, "Equipe até", Replicate( "Z", TamSX3("ACA_GRPREP")[1] ), "", "", "ACA", "", TamSX3("ACA_GRPREP")[1], .F. } ) // Equipe ate? MV_PAR06
 
 /*-----------------------------------------------------+
 | Parametro "Un.Neg de? / Un.Neg ate?"                 |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Un.Neg de",  Space( TamSX3("ADK_COD")[1] ),          "", "", "ADK", "", TamSX3("ADK_COD")[1], .F. } ) // Unidade de Negocio de? MV_PAR07
-aAdd( aParamBox, { 1, "Un.Neg atÃ©", Replicate( "Z", TamSX3("ADK_COD")[1] ), "", "", "ADK", "", TamSX3("ADK_COD")[1], .F. } ) // Unidade de Negocio ate? MV_PAR08
+aAdd( aParamBox, { 1, "Un.Neg até", Replicate( "Z", TamSX3("ADK_COD")[1] ), "", "", "ADK", "", TamSX3("ADK_COD")[1], .F. } ) // Unidade de Negocio ate? MV_PAR08
 
 /*-----------------------------------------------------+
 | Parametro "Fam.Prod. de? / Fam.Prod. ate?"           |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Fam.Prod. de",  Space( TamSX3("Z1_COD")[1] ),          "", "", "SZ1", "", TamSX3("Z1_COD")[1], .F. } ) // Familia Produto de? MV_PAR09
-aAdd( aParamBox, { 1, "Fam.Prod. atÃ©", Replicate( "Z", TamSX3("Z1_COD")[1] ), "", "", "SZ1", "", TamSX3("Z1_COD")[1], .F. } ) // Familia Produto ate? MV_PAR10
+aAdd( aParamBox, { 1, "Fam.Prod. até", Replicate( "Z", TamSX3("Z1_COD")[1] ), "", "", "SZ1", "", TamSX3("Z1_COD")[1], .F. } ) // Familia Produto ate? MV_PAR10
 
 /*-----------------------------------------------------+
 | Parametro "Lin.Prod. de? / Lin.Prod. ate?"           |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Linha Prod. de",  Space( TamSX3("Z2_COD")[1] ),          "", "", "SZ2", "", TamSX3("Z2_COD")[1], .F. } ) // Linha Produto de? 11
-aAdd( aParamBox, { 1, "Linha Prod. atÃ©", Replicate( "Z", TamSX3("Z2_COD")[1] ), "", "", "SZ2", "", TamSX3("Z2_COD")[1], .F. } ) // Linha Produto ate? 12
+aAdd( aParamBox, { 1, "Linha Prod. até", Replicate( "Z", TamSX3("Z2_COD")[1] ), "", "", "SZ2", "", TamSX3("Z2_COD")[1], .F. } ) // Linha Produto ate? 12
 
 /*-----------------------------------------------------+
 | Parametro "Grupo Prod. de? / Grupo Prod. ate?"       |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Grupo Prod. de",  Space( TamSX3("Z3_COD")[1] ),          "", "", "SZ3", "", TamSX3("Z3_COD")[1], .F. } ) // Grupo Produto de? 13
-aAdd( aParamBox, { 1, "Grupo Prod. atÃ©", Replicate( "Z", TamSX3("Z3_COD")[1] ), "", "", "SZ3", "", TamSX3("Z3_COD")[1], .F. } ) // Grupo Produto ate? 14
+aAdd( aParamBox, { 1, "Grupo Prod. até", Replicate( "Z", TamSX3("Z3_COD")[1] ), "", "", "SZ3", "", TamSX3("Z3_COD")[1], .F. } ) // Grupo Produto ate? 14
 
 /*-----------------------------------------------------+
 | Parametro "Produto de? / Produto ate?"       MV_PAR08        |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Produto de",      Space( TamSX3("B1_COD")[1] ),          "", "", "SB1", "", /*TamSX3("B1_COD")[1]*/ 80, .F. } ) // Produto de? 15
-aAdd( aParamBox, { 1, "Produto atÃ©",     Replicate( "Z", TamSX3("B1_COD")[1] ), "", "", "SB1", "", /*TamSX3("B1_COD")[1]*/ 80, .F. } ) // Produto ate? 16
+aAdd( aParamBox, { 1, "Produto até",     Replicate( "Z", TamSX3("B1_COD")[1] ), "", "", "SB1", "", /*TamSX3("B1_COD")[1]*/ 80, .F. } ) // Produto ate? 16
 
 /*-----------------------------------------------------+
 | Parametro "Cliente de? / Cliente ate?"         MV_PAR09       |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Cliente de",      Space( TamSX3("A1_COD")[1] ),          "", "", "SA1", "", TamSX3("A1_COD")[1], .F. } ) // Cliente de? 17
-aAdd( aParamBox, { 1, "Cliente atÃ©",     Replicate( "Z", TamSX3("A1_COD")[1] ), "", "", "SA1", "", TamSX3("A1_COD")[1], .F. } ) // Cliente ate? 18
+aAdd( aParamBox, { 1, "Cliente até",     Replicate( "Z", TamSX3("A1_COD")[1] ), "", "", "SA1", "", TamSX3("A1_COD")[1], .F. } ) // Cliente ate? 18
 
 /*-----------------------------------------------------+
 | Parametro "Lj Cliente de? / Lj Cliente ate?"         |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Lj Cliente de",   Space( TamSX3("A1_LOJA")[1] ),          "", "", "SA1", "", TamSX3("A1_LOJA")[1], .F. } ) // Lj Cliente de? 19
-aAdd( aParamBox, { 1, "Lj Cliente atÃ©",  Replicate( "Z", TamSX3("A1_LOJA")[1] ), "", "", "SA1", "", TamSX3("A1_LOJA")[1], .F. } ) // Lj Cliente ate? 20
+aAdd( aParamBox, { 1, "Lj Cliente até",  Replicate( "Z", TamSX3("A1_LOJA")[1] ), "", "", "SA1", "", TamSX3("A1_LOJA")[1], .F. } ) // Lj Cliente ate? 20
 
 /*-----------------------------------------------------+
 | Parametro "Regiao de? / Regiao ate?"           MV_PAR11      |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Regiao de",       Space( 3 ),          "", "", "A2", "", 3, .F. } ) // Regiao de? 21 
-aAdd( aParamBox, { 1, "Regiao atÃ©",      Replicate( "Z", 3 ), "", "", "A2", "", 3, .F. } ) // Regiao ate? 22
+aAdd( aParamBox, { 1, "Regiao até",      Replicate( "Z", 3 ), "", "", "A2", "", 3, .F. } ) // Regiao ate? 22
 
 /*-----------------------------------------------------+
 | Parametro "Estado de? / Estado ate?"                 |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Estado de",       Space( 2 ),   "", "", "12", "", 5, .F. } ) // Estado de? 23
-aAdd( aParamBox, { 1, "Estado atÃ©",      "ZZ",         "", "", "12", "", 5, .F. } ) // Estado ate? 24
+aAdd( aParamBox, { 1, "Estado até",      "ZZ",         "", "", "12", "", 5, .F. } ) // Estado ate? 24
 
 /*-----------------------------------------------------+
 | Parametro "Cidade de? / Cidade ate?"                 |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Cidade de",       Space( TamSX3("A1_COD_MUN")[1] ),          "", "", "CC2SA1", "", TamSX3("A1_COD_MUN")[1], .F. } ) // Cidade de? 25
-aAdd( aParamBox, { 1, "Cidade atÃ©",      Replicate( "Z", TamSX3("A1_COD_MUN")[1] ), "", "", "CC2SA1", "", TamSX3("A1_COD_MUN")[1], .F. } ) // Cidade ate? 26
+aAdd( aParamBox, { 1, "Cidade até",      Replicate( "Z", TamSX3("A1_COD_MUN")[1] ), "", "", "CC2SA1", "", TamSX3("A1_COD_MUN")[1], .F. } ) // Cidade ate? 26
 
 /*-----------------------------------------------------+
 | Parametro "Grp.Venda de? / Grp.Venda ate?"           |
 +-----------------------------------------------------*/
 aAdd( aParamBox, { 1, "Grp.Venda de",    Space( TamSX3("A1_GRPVEN")[1] ),          "", "", "ACY", "", TamSX3("A1_GRPVEN")[1], .F. } ) // Grp.Venda de? 27
-aAdd( aParamBox, { 1, "Grp.Venda atÃ©",   Replicate( "Z", TamSX3("A1_GRPVEN")[1] ), "", "", "ACY", "", TamSX3("A1_GRPVEN")[1], .F. } ) // Grp.Venda ate? 28
+aAdd( aParamBox, { 1, "Grp.Venda até",   Replicate( "Z", TamSX3("A1_GRPVEN")[1] ), "", "", "ACY", "", TamSX3("A1_GRPVEN")[1], .F. } ) // Grp.Venda ate? 28
 
 /*-----------------------------------------------------+
 | Parametro Assunto                                    |
@@ -209,12 +233,12 @@ aAdd( aParamBox, { 2, "Assunto", 6, CntCBox( "AOF_ASSUNT" ), 100, "", .F. } ) //
 /*-----------------------------------------------------+
 | Parametro Data de Atividade                          |
 +-----------------------------------------------------*/
-aAdd( aParamBox, { 1, "Data Ativid.",  CtoD( Space( 8 ) ), "", "", "", "", 50, .F. } ) // Data de Atividade? 30
+aAdd( aParamBox, { 1, "Data Lembrete",  CtoD( Space( 8 ) ), "", "", "", "", 50, .F. } ) // Data de Atividade? 30
 
 /*-----------------------------------------------------+
 | Parametro Descricao                                  |
 +-----------------------------------------------------*/
-aAdd( aParamBox, { 1, "Descricao", Space( TamSX3("ZA_CODIGO")[1] ), "", "", "SZA", "", TamSX3("ZA_CODIGO")[1], .F. } ) // Descricao? 31
+aAdd( aParamBox, { 1, "Descrição", Space( TamSX3("ZA_CODIGO")[1] ), "", "", "SZA", "", TamSX3("ZA_CODIGO")[1], .F. } ) // Descricao? 31
 
 /*-----------------------------------------------------+
 | Parametro Situacao (via checkbox)                    |
@@ -223,7 +247,7 @@ lPrim := .T.
 If .not. Empty( aSituacao )
    For nX := 1 to Len( aSituacao )
        If lPrim
-          aAdd( aParamBox, { 4, "Situacao", .F., aSituacao[ nX ], 90, "", .F. } ) // Situacao 32
+          aAdd( aParamBox, { 4, "Situação", .F., aSituacao[ nX ], 90, "", .F. } ) // Situacao 32
           lPrim := .F.
        Else
           aAdd( aParamBox, { 4,         "", .F., aSituacao[ nX ], 90, "", .F. } ) // Situacao 32
@@ -253,7 +277,7 @@ EndDo
 /*-----------------------------------------------------+
 | Confirmacao da execucao do ParamBox()                |
 +-----------------------------------------------------*/
-If ParamBox( aParamBox, OEMToANSI( "ParÃ¢metros" ), @aRet )
+If ParamBox( aParamBox, OEMToANSI( "Parametros" ), @aRet )
    lRet := .T.
 Else
    lRet := .F.
@@ -336,7 +360,8 @@ cQuery += "         SCJ.CJ_NUM               AS  ORC, " + _ENTER
 cQuery += "         SA1.A1_EST               AS  EST, " + _ENTER
 cQuery += "         SA1.A1_MUN               AS  MUN, " + _ENTER
 cQuery += "         SX5.X5_DESCRI            AS  REGIAO, " + _ENTER
-cQuery += "         SCJ.CJ_EMISSAO            AS  EMISSAO " + _ENTER
+cQuery += "         SCK.CK_XJUSTIF           AS  JUSTIF, " + _ENTER
+cQuery += "         SCJ.CJ_EMISSAO           AS  EMISSAO " + _ENTER
 
 cQuery += "FROM SCJ010 SCJ, SCK010 SCK, SA1010 SA1 ,SA3010 SA3 , SX5010 SX5 " + _ENTER
 cQuery += "WHERE SCJ.CJ_EMISSAO  BETWEEN '" + DtoS( MV_PAR01 ) + "' AND '" + DtoS( MV_PAR02 ) + "' " + _ENTER
@@ -365,7 +390,7 @@ EndIf
 
 cQuery += "      AND SCJ.D_E_L_E_T_ = ' ' " + _ENTER
 cQuery += "      AND SCK.D_E_L_E_T_ = ' ' " + _ENTER
-cQuery += "GROUP BY SCK.CK_PRODUTO, SCJ.CJ_XVEND, SCK.CK_VALOR, SCK.CK_XMOTIVO, SCJ.CJ_CLIENTE, SCJ.CJ_LOJA, SCJ.CJ_XNOME  , SA3.A3_NOME , CJ_NUM ,A1_EST ,A1_MUN , X5_DESCRI,CJ_EMISSAO " + _ENTER
+cQuery += "GROUP BY SCK.CK_PRODUTO, SCJ.CJ_XVEND, SCK.CK_VALOR, SCK.CK_XMOTIVO, SCJ.CJ_CLIENTE, SCJ.CJ_LOJA, SCJ.CJ_XNOME  , SA3.A3_NOME , CJ_NUM ,A1_EST ,A1_MUN , X5_DESCRI,CK_XJUSTIF,CJ_EMISSAO " + _ENTER
 cQuery += "ORDER BY SCJ.CJ_EMISSAO DESC , SCJ.CJ_CLIENTE, SCJ.CJ_LOJA " + _ENTER
 
 cQuery := ChangeQuery( cQuery )
@@ -559,7 +584,8 @@ Do While .not. GAQRY->( EoF() )
                    /* 15-Estado.     */ GAQRY->EST, ;
                    /* 16-Municipio.  */ GAQRY->MUN, ;
                    /* 17-Regiao.     */ GAQRY->REGIAO  ,;       
-                   /* 18-Emissao.    */ DTOC(STOD(GAQRY->EMISSAO)) ;            
+                   /* 18-Emissao.    */ DTOC(STOD(GAQRY->EMISSAO)),;
+                   /* 19-Justificativ*/ GAQRY->JUSTIF ;            
                    } )
 
    GAQRY->( DbSkiP() )
@@ -654,7 +680,7 @@ For nX := 1 to Len( aGrAtv )
        /*-----------------------------------------------------------------+
        | Carrega os campos da tabela AOF com os conteudos da array aGrAtv |
        +-----------------------------------------------------------------*/
-       cDesc  := "*** Gerado Automaticamente." + _ENTER + cDscAss()
+       cDesc  := "*** Gerado Automaticamente." + _ENTER + cDscAss() + _ENTER + "Produto: " + AllTrim(aGrAtv[nX][08])
        cPropr := Propriet( aGrAtv[nX][3] )
        cContato := ""
        cTel    := ''
@@ -687,7 +713,7 @@ For nX := 1 to Len( aGrAtv )
        oModelCRM:LoadValue( "AOF_CODUSR", RetCodUsr() )
        oModelCRM:LoadValue( "AOF_OBS"   , POSICIONE('SA3',1,xFilial('SA3') +SA1->A1_VEND, 'A3_CODUSR' ) )
        oModelCRM:LoadValue( "AOF_XRESP"   , POSICIONE('SA3',1,xFilial('SA3') +SA1->A1_VEND, 'A3_NOME' ) )
-       oModelCRM:LoadValue( "AOF_DTLEMB"   , dDatabase )
+       oModelCRM:LoadValue( "AOF_DTLEMB"   , MV_PAR30 )
        oModelCRM:LoadValue( "AOF_XCONT"   , cContato )
        oModelCRM:LoadValue( "AOF_XNCONT"   , cNContato )
        oModelCRM:LoadValue( "AOF_XTEL"   , cTel )
@@ -885,6 +911,7 @@ Else
             Else
                cPriori := 3
             EndIf
+            cDesc  := "**** Gerado Automaticamente." + _ENTER + cDscAss() + _ENTER + "Produto: " + AllTrim(aGrAtv[nX][08])
             cPropr := Propriet( aGrAtv[nX][3] )
             cContato := ""
             SA1->(DbSetOrder(1))
@@ -915,7 +942,7 @@ Else
             oModelCRM:LoadValue( "AOF_CODUSR", RetCodUsr() )
             oModelCRM:LoadValue( "AOF_OBS"   , POSICIONE('SA3',1,xFilial('SA3') +SA1->A1_VEND, 'A3_CODUSR' ) )
             oModelCRM:LoadValue( "AOF_XRESP"   , POSICIONE('SA3',1,xFilial('SA3') +SA1->A1_VEND, 'A3_NOME' ) )
-            oModelCRM:LoadValue( "AOF_DTLEMB"   , dDatabase )
+            oModelCRM:LoadValue( "AOF_DTLEMB"   , MV_PAR30 )
             oModelCRM:LoadValue( "AOF_XCONT"   , cContato )
             oModelCRM:LoadValue( "AOF_XTEL"   , cTel )
             oModelCRM:LoadValue( "AOF_XDDD"   , cDDD )
@@ -933,22 +960,44 @@ Else
    EndIf
 EndIf
 RestArea( aArea )
-Return 
+Return      
 
+//**********
 
 Static Function InvMrk()
+
 local nXCnt  := 0
+
 For nXCnt := 1 to Len( aGrAtv )
-   aGrAtv[nXCnt][11] := !aGrAtv[nXCnt][11]// Inverte marcaÃ§Ã£o
+   aGrAtv[nXCnt][11] := .F. // Desmarca  (era !aGrAtv[nXCnt][11]// Inverte Marcação)
 NexT
 
 Return Nil
 
 //**********
+
 Static Function MrkTodos( )
+
 local nXCnt  := 0
+
 For nXCnt := 1 to Len( aGrAtv )
-   aGrAtv[nXCnt][11] := .T.
+   aGrAtv[nXCnt][11] := .T.  // Marca
 NexT
 
 Return Nil
+
+//**********
+
+Static Function Ordena (nCol)
+
+If aOrders[nCol]                                
+	ASORT(aGrAtv ,,, { | x,y | x[aColunas[nCol]] > y[aColunas[nCol]] } )
+Else
+	ASORT(aGrAtv ,,, { | x,y | x[aColunas[nCol]] < y[aColunas[nCol]] } )
+Endif
+
+aOrders[nCol] := !aOrders[nCol]
+
+oBrwGA:Refresh()
+
+Return

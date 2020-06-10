@@ -104,9 +104,10 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.E1_EMISSAO  <= %Exp:DTOS(dDtFim)% AND 	
                     SE1.E1_BAIXA    <> ' ' AND
                     SE1.%NotDel%                
+                    AND SE1.E1_TIPO NOT IN ('NCC','RA')
             )            
             AS RECEBIDO1,
-            (
+(
                 SELECT 	SUM(SE1.E1_SALDO) 				
                 FROM %TABLE:SE1% SE1					             
                 WHERE 
@@ -115,7 +116,7 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.E1_VENCREA  <= %Exp:DTOS(dDtFim)% AND
                     SE1.E1_BAIXA    = ' '	AND
                     SE1.%NotDel%                   
-
+                    AND SE1.E1_TIPO NOT IN ('NCC','RA')
             ) AS ATRASO,
                 (SELECT SUM(SE1.E1_BASCOM1) *AVG((SE1.E1_COMIS1)/100)  
                 FROM %TABLE:SE1% SE1					            
@@ -123,7 +124,8 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.E1_VEND1     = %Exp:aRet[1]% AND 
                     SE1.E1_VENCREA  >= %Exp:DTOS(dDtIni)% AND 
                     SE1.E1_VENCREA  <= %Exp:DTOS(dDtFim)% AND
-                    SE1.%NotDel%              
+                    SE1.%NotDel%       
+                    AND SE1.E1_TIPO NOT IN ('NCC','RA')       
             ) AS COMISSAO,
             (
                 SELECT 	SUM(E3_COMIS) 				
@@ -144,6 +146,7 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.E1_VENCREA  <= %Exp:DTOS(dDtFim)% AND
                     SE1.E1_BAIXA    = ' ' AND
                     SE1.%NotDel%                  
+                    AND SE1.E1_TIPO NOT IN ('NCC','RA')
 
             ) AS CATRAS,
             (
@@ -156,6 +159,7 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.E1_PARCELA  = SE3.E3_PARCELA AND
                     SE1.E1_TIPO     = SE3.E3_TIPO AND
                     SE1.%NotDel%                       
+                    AND SE1.E1_TIPO NOT IN ('NCC','RA')
                 WHERE 
                     SE3.E3_VEND     = %Exp:aRet[1]% AND 
                     SE3.E3_EMISSAO  >= %Exp:DTOS(dDtIni)% AND 
