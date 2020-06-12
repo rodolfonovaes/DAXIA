@@ -611,7 +611,7 @@ LOCAL cMsg      := ""
 LOCAL cemail    := ""
 LOCAL cDirLeg   := "\LAUDOS_ANALISYS\"
 LOCAL nStart 	:= Seconds()
-
+Local cItem     := '00'
 DEFAULT __xFilial := "    "
 DEFAULT lJob      := .F.
 /*
@@ -635,7 +635,7 @@ cFFilial +=' %'
 
 BEGINSQL ALIAS cALIAS
     COLUMN EMISSAO AS DATE
-    SELECT		SD2.D2_FILIAL FILIAL, SD2.D2_DOC    NOTA, SD2.D2_SERIE SERIE, SD2.D2_ITEM    ITEM, SD2.D2_EMISSAO EMISSAO, 
+    SELECT		SD2.D2_FILIAL FILIAL, SD2.D2_DOC    NOTA, SD2.D2_SERIE SERIE, SD2.D2_EMISSAO EMISSAO, 
                 SD2.D2_LOTECTL  LOTE, SA1.A1_COD CLIENTE, SA1.A1_LOJA   LOJA, SA1.A1_XMAILLD MAIL
     FROM		%table:SD2% SD2 (NOLOCK), 
                 %table:SA1% SA1 (NOLOCK) 
@@ -647,6 +647,8 @@ BEGINSQL ALIAS cALIAS
                         SELECT 		Z01.Z01_FILIAL + Z01.Z01_NTFISC + Z01.Z01_SERIE + Z01.Z01_ITEM + Z01.Z01_DTNOTA
                         FROM   		%table:Z01% Z01 (NOLOCK)
                         WHERE       Z01.%NotDel% )
+    GROUP BY	SD2.D2_FILIAL , SD2.D2_DOC    , SD2.D2_SERIE , SD2.D2_EMISSAO , 
+                SD2.D2_LOTECTL  , SA1.A1_COD , SA1.A1_LOJA   , SA1.A1_XMAILLD                         
     ORDER BY  SD2.D2_FILIAL, SD2.D2_DOC, SD2.D2_SERIE, SD2.D2_ITEM, SD2.D2_EMISSAO, SD2.D2_LOTECTL 
 ENDSQL
 
@@ -657,14 +659,15 @@ aDados := {}
 
 IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
     WHILE !(cALIAS)->(EOF())
+        cItem    := Soma1(cItem)
         cemail   := ""
-        cMsgLog  := "Log de Envio de Certificados, Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+(cALIAS)->ITEM + ENTER
+        cMsgLog  := "Log de Envio de Certificados, Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+ cItem + ENTER
 
         IF VAL( (cALIAS)->LOTE ) > 76071     
             aAdd( aDados, { (cALIAS)->FILIAL , ;
                             (cALIAS)->NOTA   , ;
                             (cALIAS)->SERIE  , ;
-                            (cALIAS)->ITEM   , ;
+                            cItem            , ;
                             (cALIAS)->EMISSAO, ;
                             (cALIAS)->LOTE   })
 
@@ -673,12 +676,12 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                             "FILIAL.:" + (cALIAS)->FILIAL + ;
                             "  NOTA.:" + (cALIAS)->NOTA   + ;
                             " SERIE.:" + (cALIAS)->SERIE  + ;
-                            "  ITEM.:" + (cALIAS)->ITEM   + ;
+                            "  ITEM.:" + cItem   + ;
                             "  LOTE.:" + (cALIAS)->LOTE   )
             */
 
             // CHAMO O RELATÓRIO
-            cResult := U_DAXR050( { (cALIAS)->NOTA, (cALIAS)->SERIE, (cALIAS)->LOTE, (cALIAS)->ITEM }, .T. )
+            cResult := U_DAXR050( { (cALIAS)->NOTA, (cALIAS)->SERIE, (cALIAS)->LOTE, cItem }, .T. )
 
             IF  SUBSTR( cResult, 1, 5 ) == "ERRO:"
                 cMsgLog  += "RtItmNFS (003) Houve um ao gerar o Laudo << " + cResult  + " >>. " + ENTER
@@ -686,9 +689,9 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
             ELSE
                 _aAnexo  := {}
                 AADD( _aAnexo,  { "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+"" , cResult } )
-                cAssunto := "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+(cALIAS)->ITEM+""             
+                cAssunto := "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+cItem+""             
                 cMsg     := "Olá," + ENTER 
-                cMsg     += "Você esta recebendo o Laudo do Lote.: "+(cALIAS)->LOTE +", faturado na Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ ", item ("+(cALIAS)->ITEM+") em Anexo. "
+                cMsg     += "Você esta recebendo o Laudo do Lote.: "+(cALIAS)->LOTE +", faturado na Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ ", item ("+cItem+") em Anexo. "
                 cMsgLog  += "RtItmNFS (002) O Arquivo do Laudo foi gerado em :" + cResult  + "." + ENTER
                 lErro    := .F.
                 cErro    := ""
@@ -720,14 +723,14 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 Z01_FILIAL  := (cALIAS)->FILIAL
                 Z01_NTFISC  := (cALIAS)->NOTA
                 Z01_SERIE   := (cALIAS)->SERIE
-                Z01_ITEM    := (cALIAS)->ITEM 
+                Z01_ITEM    := cItem 
                 Z01_DTNOTA  := (cALIAS)->EMISSAO 
                 Z01_DTENVI  := dDatabase
                 Z01_HORA    := TIME()
                 Z01_LOG     := cMsgLog
             MSUNLOCK() 
         ELSE
-            cMsgLog  := "Log de Envio de Certificados, Lote.: "+ALLTRIM( (cALIAS)->LOTE )+" Nota Fiscal.: "+ALLTRIM( (cALIAS)->NOTA )+"/"+ALLTRIM( (cALIAS)->SERIE )+ " - Item.: "+(cALIAS)->ITEM  + ENTER
+            cMsgLog  := "Log de Envio de Certificados, Lote.: "+ALLTRIM( (cALIAS)->LOTE )+" Nota Fiscal.: "+ALLTRIM( (cALIAS)->NOTA )+"/"+ALLTRIM( (cALIAS)->SERIE )+ " - Item.: "+cItem  + ENTER
             cLote := ALLTRIM( (cALIAS)->LOTE )
             FwLogMsg("INFO", /*cTransactionId*/, "CRZXFUN", FunName(), "", "01", "Procurando Laudo em:" + UPPER(cDirLeg+cLote+".pdf") , 0, (nStart - Seconds()), {}) 
             //CONOUT("Procurando Laudo em:" + UPPER(cDirLeg+cLote+".pdf"))
@@ -735,9 +738,9 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 //CONOUT( "ARQUIVO " + UPPER(cDirLeg+ALLTRIM( cLote )+".pdf - ENCONTRADO"))
                 _aAnexo  := {}
                 AADD( _aAnexo,  { "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+"" , UPPER(cDirLeg+cLote+".pdf") } )
-                cAssunto := "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+(cALIAS)->ITEM+""             
+                cAssunto := "Laudo Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+cItem+""             
                 cMsg     := "Olá," + ENTER 
-                cMsg     += "Você esta recebendo o Laudo do Lote.: "+(cALIAS)->LOTE +", faturado na Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ ", item ("+(cALIAS)->ITEM+") em Anexo. "
+                cMsg     += "Você esta recebendo o Laudo do Lote.: "+(cALIAS)->LOTE +", faturado na Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ ", item ("+cItem+") em Anexo. "
                 cMsgLog  += "RtItmNFS (006) O Arquivo do Laudo foi recuperado em: " + UPPER(cDirLeg+cLote+".pdf")  + "." + ENTER
                 lErro    := .F.
                 cErro    := ""
@@ -772,7 +775,7 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 Z01_FILIAL  := (cALIAS)->FILIAL
                 Z01_NTFISC  := (cALIAS)->NOTA
                 Z01_SERIE   := (cALIAS)->SERIE
-                Z01_ITEM    := (cALIAS)->ITEM 
+                Z01_ITEM    := cItem 
                 Z01_DTNOTA  := (cALIAS)->EMISSAO 
                 Z01_DTENVI  := dDatabase
                 Z01_HORA    := TIME()

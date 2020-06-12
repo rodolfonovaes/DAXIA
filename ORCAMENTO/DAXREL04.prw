@@ -46,7 +46,8 @@ Gerar relatório de Contribuicoes em Atraso
 @author Rodolfo
 @since 03/06/2019
 @version 1.0
-/*/Static Function ImpRel(oPrint,aRet)
+/*/
+Static Function ImpRel(oPrint,aRet)
 	Local cAliasQry  := GetNextAlias()
 	Local cEmpAnt    := ""
 	Local cEmpAtu    := ""
@@ -118,7 +119,7 @@ Gerar relatório de Contribuicoes em Atraso
                     SE1.%NotDel%                   
                     AND SE1.E1_TIPO NOT IN ('NCC','RA')
             ) AS ATRASO,
-                (SELECT SUM(SE1.E1_BASCOM1) *AVG((SE1.E1_COMIS1)/100)  
+                (SELECT SUM(SE1.E1_BASCOM1 * (SE1.E1_COMIS1/100))
                 FROM %TABLE:SE1% SE1					            
                 WHERE 
                     SE1.E1_VEND1     = %Exp:aRet[1]% AND 
@@ -225,7 +226,7 @@ Gerar relatório de Contribuicoes em Atraso
             nTotAtr   += (cAliasQry)->ATRASO
             nTotCom   += (cAliasQry)->COMISSAO
             //If (cAliasQry)->MEDIA > 0
-                nTotPCom  += ((cAliasQry)->COMISSAO / (cAliasQry)->RECEBIDO1) * 100
+                nTotPCom  += ((cAliasQry)->COMISSAO / (cAliasQry)->RECEBIDO) * 100
                 nLinCom   ++
            // EndIf
             nTotCRec  += (cAliasQry)->CRECEB

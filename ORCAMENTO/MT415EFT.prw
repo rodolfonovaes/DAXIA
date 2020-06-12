@@ -120,3 +120,8 @@ lRet := iIf( FindFunction( "U_DXVLDORC" ), u_DXVldOrc(), .T. )  // Funcao no pro
 
 RestArea(aArea)
 Return lRet
+
+
+User Function AXCADSZC()
+AxCadastro('SZC','Historico Rentabilidade de Pedido de Vendas')
+Return

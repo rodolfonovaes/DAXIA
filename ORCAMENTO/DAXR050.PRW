@@ -123,8 +123,18 @@ IF  cTipo == "S"
     BEGINSQL ALIAS cAliasNF
         SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
                         SA1.A1_NOME    AS    NOME, SB1.B1_COD   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
-                        SD2.D2_LOTECTL AS    LOTE, SD2.D2_QUANT AS QUANTIDADE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
-                        SB8.B8_LOTEFOR AS LOTEFOR
+                        SD2.D2_LOTECTL AS    LOTE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
+                        SB8.B8_LOTEFOR AS LOTEFOR,
+                        (SELECT SUM(SD2A.D2_QUANT) FROM SD2010 SD2A 
+                                WHERE
+                                SD2A.D2_FILIAL  = %xFilial:SD2% AND
+                                SD2A.D2_SERIE   = SD2.D2_SERIE AND
+                                SD2A.D2_DOC     = SD2.D2_DOC AND
+                                SD2A.D2_LOTECTL = SD2.D2_LOTECTL AND
+                                SD2A.D2_CLIENTE = SD2.D2_CLIENTE AND
+                                SD2A.D2_COD     = SD2.D2_COD AND
+                                SD2A.%NotDel%
+                            ) AS QUANTIDADE	                        
         FROM    %table:SD2% SD2 (NOLOCK),
                 %table:SB1% SB1 (NOLOCK),
                 %table:SA1% SA1 (NOLOCK),
@@ -144,6 +154,8 @@ IF  cTipo == "S"
                 AND SB1.%NotDel%
                 AND SD2.%NotDel%
                 AND SB8.%NotDel%
+        GROUP BY     SD2.D2_DOC, SD2.D2_SERIE , SD2.D2_CLIENTE , SD2.D2_LOJA  ,SA1.A1_NOME , SB1.B1_COD , SB1.B1_DESC, SB1.B1_TIPOCQ, 
+                        SD2.D2_LOTECTL , D2_EMISSAO , SB1.B1_TIPO ,SB8.B8_LOTEFOR , D2_COD                
     ENDSQL
 ELSEIF  cTipo == "P"
     BEGINSQL ALIAS cAliasNF
@@ -188,8 +200,18 @@ ELSEIF  cTipo == "F"
     BEGINSQL ALIAS cAliasNF
         SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
                         SA1.A1_NOME    AS    NOME, SB1.B1_COD   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
-                        SD2.D2_LOTECTL AS    LOTE, SD2.D2_QUANT AS QUANTIDADE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
-                        SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMSEQ AS NUMSEQ
+                        SD2.D2_LOTECTL AS    LOTE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
+                        SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMSEQ AS NUMSEQ,
+                        (SELECT SUM(SD2A.D2_QUANT) FROM SD2010 SD2A 
+                                WHERE
+                                SD2A.D2_FILIAL  = %xFilial:SD2% AND
+                                SD2A.D2_SERIE   = SD2.D2_SERIE AND
+                                SD2A.D2_DOC     = SD2.D2_DOC AND
+                                SD2A.D2_LOTECTL = SD2.D2_LOTECTL AND
+                                SD2A.D2_CLIENTE = SD2.D2_CLIENTE AND
+                                SD2A.D2_COD     = SD2.D2_COD AND
+                                SD2A.%NotDel%
+                            ) AS QUANTIDADE	                              
         FROM    %table:SD2% SD2 (NOLOCK),
                 %table:SB1% SB1 (NOLOCK),
                 %table:SA1% SA1 (NOLOCK),
@@ -207,6 +229,10 @@ ELSEIF  cTipo == "F"
                 AND SB1.%NotDel%
                 AND SD2.%NotDel%
                 AND SB8.%NotDel%
+        GROUP BY SD2.D2_DOC , SD2.D2_SERIE , SD2.D2_CLIENTE, SD2.D2_LOJA   , 
+                        SA1.A1_NOME , SB1.B1_COD  , SB1.B1_DESC  , SB1.B1_TIPOCQ , 
+                        SD2.D2_LOTECTL, D2_EMISSAO , SB1.B1_TIPO ,
+                        SB8.B8_LOTEFOR , SD2.D2_NUMSEQ ,D2_COD         
     ENDSQL
 ENDIF
 CONOUT("DAXR050-005 -> Consulta Executada")

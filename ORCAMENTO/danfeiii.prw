@@ -3352,17 +3352,20 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
 		lLenOdet := .T.
 	Else
-
+		 
 		 If lLenOdet .Or. nP == 0 .Or. nXFolha < nFolhas
+		 	//QUANDO CAI AQUI IMPRIME A DESCIRCAO DO PRODUTO
 		 	nLenOdet++
 		  	nxlin:=0
 			ImpProd(oDet,oDanfe,aColProd,nLenOdet,@cProd,@nxlin)
 		  	nXFolha := nFolhas 
 		  	//Imprime o Número do Lote abaixo da descrição do produto e FCI quando houver.
 		  	If MV_PAR04 == 2
+			  	oDanfe:Say(nLinha-8, aColProd[2][1] + 2, "Lote: "+oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT, oFont07:oFont)
 		  		DbSelectArea("SD2")
-		  		dbSetOrder(3)//SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_COD+SD2->D2_ITEM)
-		  		If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+cProd+SPACE(TAMSX3("D2_COD")[1]-LEN(CPROD))+STRZERO(nLenOdet,TAMSX3("D2_ITEM")[1]))
+		  		dbSetOrder(3)
+			//SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_COD+SD2->D2_ITEM)
+		  	/*	If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+cProd+SPACE(TAMSX3("D2_COD")[1]-LEN(CPROD))+STRZERO(nLenOdet,TAMSX3("D2_ITEM")[1]))
 		  			Lotectl := SD2->D2_LOTECTL
 		  			cFCI := SD2->D2_FCICOD
 		  			cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
@@ -3374,7 +3377,7 @@ For nY := 1 To nLenItens
 		  			Else
 						  oDanfe:Say(nLinha-13+nxlin, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 		  			EndIf
-		  		EndIf
+		  		EndIf*/
 		  	EndIf
 
 		  	lLenOdet := .F.
