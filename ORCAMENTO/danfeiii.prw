@@ -13,7 +13,7 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   009                                                // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   006                                                // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 064        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 022                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
@@ -3360,25 +3360,23 @@ For nY := 1 To nLenItens
 			ImpProd(oDet,oDanfe,aColProd,nLenOdet,@cProd,@nxlin)
 		  	nXFolha := nFolhas 
 		  	//Imprime o Número do Lote abaixo da descrição do produto e FCI quando houver.
-		  	If MV_PAR04 == 2
-			  	oDanfe:Say(nLinha-8, aColProd[2][1] + 2, "Lote: "+oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT, oFont07:oFont)
-		  		DbSelectArea("SD2")
-		  		dbSetOrder(3)
-			//SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_COD+SD2->D2_ITEM)
-		  	/*	If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+cProd+SPACE(TAMSX3("D2_COD")[1]-LEN(CPROD))+STRZERO(nLenOdet,TAMSX3("D2_ITEM")[1]))
-		  			Lotectl := SD2->D2_LOTECTL
-		  			cFCI := SD2->D2_FCICOD
-		  			cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
-		  			
-		  			If !Empty(cFCI)
-		  				oDanfe:Say(nLinha-8, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-		  				oDanfe:Say(nLinha+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
-		  				oDanfe:Say(nLinha+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
-		  			Else
-						  oDanfe:Say(nLinha-13+nxlin, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-		  			EndIf
-		  		EndIf*/
-		  	EndIf
+			If MV_PAR04 == 2
+		  			DbSelectArea("SD2")
+		  			dbSetOrder(3)	
+					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1])+STRZERO(nLenOdet,TAMSX3("D2_ITEM")[1]))				
+						Lotectl := SD2->D2_LOTECTL
+						cFCI := SD2->D2_FCICOD
+						cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
+						
+						If !Empty(cFCI)
+							oDanfe:Say(nLinha-nAjustaPro-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+							oDanfe:Say(nLinha+nAjustaPro+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+							oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+						Else
+							oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+						EndIf						
+					EndIf
+				EndIf
 
 		  	lLenOdet := .F.
 		  	nP++
@@ -3402,17 +3400,26 @@ For nY := 1 To nLenItens
 		nAuxH2 := len(aAux[1][9][nY]) + (aColProd[9][1] + ((aColProd[9][2] - aColProd[9][1]) - RetTamTex(aAux[1][9][nY], oFont07:oFont, oDanfe)))
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][9][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][10][nY]) + (aColProd[10][1] + ((aColProd[10][2] - aColProd[10][1]) - RetTamTex(aAux[1][10][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][10][nY], oFont07:oFont)
-		
-		nAuxH2 := len(aAux[1][11][nY]) + (aColProd[11][1] + ((aColProd[11][2] - aColProd[11][1]) - RetTamTex(aAux[1][11][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][11][nY], oFont07:oFont)
-		
-		nAuxH2 := len(aAux[1][12][nY]) + (aColProd[12][1] + ((aColProd[12][2] - aColProd[12][1]) - RetTamTex(aAux[1][12][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][12][nY]) + (aColProd[10][1] + ((aColProd[10][2] - aColProd[10][1]) - RetTamTex(aAux[1][12][nY], oFont07:oFont, oDanfe)))
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][12][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][13][nY]) + (aColProd[13][1] + ((aColProd[13][2] - aColProd[13][1]) - RetTamTex(aAux[1][13][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][13][nY], oFont07:oFont)
+		nAuxH2 := len(aAux[1][15][nY]) + (aColProd[11][1] + ((aColProd[11][2] - aColProd[11][1]) - RetTamTex(aAux[1][15][nY], oFont07:oFont, oDanfe)))
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][15][nY], oFont07:oFont)
+		//If !Empty(aAux[1][11][nY])
+		//	oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_VICMS:TEXT, oFont07:oFont)
+		//EndIf
+	
+		nAuxH2 := len(aAux[1][16][nY]) + (aColProd[12][1] + ((aColProd[14][2] - aColProd[12][1]) - RetTamTex(aAux[1][16][nY], oFont07:oFont, oDanfe)))
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][16][nY], oFont07:oFont)
+		//If !Empty(aAux[1][14][nY])
+	//		oDanfe:Say(nLinha-20, nAuxH2-2, Iif(Empty(oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT),'0,00',oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT), oFont07:oFont)
+	//	EndIf
+		
+		nAuxH2 := len(aAux[1][18][nY]) + (aColProd[13][1] + ((aColProd[13][2] - aColProd[13][1]) - RetTamTex(aAux[1][18][nY], oFont07:oFont, oDanfe)))
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][18][nY], oFont07:oFont)
+		//if !Empty(aAux[1][13][nY])
+	//		oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_PICMS:TEXT, oFont07:oFont)
+//		EndIf
 		
 		nAuxH2 := len(aAux[1][14][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][14][nY], oFont07:oFont, oDanfe)))
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][14][nY], oFont07:oFont)
@@ -5089,10 +5096,9 @@ oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
 oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
 if len(aDesc[nLenOdet][1])>MAXITEMC
 	oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
-	nxlin:=7
+	nxlin := 7
 endif	
 cProd := aProd[nLenOdet][1]
-
 Return
 
 //Aglutina os itens que foram quebrados no WMS

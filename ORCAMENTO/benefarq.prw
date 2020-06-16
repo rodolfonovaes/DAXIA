@@ -391,7 +391,7 @@ If lNovoCalc
 	cFrom  += " AND RA_MAT >= '" + cMatDe + "' AND RA_MAT <= '" + cMatAte + "' "
 	cFrom  += " AND RA_ADMISSA <= '" + cAdm + "' "
 	cFrom  += " AND R0_TPBEN IN(" + cQryAux + ") "
-	cFrom  += " AND R0_PEDIDO = '" + cReprocessa +"'"
+	cFrom  += " AND R0_PEDIDO >= '" + MV_PAR17 +"' AND R0_PEDIDO <= '" + MV_PAR18 + "' "
 	cFrom  += " AND R0_PERIOD = '" + cPeriodo  +"'"
 	cFrom  += " AND R0_NROPED >= '" + cPedDe + "' AND R0_NROPED <= '" + cPedAte + "' "
 	cFrom  += If (!Empty(cNumPag), " AND R0_NROPGT = '" + cNumPag + "' ", " ")
@@ -425,7 +425,7 @@ Else
 	cQuery  += " AND RA_MAT >= '" + cMatDe + "' AND RA_MAT <= '" + cMatAte + "' "
 	cQuery  += " AND RA_ADMISSA <= '" + cAdm + "' "
 	cQuery  += " AND RG2_TPBEN IN(" + cQryAux + ") "
-	cQuery  += " AND RG2_PEDIDO = " + cReprocessa 
+	cQuery  += " AND RG2_PEDIDO >= '" + MV_PAR17 +"' AND RG2_PEDIDO <= '" + MV_PAR18 + "' "
 	cQuery  += " AND RG2_PERIOD = " + cPeriodo 
 	cQuery  += If (!Empty(cNumPag), " AND RG2_NROPGT = " + cNumPag + " ", " ")
 	

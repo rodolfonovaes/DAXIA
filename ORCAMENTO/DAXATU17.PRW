@@ -29,90 +29,86 @@ Private oRadMenu4
 Private nRadMenu4 := 1
 
 
-  DEFINE MSDIALOG oDlg TITLE "Consulta SERASA" FROM 000, 000  TO 500, 900 COLORS 0, 16777215 PIXEL
+DEFINE MSDIALOG oDlg TITLE "Consulta SERASA" FROM 000, 000  TO 500, 900 COLORS 0, 16777215 PIXEL
 
-    @ 040, 017 FOLDER oFolder1 SIZE 401, 182 OF oDlg ITEMS "Resumo de OpÁıes","OpÁ„o de Consulta","Tipo de Concentre ( quando selecionado relato + concentre)","Quadro Social e ParticipaÁıes","Incluir Risk Scoring" COLORS 0, 14215660 PIXEL
-    
-    @ 015, 007 RADIO oRadMenu1 VAR nRadMenu1 ITEMS "Consultar Apenas Relato Completo","Consultar Relato Completo + Concentre SintÈtico","Consultar Relato Completo + Concentre Detalhado" SIZE 105, 034 OF oFolder1:aDialogs[2] COLOR 0, 16777215 PIXEL
-    @ 016, 010 RADIO oRadMenu2 VAR nRadMenu2 ITEMS "SolicitaÁ„o de S/N para CNPJ","SocilitaÁ„o de resumo das ocorrÍncias","SolicitaÁ„o de concentre completo" SIZE 179, 031 OF oFolder1:aDialogs[3] COLOR 0, 16777215 PIXEL
-    @ 015, 010 RADIO oRadMenu3 VAR nRadMenu3 ITEMS "N„o gerar quadro social e n„o gerar participaÁıes","Gerar quadro social e n„o gerar participaÁıes","Gerar quadro social e gerar participaÁıes","N„o gerar quadro social e gerar participaÁıes" SIZE 172, 061 OF oFolder1:aDialogs[4] COLOR 0, 16777215 PIXEL
-    @ 012, 011 CHECKBOX oCheckBox1 VAR lCheckBox1 PROMPT "Incluir Risk Scoring" SIZE 084, 008 OF oFolder1:aDialogs[5] COLORS 0, 16777215 PIXEL
-    @ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
-    @ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
+@ 040, 017 FOLDER oFolder1 SIZE 401, 182 OF oDlg ITEMS "Resumo de Op√ß√µes","Op√ß√£o de Consulta","Tipo de Concentre ( quando selecionado relato + concentre)","Quadro Social e Participa√ß√µes","Incluir Risk Scoring" COLORS 0, 14215660 PIXEL
 
-    @ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
+@ 015, 007 RADIO oRadMenu1 VAR nRadMenu1 ITEMS "Consultar Apenas Relato Completo","Consultar Relato Completo + Concentre Sint√©tico","Consultar Relato Completo + Concentre Detalhado" SIZE 105, 034 OF oFolder1:aDialogs[2] COLOR 0, 16777215 PIXEL
+@ 016, 010 RADIO oRadMenu2 VAR nRadMenu2 ITEMS "Solicita√ß√£o de S/N para CNPJ","Socilita√ß√£o de resumo das ocorr√™ncias","Solicita√ß√£o de concentre completo" SIZE 179, 031 OF oFolder1:aDialogs[3] COLOR 0, 16777215 PIXEL
+@ 015, 010 RADIO oRadMenu3 VAR nRadMenu3 ITEMS "N√£o gerar quadro social e n√£o gerar participa√ß√µes","Gerar quadro social e n√£o gerar participa√ß√µes","Gerar quadro social e gerar participa√ß√µes","N√£o gerar quadro social e gerar participa√ß√µes" SIZE 172, 061 OF oFolder1:aDialogs[4] COLOR 0, 16777215 PIXEL
+@ 012, 011 CHECKBOX oCheckBox1 VAR lCheckBox1 PROMPT "Incluir Risk Scoring" SIZE 084, 008 OF oFolder1:aDialogs[5] COLORS 0, 16777215 PIXEL
+@ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
+@ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
 
-    @ 120, 300 BUTTON oButton1 PROMPT "Confirmar" SIZE 057, 026 OF oFolder1:aDialogs[5]  PIXEL ACTION ( nOpc := 1  , oDlg:End() )
+@ 039, 019 RADIO oRadMenu4 VAR nRadMenu4 ITEMS "RiskScoring 22 Classes - Horizonte de 6 meses","RiskScoring 22 Classes - Horizonte de 12 meses","RiskScoring 3.0 22 Classes - Horizonte de 6 meses","RiskScoring 3.0 22 Classes - Horizonte de 12 meses" SIZE 145, 065 OF oFolder1:aDialogs[5] COLOR 0, 16777215 PIXEL
+
+@ 120, 300 BUTTON oButton1 PROMPT "Confirmar" SIZE 057, 026 OF oFolder1:aDialogs[5]  PIXEL ACTION ( nOpc := 1  , oDlg:End() )
 
 
-  ACTIVATE MSDIALOG oDlg
+ACTIVATE MSDIALOG oDlg
 
-  If nOpc == 1 .And. MsgYesNo("Confirma Consulta SERASA?")
-        FWMsgRun(, {|| ProcSer() }, "Processando", "Processando a rotina...")
-  Endif
+If nOpc == 1 .And. MsgYesNo("Confirma Consulta SERASA?")
+    FWMsgRun(, {|| ProcSer() }, "Processando", "Processando a rotina...")
+Endif
 
 Return
 
 Static Function ProcSer()
 
-Local aParam := {}
-Local aQuadro := {}
-Local oRestClient
-Local cTipo := ""
-Local cTpConcent  := "" // TIPO CONCENTRE
-Local cTipoDoc := "" // TIPO DOCUMENTO
+    Local aParam := {}
+    Local aQuadro := {}
+    Local oRestClient
+    Local cTipo := ""
+    Local cTpConcent  := "" // TIPO CONCENTRE
+    Local cTipoDoc := "" // TIPO DOCUMENTO
+    Local cPassword := Alltrim(SupergetMV('ES_PASSSER',.F.,"D@xia12")) // Senha para utilizar o metodo
+    Local cUser :=     Alltrim(SupergetMV('ES_USERSER',.F.,"86259358")) // Usuario para utilizar o metodo
 
-If nRadMenu1 == 1 // Relato Completo
-    cTipo := "RELA"
-Elseif nRadMenu1 == 2 // Relato Completo + Concentre SintÈtico
-    cTipo := "CONC"
-Elseif nRadMenu1 == 3 //Consultar Relato Completo + Concentre Detalhado
-    cTipo := "IP2D"
-Endif
-
-// OPCAO APENAS PARA CONC E IP2D
-If nRadMenu1 == 2 .Or. nRadMenu1 == 3
-
-    If nRadMenu2 == 1  //SolicitaÁ„o de S/N para CNPJ 
-        cTpConcent := "1"
-    Elseif nRadMenu2 == 2 //SocilitaÁ„o de resumo das ocorrÍncias
-        cTpConcent := "2"
-    Elseif nRadMenu2 == 3 //SolicitaÁ„o de concentre completo
-        cTpConcent := "3"
+    If nRadMenu1 == 1 // Relato Completo
+        cTipo := "RELA"
+    Elseif nRadMenu1 == 2 // Relato Completo + Concentre Sint√©tico
+        cTipo := "CONC"
+    Elseif nRadMenu1 == 3 //Consultar Relato Completo + Concentre Detalhado
+        cTipo := "IP2D"
     Endif
 
-Endif
+// OPCAO APENAS PARA CONC E IP2D
+    If nRadMenu1 == 2 .Or. nRadMenu1 == 3
 
-If nRadMenu3== 1  //N„o gerar quadro social e n„o gerar participaÁıes  
-    cTipoDoc := "1"
-Elseif nRadMenu3 == 2 //Gerar quadro social e n„o gerar participaÁıes
-    cTipoDoc := "2"
-Elseif nRadMenu3 == 3 //Gera quadro social e gera participaÁıes
-    cTipoDoc := "3"
-Elseif nRadMenu3 == 4 //N„o Gera quadro social e gera participaÁıes
-    cTipoDoc := "4"
-Endif
+        If nRadMenu2 == 1  //Solicita√ß√£o de S/N para CNPJ
+            cTpConcent := "1"
+        Elseif nRadMenu2 == 2 //Socilita√ß√£o de resumo das ocorr√™ncias
+            cTpConcent := "2"
+        Elseif nRadMenu2 == 3 //Solicita√ß√£o de concentre completo
+            cTpConcent := "3"
+        Endif
+
+    Endif
+
+    If nRadMenu3== 1  //N√£o gerar quadro social e n√£o gerar participa√ß√µes
+        cTipoDoc := "1"
+    Elseif nRadMenu3 == 2 //Gerar quadro social e n√£o gerar participa√ß√µes
+        cTipoDoc := "2"
+    Elseif nRadMenu3 == 3 //Gera quadro social e gera participa√ß√µes
+        cTipoDoc := "3"
+    Elseif nRadMenu3 == 4 //N√£o Gera quadro social e gera participa√ß√µes
+        cTipoDoc := "4"
+    Endif
 
     oRestClient := FWRest():New("https://mqlinuxext.serasa.com.br")
-        //oRestClient:setPath("/Homologa/consultahttps?p=86259358123@daxi" + Escape(Space(8)) +  Escape("IP20RELAM2        08226826922N            03") )
- // oRestClient:setPath("/Homologa/consultahttps?p=86259358123@daxi" + Escape(Space(8)) +  Escape("IP20RELAM2        00006396022N            03") )
-    //oRestClient:setPath("/Homologa/consultahttps?p=86259358123@daxi" + Escape(Space(8)) +  Escape("IP20RELAM2        0" + Left(SA1->A1_CGC,8) + "22N            03"))
-   
-    oRestClient:setPath("/Homologa/consultahttps?p=86259358123@daxi" + Escape(Space(8)) +  Escape("IP20" + cTipo + "M3        0" +   Left(SA1->A1_CGC,8) + "22N            0" + cTipoDoc+"3" + cTpConcent ) )
-								
-//	oRestClient:setPath("/Homologa/consultahttps?p=86259358123@daxia" +  Space(8)))
-    //oRestClient:SetPostParams(Escape("IP20RELAS2 000010205N 232E C66M S CFP3"))
-	//oRestClient:SetPostParams(Escape("IP20RELAM2        00006396022N            03"))
+
+    oRestClient:setPath("/Homologa/consultahttps?p=" +  cUser + cPassword + Escape(Space(9)) +  Escape("IP20" + cTipo + "M3        0" +   Left(SA1->A1_CGC,8) + "22N            0" + cTipoDoc+"3" + cTpConcent ) )
+
 
     If (oRestClient:Post())
-		cResponse := oRestClient:getResult()
+        cResponse := oRestClient:getResult()
 
         cResponse := StrTran(cResponse,"#",CRLF + CRLF)
-		lRet := .T.
-		//Erro no POST
+        lRet := .T.
+        //Erro no POST
         // GRAVANDO RETORNO DA CONSULTA
         Reclock("Z02",.T.)
-        
+
         Z02_CODIGO := GetSxeNum("Z02","Z02_CODIGO")
         Z02_FILIAL := FWxFilial("Z02")
         Z02_DATA := dDataBase
@@ -121,75 +117,75 @@ Endif
         Z02_CONSUL := StrTran(cResponse,"#",CRLF)
         Z02_CLI := SA1->A1_COD
         Z02_LOJA := SA1->A1_LOJA
-        
+
         Z02->(MsUnLock())
 
         U_LOGATU17(cResponse)
 
-	Else
-			cResponse := oRestClient:getResult()
-			cStatus := oRestClient:GetLastError()
-            MsgInfo('Consulta com Erro: ' + Alltrim(cResponse))
+    Else
+        cResponse := oRestClient:getResult()
+        cStatus := oRestClient:GetLastError()
+        MsgInfo('Consulta com Erro: ' + Alltrim(cResponse))
     Endif
 
 Return
 
 
 User Function LOGATU17(cMsg, cTitulo, nTipo, lEdit)
-Local lRetMens := .F.
-Local oDlgMens
-Local oBtnOk, cTxtConf := ""
-Local oBtnCnc, cTxtCancel := ""
-Local oBtnSlv
-Local oFntTxt
-Local oMsg
-Local ABUTTONS := {}
+    Local lRetMens := .F.
+    Local oDlgMens
+    Local oBtnOk, cTxtConf := ""
+    Local oBtnCnc, cTxtCancel := ""
+    Local oBtnSlv
+    Local oFntTxt
+    Local oMsg
+    Local ABUTTONS := {}
 
-Default cMsg    := ""
-Default cTitulo := "Log"
-Default nTipo   := 1 //1=Ok; 2= Confirmar e Cancelar
-Default lEdit   := .F.
+    Default cMsg    := ""
+    Default cTitulo := "Log"
+    Default nTipo   := 1 //1=Ok; 2= Confirmar e Cancelar
+    Default lEdit   := .F.
 
-//Definindo os textos dos botıes
-If(nTipo == 1)
-	cTxtConf:='&Ok'
-Else
-	cTxtConf:='&Confirmar'
-	cTxtCancel:='C&ancelar'
-EndIf
+//Definindo os textos dos bot√µes
+    If(nTipo == 1)
+        cTxtConf:='&Ok'
+    Else
+        cTxtConf:='&Confirmar'
+        cTxtCancel:='C&ancelar'
+    EndIf
 
-//Criando a janela centralizada com os botıes
-DEFINE FONT oFntTxt NAME "MONO AS" SIZE 7,15   //6,15
-DEFINE MSDIALOG oDlgMens TITLE cTitulo FROM 0,0  TO 550,1290 PIXEL
-@ 5,5 GET oMsg VAR cMsg MEMO SIZE 610,243 OF oDlgMens PIXEL
-If !lEdit
-	oMsg:lReadOnly := .T.
-EndIf
+//Criando a janela centralizada com os bot√µes
+    DEFINE FONT oFntTxt NAME "MONO AS" SIZE 7,15   //6,15
+    DEFINE MSDIALOG oDlgMens TITLE cTitulo FROM 0,0  TO 550,1290 PIXEL
+    @ 5,5 GET oMsg VAR cMsg MEMO SIZE 610,243 OF oDlgMens PIXEL
+    If !lEdit
+        oMsg:lReadOnly := .T.
+    EndIf
 
-If (nTipo==1)
-	@ 255, 080 BUTTON oBtnOk  PROMPT cTxtConf   SIZE 045, 015 ACTION oDlgMens:End() OF oDlgMens PIXEL
-ElseIf(nTipo==2)
-	@ 192, 240 BUTTON oBtnOk  PROMPT cTxtConf   SIZE 045, 015 ACTION (lRetMens:=.T., oDlgMens:End()) OF oDlgMens PIXEL
-	@ 192, 290 BUTTON oBtnCnc PROMPT cTxtCancel SIZE 045, 015 ACTION (lRetMens:=.F., oDlgMens:End()) OF oDlgMens PIXEL
-EndIf
+    If (nTipo==1)
+        @ 255, 080 BUTTON oBtnOk  PROMPT cTxtConf   SIZE 045, 015 ACTION oDlgMens:End() OF oDlgMens PIXEL
+    ElseIf(nTipo==2)
+        @ 192, 240 BUTTON oBtnOk  PROMPT cTxtConf   SIZE 045, 015 ACTION (lRetMens:=.T., oDlgMens:End()) OF oDlgMens PIXEL
+        @ 192, 290 BUTTON oBtnCnc PROMPT cTxtCancel SIZE 045, 015 ACTION (lRetMens:=.F., oDlgMens:End()) OF oDlgMens PIXEL
+    EndIf
 
-oMsg:oFont:= oFntTxt
+    oMsg:oFont:= oFntTxt
 
-//Bot„o de Salvar em Txt
-@ 255, 005 BUTTON oBtnSlv PROMPT "&Salvar em .txt" SIZE 045, 015 ACTION (fSalvArq(cMsg, cTitulo)) OF oDlgMens PIXEL
-	ACTIVATE MSDIALOG oDlgMens CENTERED //ON INIT EnchoiceBar(oDlg,{|| MsgRun("Gerando Pedido...","",{|| CursorWait(),oDlg:End()}) } ,{||oDlg:End()},,aButtons)
+//Bot√£o de Salvar em Txt
+    @ 255, 005 BUTTON oBtnSlv PROMPT "&Salvar em .txt" SIZE 045, 015 ACTION (fSalvArq(cMsg, cTitulo)) OF oDlgMens PIXEL
+    ACTIVATE MSDIALOG oDlgMens CENTERED //ON INIT EnchoiceBar(oDlg,{|| MsgRun("Gerando Pedido...","",{|| CursorWait(),oDlg:End()}) } ,{||oDlg:End()},,aButtons)
 
 Return lRetMens
 
 //-------------------------------------------------------------------
 /*/{Protheus.doc} fSalvArq
-Salva arquivo de geraÁ„o de etiqueta
+Salva arquivo de gera√ß√£o de etiqueta
 
 @param cMSG, character, Texto a ser salvo
-@param cSocio, character, CÛdigo do SÛcio
+@param cSocio, character, C√≥digo do S√≥cio
 @param cEnvio, character, Tipo de Envio 1-Correios 2-Retirada
 
-@return True se salvou o arquivo, False se n„o
+@return True se salvou o arquivo, False se n√£o
 
 @author janaina.jesus
 @since 12/03/2019
@@ -197,28 +193,28 @@ Salva arquivo de geraÁ„o de etiqueta
 /*/
 //-------------------------------------------------------------------
 Static Function fSalvArq(cMsg, cSocio, cEnvio)
-	Local cFileNom := "NSOC.txt"
-	Local lOk      := .T.
-	 
-	cFileNom := cGetFile( "Arquivo TXT *.txt | *.txt", "Arquivo .txt",,'',.T., GETF_LOCALHARD) //--Caminho do arquivo
-	 
-	If !Empty(cFileNom)
-		If ! ExistDir(SubStr(cFileNom,1,RAt('\',cFileNom)))
-	    	Alert("DiretÛrio n„o existe: " + CRLF + SubStr(cFileNom, 1, RAt('\',cFileNom)) + "!")
-			Return
-		EndIf
-	 
-		If File(cFileNom) //--Verifico se o arquivo j· existe
-			lOk := MsgYesNo("Arquivo j· existe, deseja substituir?", "AtenÁ„o")
-		EndIf
-		 
-		If lOk
-			If MemoWrite(cFileNom, cMsg)
-				MsgInfo("Arquivo Gerado com Sucesso!")
-			Else
-				MsgAlert("N„o foi possÌvel criar o arquivo no local: "+ CRLF + cFileNom)
-			EndIf
-		 	
-		EndIf
-	EndIf
+    Local cFileNom := "NSOC.txt"
+    Local lOk      := .T.
+
+    cFileNom := cGetFile( "Arquivo TXT *.txt | *.txt", "Arquivo .txt",,'',.T., GETF_LOCALHARD) //--Caminho do arquivo
+
+    If !Empty(cFileNom)
+        If ! ExistDir(SubStr(cFileNom,1,RAt('\',cFileNom)))
+            Alert("Diret√≥rio n√£o existe: " + CRLF + SubStr(cFileNom, 1, RAt('\',cFileNom)) + "!")
+            Return
+        EndIf
+
+        If File(cFileNom) //--Verifico se o arquivo j√° existe
+            lOk := MsgYesNo("Arquivo j√° existe, deseja substituir?", "Aten√ß√£o")
+        EndIf
+
+        If lOk
+            If MemoWrite(cFileNom, cMsg)
+                MsgInfo("Arquivo Gerado com Sucesso!")
+            Else
+                MsgAlert("N√£o foi poss√≠vel criar o arquivo no local: "+ CRLF + cFileNom)
+            EndIf
+
+        EndIf
+    EndIf
 Return
