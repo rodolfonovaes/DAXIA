@@ -249,7 +249,7 @@ If !(cAliasQry)->(Eof())
         Next
         oSecGG:Finish()
 
-        aAux := U_RetG1(cCod,'GG')
+        aAux := U_RetG1(cCod,'GG|SV')
         oSection5:Init()
 
         For nI := 1 to Len(aAux)

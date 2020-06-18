@@ -1110,6 +1110,7 @@ Local cProd			:= ""
 local nxlin			:= 0
 Local cFCI			:= ""
 lOCAL cMsgPad 		:= ""
+Local lLote			:= .F.
 
 Local nPos2			 := 0
 
@@ -3363,18 +3364,39 @@ For nY := 1 To nLenItens
 			If MV_PAR04 == 2
 		  			DbSelectArea("SD2")
 		  			dbSetOrder(3)	
-					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1])+STRZERO(nLenOdet,TAMSX3("D2_ITEM")[1]))				
-						Lotectl := SD2->D2_LOTECTL
-						cFCI := SD2->D2_FCICOD
-						cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
-						
-						If !Empty(cFCI)
-							oDanfe:Say(nLinha-nAjustaPro-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-							oDanfe:Say(nLinha+nAjustaPro+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
-							oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
-						Else
-							oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-						EndIf						
+					lLote := .T.
+					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]))		
+						If Type("oDet["+Alltrim(STR(nLenOdet))+"]:_PROD:_RASTRO") <> 'U'
+							If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT)	<>  Alltrim(SD2->D2_LOTECTL)
+								While xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]) == SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA + D2_COD)
+									If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT) ==  Alltrim(SD2->D2_LOTECTL)
+										lLote := .T.
+										Exit
+									Else
+										lLote := .F.
+									EndIf
+
+									SD2->(DbSkip())
+								EndDo
+							Else
+								lLote := .T.
+							EndIf
+						EndIf
+						If lLote
+							Lotectl := SD2->D2_LOTECTL
+							cFCI := SD2->D2_FCICOD
+							cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
+							
+							If !Empty(cFCI)
+								oDanfe:Say(nLinha-nAjustaPro-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+								oDanfe:Say(nLinha+nAjustaPro+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+								oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+							Else
+								If !Empty(Lotectl)
+									oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+								EndIf
+							EndIf		
+						EndIf				
 					EndIf
 				EndIf
 
@@ -3409,8 +3431,8 @@ For nY := 1 To nLenItens
 		//	oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_VICMS:TEXT, oFont07:oFont)
 		//EndIf
 	
-		nAuxH2 := len(aAux[1][16][nY]) + (aColProd[12][1] + ((aColProd[14][2] - aColProd[12][1]) - RetTamTex(aAux[1][16][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][16][nY], oFont07:oFont)
+		nAuxH2 := len(aAux[1][17][nY]) + (aColProd[12][1] + ((aColProd[12][2] - aColProd[12][1]) - RetTamTex(aAux[1][17][nY], oFont07:oFont, oDanfe)))
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][17][nY], oFont07:oFont)
 		//If !Empty(aAux[1][14][nY])
 	//		oDanfe:Say(nLinha-20, nAuxH2-2, Iif(Empty(oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT),'0,00',oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT), oFont07:oFont)
 	//	EndIf
@@ -3421,8 +3443,8 @@ For nY := 1 To nLenItens
 	//		oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_PICMS:TEXT, oFont07:oFont)
 //		EndIf
 		
-		nAuxH2 := len(aAux[1][14][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][14][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][14][nY], oFont07:oFont)
+		nAuxH2 := len(aAux[1][19][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][19][nY], oFont07:oFont, oDanfe)))
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
 		nLinha := nLinha + 12

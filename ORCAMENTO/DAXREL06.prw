@@ -310,7 +310,7 @@ If !(cAliasQry1)->(Eof())
 
 
         //Embalagem
-        cQuery := RetQry(cCod,"('GG')")
+        cQuery := RetQry(cCod,"('GG','SV')")
         aAux := {}
         If Select(cAliasQry) > 0
             (cAliasQry)->(DbCloseArea())

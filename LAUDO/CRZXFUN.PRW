@@ -659,7 +659,7 @@ aDados := {}
 
 IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
     WHILE !(cALIAS)->(EOF())
-        cItem    := Soma1(cItem)
+        cItem    := RetItem(cALIAS)
         cemail   := ""
         cMsgLog  := "Log de Envio de Certificados, Lote.: "+(cALIAS)->LOTE +" Nota Fiscal.: "+(cALIAS)->NOTA+"/"+(cALIAS)->SERIE+ " - Item.: "+ cItem + ENTER
 
@@ -858,3 +858,23 @@ aAdd( aLaudo, { "5-BOLORES E LEVEDURAS (UFC/g)   ", "0 / 100                    
 aAdd( aLaudo, { "5-SALMONELLA (/25g)             ", "AUSENTE / AUSENTE                ", "AUSENTE "} )
 aAdd( aLaudo, { "5-COLIFORMES 45ºC (UFC/g)       ", "0 / 5                            ", "<1.0    "} )
 */
+
+
+Static Function RetItem(cAliasQry)
+Local cItem := ''
+
+DbSelectArea('SD2')
+SD2->(DbSetOrder(3))
+If SD2->(DbSeek(xFilial('SD2') + (cAliasQry)->(NOTA + SERIE + CLIENTE + LOJA )))
+    If (cAliasQry)->LOTE <> SD2->D2_LOTECTL
+        While xFilial('SD2') + (cAliasQry)->(NOTA + SERIE + CLIENTE + LOJA ) == SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA)
+            If SD2->D2_LOTECTL == (cAliasQry)->LOTE
+                cItem := SD2->D2_ITEM
+                Exit
+            EndIf
+            SD2->(DbSkip())
+        EndDo
+    EndIF
+EndIf
+
+Return cItem

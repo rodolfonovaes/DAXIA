@@ -144,7 +144,7 @@
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "suporte",
+            "environment": "producao",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8001",
