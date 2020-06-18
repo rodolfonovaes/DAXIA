@@ -13,10 +13,10 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   006                                                // M·ximo de produtos para a primeira p·gina
-#DEFINE MAXITEMP2 064        
+#DEFINE MAXITEM   009                                                // M·ximo de produtos para a primeira p·gina
+#DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informaÁ„o complementar
-#DEFINE MAXITEMP3 022                                                // M·ximo de produtos para a pagina 2 (caso utilize a opÁ„o de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
+#DEFINE MAXITEMP3 020                                                // M·ximo de produtos para a pagina 2 (caso utilize a opÁ„o de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  051                                                // M·xima de caracteres por linha de produtos/serviÁos
 
 /*******************************************************************************************************************************
@@ -25,7 +25,7 @@ DAXIA INICIO - AJUSTE PARA N√O ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CIC
 #DEFINE MAXMENLIN 170                                                // M·ximo de caracteres por linha de dados adicionais
 /*******************************************************************************************************************************
 DAXIA FIM - AJUSTE PARA N√O ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
-********************************************************************************************************************************/	
+************************************************************* *******************************************************************/	
 
 
 #DEFINE MAXMSG    006                                                // M·ximo de dados adicionais na primeira p·gina
@@ -36,7 +36,7 @@ DAXIA FIM - AJUSTE PARA N√O ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO
 #DEFINE MAXMENL   080                                                // M·ximo de caracteres por linha de dados adicionais
 #DEFINE MAXVALORC 012                                                // M·ximo de caracteres por linha de valores numÈricos
 #DEFINE MAXCODPRD 040                                                // M·ximo de caracteres do codigo de produtos/servicos
-
+#DEFINE MAXITEMP4 010
 /*/
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -3393,7 +3393,11 @@ For nY := 1 To nLenItens
 								oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
 							Else
 								If !Empty(Lotectl)
-									oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									If nxlin == 0
+										oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									Else
+										oDanfe:Say(nLinha-5, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									EndIf
 								EndIf
 							EndIf		
 						EndIf				
@@ -3447,9 +3451,9 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
-		nLinha := nLinha + 12
+		nLinha := nLinha + 10
 	else 
-		nLinha := nLinha + 12
+		nLinha := nLinha + 14
 	endif		
 Next nY 
 
@@ -4250,6 +4254,7 @@ local nPosAdicionais := 0
 DAXIA INICIO - MUDAR FONTE DA MENSAGEM - CICERO CRUZ
 ********************************************************************************************************************************/	
 LOCAL oFntDax := TFontEx():New(oDanfe,"Courier",05,05,.T.,.T.,.F.)// 3
+Local Nw		:= 0
 /*******************************************************************************************************************************
 DAXIA FINAL - MENSAGEM NA NOTA PRIMEIRA LINHA - SEMPRE COM A MESMA MENSAGEM - CICERO CRUZ
 ********************************************************************************************************************************/	

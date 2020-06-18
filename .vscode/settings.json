@@ -147,7 +147,7 @@
             "environment": "producao",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
-            "port": "8001",
+            "port": "8002",
             "user": "totvs.rnovaes",
             "passwordCipher": "jR+aOqkqMj82f5smHx5cRVqAXYeIB9gDPb26efj5SfdcpGSVH9NH5lDnlefEc3nGAAaDPSnQUZbqzd7Zof+dM0Pj=",
             "language": "PORTUGUESE",

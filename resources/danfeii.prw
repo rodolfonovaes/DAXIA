@@ -14,7 +14,7 @@
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
 #DEFINE MAXITEM   009                                                // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 064        
+#DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 022                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  051                                                // Máxima de caracteres por linha de produtos/serviços
@@ -3423,7 +3423,11 @@ For nY := 1 To nLenItens
 								oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
 							Else
 								If !Empty(Lotectl)
-									oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									If nxlin == 0
+										oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									Else
+										oDanfe:Say(nLinha-5, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									EndIf
 								EndIf
 							EndIf		
 						EndIf						
@@ -3477,9 +3481,9 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
-		nLinha := nLinha + 12
+		nLinha := nLinha + 10
 	else 
-		nLinha := nLinha + 12
+		nLinha := nLinha + 14
 	endif		
 Next nY 
 

@@ -485,7 +485,13 @@ If !(cAliasQry)->(Eof())
 
         For nI := 1 to Len(aAux)
             nValor += aAux[nI,5]
-        Next               
+        Next       
+
+        aAux := U_RetG1(cProduto,'SV')
+
+        For nI := 1 to Len(aAux)
+            nValor += aAux[nI,5]
+        Next    		        
 
         SBZ->(DbGoTo((cAliasQry)->BZREC))  
         If !SBZ->BZ_XTIPO $ 'MP|ME|EM|GG|SV'

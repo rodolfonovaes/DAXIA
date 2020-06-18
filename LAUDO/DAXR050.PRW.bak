@@ -189,7 +189,7 @@ ELSEIF  cTipo == "F"
         SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
                         SA1.A1_NOME    AS    NOME, SB1.B1_COD   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
                         SD2.D2_LOTECTL AS    LOTE, SD2.D2_QUANT AS QUANTIDADE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
-                        SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMLOTE AS NUMLOTE
+                        SB8.B8_LOTEFOR AS LOTEFOR
         FROM    %table:SD2% SD2 (NOLOCK),
                 %table:SB1% SB1 (NOLOCK),
                 %table:SA1% SA1 (NOLOCK),
