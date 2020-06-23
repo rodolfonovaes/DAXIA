@@ -139,18 +139,18 @@ User Function CRZMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit, _c
 	//---------------------------------------------------------------------------------------------------------------------
 	//DEFINE O TEMPO DE ESPERA PARA UMA CONEXAO ESTABELECIDA COM O SERVIDOR DE E-MAIL SMTP (SIMPLE MAIL TRANSFER PROTOCOL)
 	If (nTimeout <= 0)
-		//ConOut("[TIMEOUT] DISABLE")
+		ConOut("[TIMEOUT] DISABLE")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG001", FunName(), "", "01", "[TIMEOUT] DISABLE..." , 0, (nStart - Seconds()), {}) 
 	Else
 		//IncProc("[TIMEOUT] ENABLE()")
-		//ConOut("[TIMEOUT] ENABLE()")
+		ConOut("[TIMEOUT] ENABLE()")
 
 		nRet := oMail:SetSmtpTimeOut(nTimeout)
 
 		If nRet != 0
-			//ConOut("[TIMEOUT] Fail to set")
+			ConOut("[TIMEOUT] Fail to set")
 			FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG002", FunName(), "", "01", "[TIMEOUT]  Fail to set " , 0, (nStart - Seconds()), {}) 
-			//ConOut("[TIMEOUT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+			ConOut("[TIMEOUT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 			FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG003", FunName(), "", "01", "[TIMEOUT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) , 0, (nStart - Seconds()), {}) 
 			_cMErro += "[TIMEOUT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
 			oMail:SMTPDisconnect()
@@ -161,66 +161,66 @@ User Function CRZMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit, _c
 	//---------------------------------------------------------------------------------------------------------------------
 	//CONECTA COM O SERVIDOR DE E-MAIL SMTP (SIMPLE MAIL TRANSFER PROTOCOL)
 	//IncProc("[SMTPCONNECT] connecting ...")
-	//ConOut("[SMTPCONNECT] connecting ...")
+	ConOut("[SMTPCONNECT] connecting ...")
 	nRet := oMail:SmtpConnect()
 	If nRet <> 0
-		//ConOut("[SMTPCONNECT] Falha ao conectar")
+		ConOut("[SMTPCONNECT] Falha ao conectar")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG004", FunName(), "", "01", "[SMTPCONNECT] Falha ao conectar" , 0, (nStart - Seconds()), {}) 
 			
-		//ConOut("[SMTPCONNECT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+		ConOut("[SMTPCONNECT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG005", FunName(), "", "01", "[SMTPCONNECT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) , 0, (nStart - Seconds()), {}) 
 			
 		_cMErro += "[SMTPCONNECT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
 		oMail:SMTPDisconnect()
 		Return(.F.)
 	Else
-		//ConOut("[SMTPCONNECT] Sucesso ao conectar")
+		ConOut("[SMTPCONNECT] Sucesso ao conectar")
 	EndIf
 
 	//---------------------------------------------------------------------------------------------------------------------
 	//REALIZA A AUTENTICACAO NO SERVIDOR DE E-MAIL SMTP (SIMPLE MAIL TRANSFER PROTOCOL) PARA ENVIO DE MENSAGENS
 	If lAuth
 		//IncProc("[AUTH] ENABLE")
-		//ConOut("[AUTH] ENABLE")
+		ConOut("[AUTH] ENABLE")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG006", FunName(), "", "01", "[AUTH] ENABLE" , 0, (nStart - Seconds()), {}) 
 		
-		//ConOut("[AUTH] TRY with ACCOUNT() and PASS()")
+		ConOut("[AUTH] TRY with ACCOUNT() and PASS()")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG007", FunName(), "", "01", "[AUTH] TRY with ACCOUNT() and PASS()" , 0, (nStart - Seconds()), {}) 
 		
 		nRet := oMail:SMTPAuth(cEmailA,cPass)
 		If nRet != 0
 			//IncProc("[AUTH] FAIL TRY with ACCOUNT() and PASS()")
-			//ConOut("[AUTH] FAIL TRY with ACCOUNT() and PASS()")
+			ConOut("[AUTH] FAIL TRY with ACCOUNT() and PASS()")
 			FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG008", FunName(), "", "01", "[AUTH] FAIL TRY with ACCOUNT() and PASS()" , 0, (nStart - Seconds()), {}) 
 		
-			//ConOut("[AUTH][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+			ConOut("[AUTH][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 			FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG009", FunName(), "", "01", "[AUTH][ERROR] " + str(nRet,6) + oMail:GetErrorString(nRet) , 0, (nStart - Seconds()), {}) 
 		
-			//ConOut("[AUTH] TRY with USER() and PASS()")
+			ConOut("[AUTH] TRY with USER() and PASS()")
 			FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG010", FunName(), "", "01", "[AUTH] TRY with USER() and PASS()", 0, (nStart - Seconds()), {}) 
 		
 			_cMErro += "[AUTH][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
 			nRet := oMail:SMTPAuth(cEmailA,cPass)
 
 			If nRet != 0
-				//ConOut("[AUTH] FAIL TRY with USER() and PASS()")
+				ConOut("[AUTH] FAIL TRY with USER() and PASS()")
 				FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG011", FunName(), "", "01", "[AUTH] FAIL TRY with USER() and PASS()", 0, (nStart - Seconds()), {}) 
-				//ConOut("[AUTH][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+				ConOut("[AUTH][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 				FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG012", FunName(), "", "01", "[AUTH][ERROR] " + str(nRet,6) + oMail:GetErrorString(nRet), 0, (nStart - Seconds()), {}) 
 				_cMErro += "[AUTH][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
 				oMail:SMTPDisconnect()
 				Return(.F.)
 			Else
 				//IncProc("[AUTH] SUCEEDED TRY with USER() and PASS()")
-				//ConOut("[AUTH] SUCEEDED TRY with USER() and PASS()")
+				ConOut("[AUTH] SUCEEDED TRY with USER() and PASS()")
 			EndIf
 		Else
 			//IncProc("[AUTH] SUCEEDED TRY with ACCOUNT and PASS")
-			//ConOut("[AUTH] SUCEEDED TRY with ACCOUNT and PASS")
+			ConOut("[AUTH] SUCEEDED TRY with ACCOUNT and PASS")
 		EndIf
 	Else
 		//IncProc("[AUTH] DISABLE")
-		//ConOut("[AUTH] DISABLE")
+		ConOut("[AUTH] DISABLE")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG013", FunName(), "", "01", "[AUTH] DISABLE", 0, (nStart - Seconds()), {}) 
 				
 	EndIf
@@ -252,10 +252,10 @@ User Function CRZMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit, _c
 	ConOut("[SEND] Sending ...")
 	nRet := oMessage:Send(oMail)
 	If nRet <> 0
-		//ConOut("[SEND] Fail to send message")
+		ConOut("[SEND] Fail to send message")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG014", FunName(), "", "01", "[SEND] Fail to send message", 0, (nStart - Seconds()), {}) 
 
-		//ConOut("[SEND][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+		ConOut("[SEND][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG015", FunName(), "", "01", "[SEND][ERROR] " + str(nRet,6) + oMail:GetErrorString(nRet), 0, (nStart - Seconds()), {}) 
 
 		_cMErro += "[SEND][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
@@ -263,7 +263,7 @@ User Function CRZMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit, _c
 		Return(.F.)
 	Else
 		//IncProc("[SEND] Success to send message")
-		//ConOut("[SEND] Success to send message")
+		ConOut("[SEND] Success to send message")
 	EndIf
 
 	//---------------------------------------------------------------------------------------------------------------------
@@ -273,16 +273,16 @@ User Function CRZMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit, _c
 	oMail:SMTPDisconnect()
 	If nRet != 0
 		//IncProc("[DISCONNECT] Fail smtp disconnecting ... ")
-		//ConOut("[DISCONNECT] Fail smtp disconnecting ... ")
+		ConOut("[DISCONNECT] Fail smtp disconnecting ... ")
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG016", FunName(), "", "01", "[DISCONNECT] Fail smtp disconnecting ...", 0, (nStart - Seconds()), {}) 
 
-		//ConOut("[DISCONNECT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
+		ConOut("[DISCONNECT][ERROR] " + str(nRet,6) , oMail:GetErrorString(nRet))
 		FwLogMsg("INFO", /*cTransactionId*/, "CRZMAILLOG017", FunName(), "", "01", "[DISCONNECT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) , 0, (nStart - Seconds()), {}) 
 
 		_cMErro += "[DISCONNECT][ERROR] " + str(nRet,6) + " - " + oMail:GetErrorString(nRet) + ENTER
 	Else
 		//IncProc("[DISCONNECT] Success smtp disconnecting ... ")
-		//ConOut("[DISCONNECT] Success smtp disconnecting ... ")
+		ConOut("[DISCONNECT] Success smtp disconnecting ... ")
 	EndIf
 
 Return(.T.)

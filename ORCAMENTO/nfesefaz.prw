@@ -1674,7 +1674,29 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2I.%NotDel% AND
 										SD2I.D2_COD 	= SD2.D2_COD AND
 										SD2I.D2_LOTECTL = SD2.D2_LOTECTL
-									) AS D2_VALIPI																																																								
+									) AS D2_VALIPI,
+								(SELECT SUM(SD2J.D2_BASEICM) FROM SD2010 SD2J
+										WHERE
+										SD2J.D2_FILIAL  = %xFilial:SD2% AND
+										SD2J.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2J.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2J.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2J.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2J.%NotDel% AND
+										SD2J.D2_COD 	= SD2.D2_COD AND
+										SD2J.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASEICM,
+								(SELECT SUM(SD2L.D2_BASEIPI) FROM SD2010 SD2L
+										WHERE
+										SD2L.D2_FILIAL  = %xFilial:SD2% AND
+										SD2L.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2L.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2L.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2L.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2L.%NotDel% AND
+										SD2L.D2_COD 	= SD2.D2_COD AND
+										SD2L.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASEIPI																																																																														
 									%Exp:cField% 																				
 								FROM %Table:SD2% SD2
 								WHERE
@@ -1795,7 +1817,29 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2I.%NotDel% AND
 										SD2I.D2_COD 	= SD2.D2_COD AND
 										SD2I.D2_LOTECTL = SD2.D2_LOTECTL
-									) AS D2_VALIPI																											
+									) AS D2_VALIPI,
+								(SELECT SUM(SD2J.D2_BASEICM) FROM SD2010 SD2J
+										WHERE
+										SD2J.D2_FILIAL  = %xFilial:SD2% AND
+										SD2J.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2J.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2J.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2J.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2J.%NotDel% AND
+										SD2J.D2_COD 	= SD2.D2_COD AND
+										SD2J.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASEICM,
+								(SELECT SUM(SD2L.D2_BASEIPI) FROM SD2010 SD2L
+										WHERE
+										SD2L.D2_FILIAL  = %xFilial:SD2% AND
+										SD2L.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2L.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2L.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2L.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2L.%NotDel% AND
+										SD2L.D2_COD 	= SD2.D2_COD AND
+										SD2L.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASEIPI																																															
 									%Exp:cField% 							
 							FROM %Table:SD2% SD2
 							WHERE
@@ -3265,11 +3309,11 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 													   If(lNfCupZero,SF4->F4_SITTRIB,CD2->CD2_CST),;
 													   CD2->CD2_MODBC,;
 									                   If(lNfCupZero,0,nMargem),;
-													   If(lNfCupZero .Or. lIcmsPR,0,CD2->CD2_BC),;
+													   If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->D2_BASEICM),; //Rodolfo - Base de calculo Aglutinada
 									Iif(cVerAmb == "4.00" .and. FindFunction("xFisRetFCP"), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,xFisRetFCP('4.0','CD2','CD2_ALIQ'),0)), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,CD2->CD2_ALIQ,0))),;
 									If(lNfCupZero .Or. lIcmsPR,0,nValtrib),;
 									0,;
-									CD2->CD2_QTRIB,;
+									(cAliasSD2)->D2_QUANT,; //Rodolfo
 									CD2->CD2_PAUTA,;
 									If(SFT->(ColumnPos("FT_MOTICMS")) > 0,SFT->FT_MOTICMS,""),;
 									SFT->FT_ICMSDIF,;
@@ -3390,8 +3434,8 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										0,;
 										IIf(CD2->(FieldPos("CD2_GRPCST")) > 0 .and. !Empty(CD2->CD2_GRPCST),CD2->CD2_GRPCST,"999"),; //NT2015/002
 										CD2->CD2_CST,;
-										CD2->CD2_BC,;
-										CD2->CD2_QTRIB,;
+										(cAliasSD2)->D2_BASEIPI,; // RODOLFO
+										(cAliasSD2)->D2_QUANT,; //Rodolfo
 										CD2->CD2_PAUTA,;
 										CD2->CD2_ALIQ,;
 										CD2->CD2_VLTRIB,;

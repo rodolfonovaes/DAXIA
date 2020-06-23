@@ -235,6 +235,7 @@ ELSEIF  cTipo == "F"
                         SB8.B8_LOTEFOR , SD2.D2_NUMSEQ ,D2_COD         
     ENDSQL
 ENDIF
+CONOUT("DAXR050-005 ->TIPO " + cTipo)
 CONOUT("DAXR050-005 -> Consulta Executada")
 aLastQuery    := GetLastQuery()
 cLastQuery    := aLastQuery[2]
@@ -278,6 +279,7 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
                 RETURN NIL
             ELSE
                 CONOUT("ERRO: Dados do Lote ("+aCab[8]+") não encontrados!")
+                Conout('QUERY - ' + cLastQuery)
                 RETURN "ERRO: Dados do Lote ("+aCab[8]+") não encontrados!"
             ENDIF
         ENDIF
@@ -342,6 +344,7 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
             Help( ,, "Help",,"Dados do Lote não Encontrados!", 1, 0 ) 
         ELSE
             CONOUT("ERRO: Dados do Lote não Encontrados!")
+            Conout('QUERY - ' + cLastQuery)
             RETURN "ERRO: Dados do Lote não Encontrados!"
         ENDIF
         RETURN NIL
@@ -437,6 +440,9 @@ ELSE // FATURAMENTO USA CONCEITO DE RANGE
                 RETURN NIL
             ELSE
                 CONOUT("ERRO: Dados do Lote ("+aCab[8]+") não encontrados!")
+                If cTipo == 'S'
+                    Conout(cLastQuery)
+                EndIf                           
                 RETURN "ERRO: Dados do Lote ("+aCab[8]+") não encontrados!"
             ENDIF
         ENDIF
@@ -490,7 +496,7 @@ ELSE // FATURAMENTO USA CONCEITO DE RANGE
                 Help( ,, "Help",,"Dados do Lote vazios na Nota Fiscal!", 1, 0 ) 
                 RETURN NIL  
             ELSE
-                CONOUT("ERRO: Dados do Lote vazios na Nota Fiscal!")
+                CONOUT("ERRO: Dados do Lote vazios na Nota Fiscal!")     
                 RETURN "ERRO: Dados do Lote vazios na Nota Fiscal!"
             ENDIF
         ENDIF        

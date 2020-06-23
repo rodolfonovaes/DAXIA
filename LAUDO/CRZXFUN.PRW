@@ -649,7 +649,7 @@ BEGINSQL ALIAS cALIAS
                         WHERE       Z01.%NotDel% )
     GROUP BY	SD2.D2_FILIAL , SD2.D2_DOC    , SD2.D2_SERIE , SD2.D2_EMISSAO , 
                 SD2.D2_LOTECTL  , SA1.A1_COD , SA1.A1_LOJA   , SA1.A1_XMAILLD                         
-    ORDER BY  SD2.D2_FILIAL, SD2.D2_DOC, SD2.D2_SERIE, SD2.D2_ITEM, SD2.D2_EMISSAO, SD2.D2_LOTECTL 
+    ORDER BY  SD2.D2_FILIAL, SD2.D2_DOC, SD2.D2_SERIE, SD2.D2_EMISSAO, SD2.D2_LOTECTL 
 ENDSQL
 
 aLastQuery    := GetLastQuery()
@@ -657,6 +657,7 @@ cLastQuery    := aLastQuery[2]
 MemoWrite( "C:\TEMP\QRY-RtItmNFS.TXT", cLastQuery )
 aDados := {}
 
+Conout("Query - " + GetLastQuery()[2])
 IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
     WHILE !(cALIAS)->(EOF())
         cItem    := RetItem(cALIAS)
@@ -700,6 +701,7 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
 
             // CHAMO A ROTINA DE ENVIO DE E-MAIL CASO NÃO TENHA HAVIDO ERRO NA GERAÇÃO DO LAUDO
             IF !lErro
+                Conout('RtItmNFS - Enviando email  ' + (cALIAS)->NOTA + ' - ' +  (cALIAS)->SERIE + ' - ' +  (cALIAS)->LOTE + ' - ' + cItem )
                 U_CRZMail(						                                cemail, ;
                                                                                     "", ;
                                                       "faturamento.daxia@daxia.com.br", ;
@@ -717,18 +719,27 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 ENDIF
             
             ENDIF
-
-            // REGISTRO O STATUS DO ENVIO  
-            RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
-                Z01_FILIAL  := (cALIAS)->FILIAL
-                Z01_NTFISC  := (cALIAS)->NOTA
-                Z01_SERIE   := (cALIAS)->SERIE
-                Z01_ITEM    := cItem 
-                Z01_DTNOTA  := (cALIAS)->EMISSAO 
-                Z01_DTENVI  := dDatabase
-                Z01_HORA    := TIME()
-                Z01_LOG     := cMsgLog
-            MSUNLOCK() 
+            SD2->(DbSetOrder(3))
+            If SD2->(DbSeek((cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA))
+                While (SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) == (cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA)
+                    Conout('RtItmNFS - cAlias Lote ' + (cAlias)->LOTE + ' SD2->D2_LOTECTL ' + SD2->D2_LOTECTL)
+                    If Alltrim(SD2->D2_LOTECTL) == Alltrim((cAlias)->LOTE)
+                        conout('RtItmNFS - Gravando Z01 ' + (cALIAS)->NOTA + ' - ' + SD2->D2_ITEM )
+                        // REGISTRO O STATUS DO ENVIO  
+                        RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
+                            Z01_FILIAL  := (cALIAS)->FILIAL
+                            Z01_NTFISC  := (cALIAS)->NOTA
+                            Z01_SERIE   := (cALIAS)->SERIE
+                            Z01_ITEM    := SD2->D2_ITEM 
+                            Z01_DTNOTA  := (cALIAS)->EMISSAO 
+                            Z01_DTENVI  := dDatabase
+                            Z01_HORA    := TIME()
+                            Z01_LOG     := cMsgLog
+                        MSUNLOCK() 
+                    EndIf
+                    SD2->(DbSkip())
+                EndDo
+            EndIf
         ELSE
             cMsgLog  := "Log de Envio de Certificados, Lote.: "+ALLTRIM( (cALIAS)->LOTE )+" Nota Fiscal.: "+ALLTRIM( (cALIAS)->NOTA )+"/"+ALLTRIM( (cALIAS)->SERIE )+ " - Item.: "+cItem  + ENTER
             cLote := ALLTRIM( (cALIAS)->LOTE )
@@ -862,19 +873,25 @@ aAdd( aLaudo, { "5-COLIFORMES 45ºC (UFC/g)       ", "0 / 5                      
 
 Static Function RetItem(cAliasQry)
 Local cItem := ''
-
+Conout('RetItem')
 DbSelectArea('SD2')
 SD2->(DbSetOrder(3))
 If SD2->(DbSeek(xFilial('SD2') + (cAliasQry)->(NOTA + SERIE + CLIENTE + LOJA )))
-    If (cAliasQry)->LOTE <> SD2->D2_LOTECTL
+    Conout('Achou' + Alltrim(SD2->D2_LOTECTL) + ' ' + Alltrim((cAliasQry)->LOTE))
+    If Alltrim(SD2->D2_LOTECTL) <> Alltrim((cAliasQry)->LOTE)
+        Conout(' é diferente ')
         While xFilial('SD2') + (cAliasQry)->(NOTA + SERIE + CLIENTE + LOJA ) == SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA)
-            If SD2->D2_LOTECTL == (cAliasQry)->LOTE
+            Conout('While ' + Alltrim(SD2->D2_LOTECTL) + ' ' + Alltrim((cAliasQry)->LOTE))
+            If Alltrim(SD2->D2_LOTECTL) == Alltrim((cAliasQry)->LOTE)
                 cItem := SD2->D2_ITEM
                 Exit
             EndIf
             SD2->(DbSkip())
         EndDo
+    Else
+        Conout(' é igual ')
+        cItem := SD2->D2_ITEM
     EndIF
 EndIf
-
+Conout('Item - ' + cItem)
 Return cItem

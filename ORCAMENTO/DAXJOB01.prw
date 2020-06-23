@@ -494,7 +494,7 @@ If !(cAliasQry)->(Eof())
         Next    		        
 
         SBZ->(DbGoTo((cAliasQry)->BZREC))  
-        If !SBZ->BZ_XTIPO $ 'MP|ME|EM|GG|SV'
+        If !SBZ->BZ_XTIPO $ 'MP|ME|EM|GG|SV|BN'
             Reclock('SBZ',.F.)
             SBZ->BZ_CUSTD := xMoeda(nValor,1,Val(SBZ->BZ_MCUSTD),dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2')) //converto de real para a moeda da SBZ
             MsUnlock()
