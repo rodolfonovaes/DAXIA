@@ -1505,6 +1505,7 @@ Local cLibEst   := ""
 					SC9->(DbGoTo((cAliasSC9)->RECNOSC9))
 					RecLock("SC9",.F.)
 					SC9->C9_BLWMS := "01"
+					SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLWMS
 					SC9->(MsUnlock())
 					(cAliasSC9)->(dbSkip())
 				EndDo
@@ -2173,6 +2174,7 @@ Local cAliasSC9 := ""
 		SC9->(dbGoTo((cAliasSC9)->RECNOSC9))
 		RecLock("SC9",.F.)
 		SC9->C9_BLWMS := "05"
+		SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLWMS
 		SC9->(MsUnlock())
 		(cAliasSC9)->(dbSkip())
 	EndDo

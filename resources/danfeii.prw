@@ -13,7 +13,7 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   010                                                // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   011                                                // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 022                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
@@ -3397,24 +3397,37 @@ For nY := 1 To nLenItens
 		  			DbSelectArea("SD2")
 		  			dbSetOrder(3)	
 					lLote := .T.
-					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]))				
+					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]))
+						Conout	('DANFEII - Entrou no DBSEEK DA SD2')			
+						Conout('DANFEII ' + Type("oDet["+Alltrim(STR(nLenOdet))+"]:_PROD:_RASTRO"))		
 						If Type("oDet["+Alltrim(STR(nLenOdet))+"]:_PROD:_RASTRO") <> 'U'
+							Conout('DANFEII - Achou o oDet["+Alltrim(STR(nLenOdet))+"]:_PROD:_RASTRO"')	
+							Conout('DANFEII - Lote XML : ' + Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT) + ' Lote SD2 ' + Alltrim(SD2->D2_LOTECTL))	
 							If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT)	<>  Alltrim(SD2->D2_LOTECTL)
+								Conout('DANFEII - Vai entrar no while')
 								While xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]) == SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA + D2_COD)
+									Conout('DANFEII - While Lote XML : ' + Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT) + ' Lote SD2 ' + Alltrim(SD2->D2_LOTECTL))	
 									If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT) ==  Alltrim(SD2->D2_LOTECTL)
+										Conout('DANFEII - Setou lLote para verdadeiro')	
 										lLote := .T.
 										Exit
 									Else
+										Conout('DANFEII - Setou lLote para Falso')	
 										lLote := .F.
 									EndIf
 
 									SD2->(DbSkip())
 								EndDo
 							Else
+								Conout('DANFEII - Setou lLote para verdadeiro - Fora do while')
 								lLote := .T.
 							EndIf
 						EndIf
+						If !lLote
+							Conout('DANFEII - Lote = .F.' + SD2->D2_LOTECTL)
+						EndIf
 						If lLote
+							Conout('DANFEII - Lote = .T.' + SD2->D2_LOTECTL)
 							Lotectl := SD2->D2_LOTECTL
 							cFCI := SD2->D2_FCICOD
 							cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
@@ -3449,41 +3462,41 @@ For nY := 1 To nLenItens
 		nLinAnt := nLinha-20
 		nColAnt := aColProd[6][1]
 		
-		nAuxH2 :=  len(aAux[1][7][nY]) + (aColProd[7][1] + ((aColProd[7][2] - aColProd[7][1]) - RetTamTex(aAux[1][7][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 :=  len(aAux[1][7][nY]) + (aColProd[7][1] + ((aColProd[7][2] - aColProd[7][1]) - RetTamTex(aAux[1][7][nY], oFont07:oFont, oDanfe))) //QUANT
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][7][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][8][nY]) + (aColProd[8][1] + ((aColProd[8][2] - aColProd[8][1]) - RetTamTex(aAux[1][8][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][8][nY]) + (aColProd[8][1] + ((aColProd[8][2] - aColProd[8][1]) - RetTamTex(aAux[1][8][nY], oFont07:oFont, oDanfe)))//VLR UNITARIO
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][8][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][9][nY]) + (aColProd[9][1] + ((aColProd[9][2] - aColProd[9][1]) - RetTamTex(aAux[1][9][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][9][nY]) + (aColProd[9][1] + ((aColProd[9][2] - aColProd[9][1]) - RetTamTex(aAux[1][9][nY], oFont07:oFont, oDanfe)))//VLR TOTAL
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][9][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][12][nY]) + (aColProd[10][1] + ((aColProd[10][2] - aColProd[10][1]) - RetTamTex(aAux[1][12][nY], oFont07:oFont, oDanfe)))
-		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][12][nY], oFont07:oFont)
+		nAuxH2 := len(aAux[1][13][nY]) + (aColProd[10][1] + ((aColProd[10][2] - aColProd[10][1]) - RetTamTex(aAux[1][13][nY], oFont07:oFont, oDanfe))) //BC ICMS
+		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][13][nY], oFont07:oFont)
 		
-		nAuxH2 := len(aAux[1][13][nY]) + (aColProd[11][1] + ((aColProd[11][2] - aColProd[11][1]) - RetTamTex(aAux[1][13][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][13][nY]) + (aColProd[11][1] + ((aColProd[11][2] - aColProd[11][1]) - RetTamTex(aAux[1][13][nY], oFont07:oFont, oDanfe)))//VLR ICMS
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][15][nY], oFont07:oFont)
 		//If !Empty(aAux[1][11][nY])
 		//	oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_VICMS:TEXT, oFont07:oFont)
 		//EndIf
 	
-		nAuxH2 := len(aAux[1][17][nY]) + (aColProd[12][1] + ((aColProd[12][2] - aColProd[12][1]) - RetTamTex(aAux[1][17][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][17][nY]) + (aColProd[12][1] + ((aColProd[12][2] - aColProd[12][1]) - RetTamTex(aAux[1][17][nY], oFont07:oFont, oDanfe)))// VLR IPI
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][17][nY], oFont07:oFont)
 		//If !Empty(aAux[1][14][nY])
 	//		oDanfe:Say(nLinha-20, nAuxH2-2, Iif(Empty(oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT),'0,00',oDet[nLenOdet]:_IMPOSTO:_IPI:_IPINT:TEXT), oFont07:oFont)
 	//	EndIf
 		
-		nAuxH2 := len(aAux[1][18][nY]) + (aColProd[13][1] + ((aColProd[13][2] - aColProd[13][1]) - RetTamTex(aAux[1][18][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][18][nY]) + (aColProd[13][1] + ((aColProd[13][2] - aColProd[13][1]) - RetTamTex(aAux[1][18][nY], oFont07:oFont, oDanfe)))// ALIQ ICMS
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][18][nY], oFont07:oFont)
 		//if !Empty(aAux[1][13][nY])
 	//		oDanfe:Say(nLinha-20, nAuxH2-2, oDet[nLenOdet]:_IMPOSTO:_ICMS:_ICMS00:_PICMS:TEXT, oFont07:oFont)
 //		EndIf
 		
-		nAuxH2 := len(aAux[1][19][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][19][nY], oFont07:oFont, oDanfe)))
+		nAuxH2 := len(aAux[1][19][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][19][nY], oFont07:oFont, oDanfe)))//ALIQ IPI
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
-		nLinha := nLinha + 10
+		nLinha := nLinha + 9
 	else 
 		nLinha := nLinha + 14
 	endif		

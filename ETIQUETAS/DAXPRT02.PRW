@@ -123,7 +123,7 @@ Private cModelo  	:= "ZT230"
 	EndIf		
 
 	SG2->(DbSetOrder(1))
-	If lRet .And. !SG2->(DbSeek(xFilial('SG2') + TRBLO->C2_PRODUTO ))
+	If lRet .And. !SG2->(DbSeek(xFilial('SG2') + TRBLO->C2_PRODUTO + TRBLO->C2_ROTEIRO))
 		Alert('Roteiro de Operações não encontrado!')
 		lRet := .F.	
 	EndIf	
@@ -243,9 +243,9 @@ For nY := 1 to VQetiq
 	
 	//B1_CONV E PESO LIQUIDO 
 	If SB1->B1_CONV <> 0 
-		MSCBSay(nLinha,140, Alltrim(Transform(SB1->B1_CONV,"@E 999,999.99")) + ' KG' ,"R","0",cFont2)
+		MSCBSay(nLinha,140, Alltrim(Transform(SB1->B1_CONV,"@E 999,999.99")) + ' ' + Alltrim(SB1->B1_UM) ,"R","0",cFont2)
 	Else 
-		MSCBSay(nLinha,140, Alltrim(Transform(SB1->B1_PESO,"@E 999,999.99")) + ' KG' ,"R","0",cFont2)
+		MSCBSay(nLinha,140, Alltrim(Transform(SB1->B1_PESO,"@E 999,999.99")) + ' ' + Alltrim(SB1->B1_UM) ,"R","0",cFont2)
 	Endif
 	nLinha += nInterval
 	MSCBSay(nLinha,nCol1,'Distribuidor:'	,"R","0",cFont)

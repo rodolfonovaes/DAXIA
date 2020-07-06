@@ -52,6 +52,7 @@ Local aArea     := GetArea()
 Local cQry  	:= ""
 Local cAliasQry	:= GetNextAlias()
 Local lContinua := .F.
+Local cMsg		:= GetMV("ES_MSGMOV")
 
 M->C5_TRANSP    := SCJ->CJ_XTRANSP
 M->C5_XTREDES   := SCJ->CJ_XTREDES
@@ -230,6 +231,19 @@ If ( cAliasQry )->( !Eof() )
 EndIf
 
 ( cAliasQry )->(DbCloseArea())
+
+dbSelectArea("SA1")
+dbSetOrder(1)
+If dbSeek(xFilial("SA1") + SCJ->CJ_CLIENTE + SCJ->CJ_LOJA)
+	If SA1->A1_XSITUA == "2"
+		MsgAlert(cMsg,"Status")
+	Endif            
+	
+	RecLock("SA1",.F.)
+	SA1->A1_XSITUA := "1"
+	msUnlock() 
+Endif
+
 
 RestArea( aArea )
 Return( Nil )

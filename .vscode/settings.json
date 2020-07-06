@@ -180,7 +180,7 @@
         }
     ],
     // Chave de compilação
-    "advpl.debug_multiThread": true,
+    "advpl.debug_multiThread": false,
     "advpl.debug_ignoreSourceNotFound": true,
     "advpl.alpha_compile": true,
     "files.encoding": "windows1252",

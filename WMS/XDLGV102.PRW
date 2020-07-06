@@ -1188,6 +1188,7 @@ Local cAliasSC9 := ""
 					ElseIf SC9->C9_BLWMS == "07"
 						SC9->C9_BLWMS := "03"
 					EndIf
+					SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLWMS
 					SC9->(MsUnlock())
 					(cAliasSC9)->(DbSkip())
 				 EndDo

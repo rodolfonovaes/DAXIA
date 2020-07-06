@@ -2514,6 +2514,7 @@ If SC9->(DbSeek(xFilial('SC9') + DCF->DCF_ID))
 			SC9->C9_SERVIC := cSegSepara
 			SC9->C9_XBLWMS  := SC9->C9_BLWMS
 			SC9->C9_BLWMS  := '01'  
+			SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + '01'
 			//SC9->C9_XLOTECT := SC9->C9_LOTECTL
 			//SC9->C9_LOTECTL := DCF->DCF_LOTECT
 			SC9->C9_XENDPAD := SC9->C9_ENDPAD	

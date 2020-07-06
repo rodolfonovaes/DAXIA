@@ -26,6 +26,7 @@ Private nXTxJurBco := 0
 
 Private _aTitulos  := {}
 Private _nCont	   := 1
+Private nRecSM0		:= SM0->(Recno()) 
 
 If MntPerg()
 	
@@ -117,6 +118,8 @@ If MntPerg()
 	
 EndIf
 
+SM0->(DbGoTo(nRecSM0)) // Tratamento para voltar a filial original
+
 Return Nil
 
 
@@ -153,8 +156,8 @@ cFilter		+= "E1_CLIENTE   >= '" + MV_PAR11 + "' .And. E1_CLIENTE  <='" + MV_PAR1
 cFilter		+= "E1_LOJA      >= '" + MV_PAR13 + "' .And. E1_LOJA     <='" + MV_PAR14 + "' .And. "
 cFilter		+= "DTOS(E1_EMISSAO)>='"+DTOS(MV_PAR15)+"' .And. DTOS(E1_EMISSAO) <= '"+DTOS(MV_PAR16)+"' .And. "
 cFilter		+= 'DTOS(E1_VENCREA)>="'+DTOS(MV_PAR17)+'" .And. DTOS(E1_VENCREA) <= "'+DTOS(MV_PAR18)+'" .And. '
-cFilter		+= "!(E1_TIPO$MVABATIM) "
-cFilter		+= ".AND. ALLTRIM(E1_TIPO) $ 'NF/DP/BOL/MUT/FT' "
+//cFilter		+= "!(E1_TIPO$MVABATIM) "
+cFilter		+= " ALLTRIM(E1_TIPO) $ 'NF/DP/BOL/MUT/FT' "
 //cFilter		+= " .AND. E1_XFORMA = 'BOL' "
 
 If MV_PAR19 == 1  // ReImpressao = SIM

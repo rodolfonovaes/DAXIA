@@ -1035,5 +1035,7 @@ User Function SPRATU18()
 		nRet := StrZero(1205533,8)
 	ElseIf cFilAnt $ "0103"
 		nRet := StrZero(1432442,8)
+	ElseIf cFilAnt $ "0104"
+		nRet := StrZero(1731430,8)		
 	EndIf
 Return nRet

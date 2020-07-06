@@ -134,6 +134,8 @@ Static Function EXECUTA(_oRegua)
 		EndDo*/
 	Endif
 
+	
+
 	If !Empty( mv_par01 )
 		cArqImp    := FCreate( AllTrim( mv_par01 ) )
 
@@ -280,8 +282,8 @@ Static Function EXECUTA(_oRegua)
 		If mv_par03 <= GetMV( "MV_DTCISP" ) .and. mv_par05 == 1
 			MsgStop( "Última remessa de arquivos para a CISP foi em " + DtoC( GetMV( "MV_DTCISP" ) ) +;
 			", portanto, uma nova remessa deverá ser superior a esta data !" )
-			Return
-		EndIf
+			Return 
+		EndIf 
 
 		If mv_par03 > mv_par04
 			MsgStop( "Período de datas inválidos !" )
@@ -647,8 +649,13 @@ Static Function EXECUTA(_oRegua)
 				SZ7->Z7_DATCAD    	:= dDataCad
 				SZ7->Z7_DTULTCO		:= dDataUC
 				SZ7->Z7_VLULTCO		:= Round( nValorUC , 2 )
-				SZ7->Z7_DTMAIAC		:= dDataMA
-				SZ7->Z7_VLMAIAC		:= Round( nValorMA , 2 )
+
+				//Protecao a diversos problemas na rotina, B. Vinicius 21/05
+				If nValorMA >  SZ7->Z7_VLMAIAC
+					SZ7->Z7_VLMAIAC		:= Round( nValorMA , 2 )
+					SZ7->Z7_DTMAIAC		:= dDataMA
+				Endif
+
 				SZ7->Z7_DTPENCO		:= dDataPV
 				SZ7->Z7_VLPENCO		:= Round( nValorPV , 2 )
 			Else
@@ -713,6 +720,18 @@ Static Function EXECUTA(_oRegua)
 					nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
 				EndIf
 			EndIf //COMENTEI - NAO ENTENDI O PQ TA ACUMULANDO O VALOR DE TODOS OS CLIENTES
+
+
+				// ADAPTADO BRUNO, NAO GRAVOU O VALOR ANTERIOR , ENTAO ATUALIZA PARA ASSUMIR O VALOR DO ULTIMO TITULO SE ELE FOR MAIOR
+				If SZ7->Z7_VLULTCO > SZ7->Z7_VLMAIAC
+					If RecLock( "SZ7" , .F. )
+						SZ7->Z7_VLMAIAC :=  SZ7->Z7_VLULTCO
+						SZ7->Z7_DTMAIAC := SZ7->Z7_DTULTCO
+						SZ7->(MsUnlock())
+					Endif 
+					dDataMA		:= SZ7->Z7_DTMAIAC
+					nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
+				Endif 
 
 			dDataMA_Old		:= dDataMA
 			nValorMA_Old	:= Round( nValorMA , 2 )
@@ -958,3 +977,5 @@ Static Function AjustaSX1()
 		EndIf
 	Next nXX
 Return
+
+

@@ -6,9 +6,9 @@ valida se usuario tem privilegio para aprovar pedido de venda com margem negativ
 @since 03/10/2019
 @version 1.0
 @return ${lRet}, ${Deve ser retorna .T.() ou .F.}
-/*/ 
+/*/
 
-User Function MT440AT()  
+User Function MT440AT()
 Local lRet     := .F.
 Local nMargem   := 0
 Local nItens    := 0
@@ -22,65 +22,90 @@ Local nFx4Ini    := Val(Separa(GETMV('ES_LIBFX4'),'|')[1])
 Local nFx4Fim    := Val(Separa(GETMV('ES_LIBFX4'),'|')[2])
 Local aArea      := GetArea()
 Local nRecC5     := SC5->(Recno())
-Local cTesLib  := SuperGetMv('ES_TESLIB',.T.,'')
+Local cTesLib  	 := SuperGetMv('ES_TESLIB',.T.,'')
 Local cOpLib     := SuperGetMv('ES_OPZERPE',.t.,'')
+Local lMarNeg	 := .F.
+Local cItemNeg	 := ""
+Local nFaixa     := 0
+Local nMaxFai	 := 0
 
 If SC5->C5_XTPOPER $ cOpLib
-    RestArea(aArea)
-    Return .T.
+	RestArea(aArea)
+	Return .T.
 EndIf
 
 DbSelectArea('SC6')
 SC6->(DbSetOrder(1))
 If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM ))
-    While SC6->C6_FILIAL + SC6->C6_NUM == SC5->(C5_FILIAL + C5_NUM)
-        nMargem += SC6->C6_XMGBRUT
-        nItens ++
-        If SC6->C6_TES $ cTesLib
-            lRet := .T.
-        EndIf
-        SC6->(DbSkip())
-    EndDo
+	While SC6->C6_FILIAL + SC6->C6_NUM == SC5->(C5_FILIAL + C5_NUM)
+		
+		nMargem := SC6->C6_XMGBRUT
+		
+		If nMargem <= nFx1Ini .And. nMargem >= nFx1Fim
+			nFaixa := 1
+		ElseIf nMargem <= nFx2Ini .And. nMargem >= nFx2Fim
+			nFaixa := 2
+		ElseIf nMargem <= nFx3Ini .And. nMargem >= nFx3Fim
+			nFaixa := 3
+		ElseIf nMargem <= nFx4Ini .And. nMargem >= nFx4Fim
+			nFaixa := 4
+		EndIf
+		
+		If nMargem < 0
+			nFaixa := 4
+		Endif
+		
+		nItens ++
+		If SC6->C6_TES $ cTesLib
+			lRet := .T.
+		EndIf
+		
+		If nFaixa > nMaxFai
+			nMaxFai := nFaixa
+		Endif
+		
+		SC6->(DbSkip())
+	EndDo
 EndIf
 
-nMargem := nMargem / nItens
+//nMargem := nMargem / nItens
 
 DbSelectArea('SZE')
 SZE->(DbSetOrder(1))
 If SZE->(DbSeek(xFilial('SZE') + Alltrim(RetCodUsr())))
-    If SZE->ZE_FAIXA == '1' .And. nMargem <= nFx1Ini .And. nMargem >= nFx1Fim
-        lRet := .T.
-    ElseIf SZE->ZE_FAIXA == '2' .And. nMargem <= nFx2Ini .And. nMargem >= nFx2Fim
-        lRet := .T.
-    ElseIf SZE->ZE_FAIXA == '3' .And. nMargem <= nFx3Ini .And. nMargem >= nFx3Fim
-        lRet := .T.
-    ElseIf SZE->ZE_FAIXA == '4' .And. nMargem <= nFx4Ini .And. nMargem >= nFx4Fim
-        lRet := .T.        
-    EndIf
+	If SZE->ZE_FAIXA == '1' .And. nMaxFai == 1
+		lRet := .T.
+	ElseIf SZE->ZE_FAIXA == '2' .And. nMaxFai <= 2
+		lRet := .T.
+	ElseIf SZE->ZE_FAIXA == '3' .And. nMaxFai <= 3
+		lRet := .T.
+	ElseIf SZE->ZE_FAIXA == '4' .And. nMaxFai <= 4
+		lRet := .T.
+	EndIf
 Else
-    Alert('Usuario não cadastrado na tabela de liberação comercial!')
+	Alert('Usuario não cadastrado na tabela de liberação comercial!')
 EndIf
 
 If SC5->C5_TIPO <> 'N'
-    lRet := .T.
+	lRet := .T.
 EndIf
 
 SC5->(DbGoTo(nRecC5))
 
 SC9->(DbSetOrder(1))
 If SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM))
-    While(xFilial('SC9') + SC5->C5_NUM == SC9->(C9_FILIAL + C9_PEDIDO))
-        If SC9->(FieldPos('C9_XBLMRG')) > 0
-            Reclock('SC9',.F.)
-            SC9->C9_XBLMRG := Iif(lRet,'01','10')
-            MsUnlock()
-        EndIf
-        SC9->(DbSkip())
-    EndDo
+	While(xFilial('SC9') + SC5->C5_NUM == SC9->(C9_FILIAL + C9_PEDIDO))
+		If SC9->(FieldPos('C9_XBLMRG')) > 0
+			Reclock('SC9',.F.)
+			SC9->C9_XBLMRG := Iif(lRet,'01','10')
+			MsUnlock()
+		EndIf
+		SC9->(DbSkip())
+	EndDo
 EndIf
 
-If !lRet .And. SZE->(DbSeek(xFilial('SZE') + Alltrim(RetCodUsr()))) 
-    Alert('Usuario não apto a liberar pedidos com esta margem : ' + Alltrim(STR(nMargem)))
+If !lRet .And. SZE->(DbSeek(xFilial('SZE') + Alltrim(RetCodUsr())))
+	Alert('Usuario não apto a liberar pedidos com esta margem : ' + Alltrim(STR(nMargem)))
 EndIf
 
 RestArea(aArea)

@@ -1696,7 +1696,24 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2L.%NotDel% AND
 										SD2L.D2_COD 	= SD2.D2_COD AND
 										SD2L.D2_LOTECTL = SD2.D2_LOTECTL
-									) AS D2_BASEIPI																																																																														
+									) AS D2_BASEIPI,
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2M ON 
+										SD2M.D2_FILIAL  = %xFilial:SD2% AND
+										SD2M.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2M.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2M.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2M.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2M.D2_DOC		= CD2_DOC AND
+										SD2M.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2M.D2_COD 	= SD2.D2_COD 	AND
+										SD2M.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2M.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2M.D2_ITEM AND
+										CD2.CD2_IMP		= 'ICM'
+									) AS CD2_VLTRIB																																																																																						
 									%Exp:cField% 																				
 								FROM %Table:SD2% SD2
 								WHERE
@@ -1839,7 +1856,24 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2L.%NotDel% AND
 										SD2L.D2_COD 	= SD2.D2_COD AND
 										SD2L.D2_LOTECTL = SD2.D2_LOTECTL
-									) AS D2_BASEIPI																																															
+									) AS D2_BASEIPI	,	
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2M ON 
+										SD2M.D2_FILIAL  = %xFilial:SD2% AND
+										SD2M.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2M.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2M.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2M.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2M.D2_DOC		= CD2_DOC AND
+										SD2M.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2M.D2_COD 	= SD2.D2_COD 	AND
+										SD2M.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2M.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2M.D2_ITEM AND
+										CD2.CD2_IMP		= 'ICM'
+									) AS CD2_VLTRIB																																																							
 									%Exp:cField% 							
 							FROM %Table:SD2% SD2
 							WHERE
@@ -3311,7 +3345,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 									                   If(lNfCupZero,0,nMargem),;
 													   If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->D2_BASEICM),; //Rodolfo - Base de calculo Aglutinada
 									Iif(cVerAmb == "4.00" .and. FindFunction("xFisRetFCP"), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,xFisRetFCP('4.0','CD2','CD2_ALIQ'),0)), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,CD2->CD2_ALIQ,0))),;
-									If(lNfCupZero .Or. lIcmsPR,0,nValtrib),;
+									If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->CD2_VLTRIB),; //RODOLFO
 									0,;
 									(cAliasSD2)->D2_QUANT,; //Rodolfo
 									CD2->CD2_PAUTA,;

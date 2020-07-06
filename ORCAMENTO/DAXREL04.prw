@@ -139,7 +139,7 @@ Static Function ImpRel(oPrint,aRet)
                     SE3.%NotDel%                  
 
             ) AS CRECEB,
-            (SELECT SUM(SE1.E1_SALDO) * AVG((SE1.E1_COMIS1)/100)
+            (SELECT SUM(SE1.E1_SALDO * (SE1.E1_COMIS1/100))
                 FROM %TABLE:SE1% SE1            
                 WHERE
                     SE1.E1_VEND1     = %Exp:aRet[1]% AND
@@ -211,15 +211,15 @@ Static Function ImpRel(oPrint,aRet)
                 nPagina++
             EndIf	
 
-            oPrint:Say(nLinha, 0150        	, DTOC(dDtIni) + ' a ' + DTOC(dDtFim)		                            , oFont10 )
+            oPrint:Say(nLinha, 0150        	+, DTOC(dDtIni) + ' a ' + DTOC(dDtFim)		                            , oFont10 )
             oPrint:Say(nLinha, 0500     	, Transform( (cAliasQry)->FAT ,PesqPict("SF2","F2_VALMERC"))	    , oFont10 )
-            oPrint:Say(nLinha, 0800     	, Transform((cAliasQry)->RECEBIDO /*+ (cAliasQry)->RECEBIDO1*/ ,PesqPict("SF2","F2_VALMERC"))		, oFont10 )
+            oPrint:Say(nLinha, 0850     	, Transform((cAliasQry)->RECEBIDO /*+ (cAliasQry)->RECEBIDO1*/ ,PesqPict("SF2","F2_VALMERC"))		, oFont10 )
             oPrint:Say(nLinha, 1050     	, Transform((cAliasQry)->ATRASO ,PesqPict("SF2","F2_VALMERC"))		    , oFont10 )
-            oPrint:Say(nLinha, 1350     	, Transform((cAliasQry)->COMISSAO ,PesqPict("SF2","F2_VALBRUT"))		, oFont10 )
-            oPrint:Say(nLinha, 1750     	, Transform((((cAliasQry)->CRECEB + (cAliasQry)->CARECEB) / (cAliasQry)->RECEBIDO) * 100  ,"@E 999,999.999")		        , oFont10 )
-            oPrint:Say(nLinha, 2000     	, Transform((cAliasQry)->CRECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
-            oPrint:Say(nLinha, 2300     	, Transform((cAliasQry)->CATRAS + (cAliasQry)->CATRAS1 ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
-            oPrint:Say(nLinha, 2600     	, Transform((cAliasQry)->CARECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+            //oPrint:Say(nLinha, 1350     	, Transform((cAliasQry)->COMISSAO ,PesqPict("SF2","F2_VALBRUT"))		, oFont10 )
+            oPrint:Say(nLinha, 1400     	, Transform((((cAliasQry)->CRECEB + (cAliasQry)->CARECEB) / (cAliasQry)->RECEBIDO) * 100  ,"@E 999,999.999")		        , oFont10 )
+            oPrint:Say(nLinha, 1750     	, Transform((cAliasQry)->CRECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+            oPrint:Say(nLinha, 2050     	, Transform((cAliasQry)->CATRAS + (cAliasQry)->CATRAS1 ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+            oPrint:Say(nLinha, 2500     	, Transform((cAliasQry)->CARECEB ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
 
             nTotFat   += (cAliasQry)->FAT
             nTotRec   += (cAliasQry)->RECEBIDO 
@@ -230,7 +230,7 @@ Static Function ImpRel(oPrint,aRet)
                 nLinCom   ++
            // EndIf
             nTotCRec  += (cAliasQry)->CRECEB
-            nTotCAtr  += (cAliasQry)->CATRAS
+            nTotCAtr  += (cAliasQry)->CATRAS + (cAliasQry)->CATRAS1
             nTotCARec += (cAliasQry)->CARECEB + (cAliasQry)->CATRAS1
             nLinha += 50
             (cAliasQry)->(dbSkip())
@@ -280,11 +280,11 @@ Static Function Cabecalho(oPrint, cAliasQry,aRet)
 	oPrint:Say(0455, 0450, "Titulos com venc no periodo" 	, oFont10)
 	oPrint:Say(0455, 0850, "Vl Liquidado"	    , oFont10)
     oPrint:Say(0455, 1100, "Vl Atraso"	        , oFont10)
-    oPrint:Say(0455, 1350, "Vl Comissão Sem DSR"  , oFont10)
-    oPrint:Say(0455, 1650, "% Medio comissão Sem DSR"	, oFont10)
-    oPrint:Say(0455, 2050, "Comissão Recebida"	, oFont10)
-    oPrint:Say(0455, 2300, "Comissão Atraso"	, oFont10)
-    oPrint:Say(0455, 2600, "Comissão a Receber"	, oFont10)
+    //oPrint:Say(0455, 1350, "Vl Comissão Sem DSR"  , oFont10)
+    oPrint:Say(0455, 1300, "% Medio comissão Sem DSR"	, oFont10)
+    oPrint:Say(0455, 1700, "Com. Recebida s/ DSR"	, oFont10)
+    oPrint:Say(0455, 2050, "Com. Em Atraso s/ DSR"	, oFont10)
+    oPrint:Say(0455, 2450, "Com. A Receber S/ DSR"	, oFont10)
 	
 Return
 
@@ -314,14 +314,14 @@ Static Function trailer(oPrint,nLinha)
     oPrint:Say(nLinha, 0500     	, Transform(nTotFat ,PesqPict("SF2","F2_VALMERC"))	    , oFont10 )
     oPrint:Say(nLinha, 0800     	, Transform(nTotRec ,PesqPict("SF2","F2_VALMERC"))		, oFont10 )
     oPrint:Say(nLinha, 1050     	, Transform(nTotAtr ,PesqPict("SF2","F2_VALMERC"))		    , oFont10 )
-    oPrint:Say(nLinha, 1350     	, Transform(nTotCom ,PesqPict("SF2","F2_VALBRUT"))		, oFont10 )
+  //  oPrint:Say(nLinha, 1350     	, Transform(nTotCom ,PesqPict("SF2","F2_VALBRUT"))		, oFont10 )
     If nLinCom > 0 
    //     oPrint:Say(nLinha, 1750     	, Transform( nTotPCom ,"@E 999,999.999")		        , oFont10 )
     Else
      //   oPrint:Say(nLinha, 1750     	, Transform( 0 ,"@E 999,999.999")		        , oFont10 )
     EndIf
-    oPrint:Say(nLinha, 2000     	, Transform(nTotCRec ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
-    oPrint:Say(nLinha, 2300     	, Transform(nTotCAtr ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
-    oPrint:Say(nLinha, 2600     	, Transform(nTotCARec ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+    oPrint:Say(nLinha, 1750     	, Transform(nTotCRec ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+    oPrint:Say(nLinha, 2050     	, Transform(nTotCAtr ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
+    oPrint:Say(nLinha, 2500     	, Transform(nTotCARec ,PesqPict("SE3","E3_COMIS"))		    , oFont10 )
 
 Return
