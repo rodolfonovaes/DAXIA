@@ -158,7 +158,8 @@ cFilter		+= "DTOS(E1_EMISSAO)>='"+DTOS(MV_PAR15)+"' .And. DTOS(E1_EMISSAO) <= '"
 cFilter		+= 'DTOS(E1_VENCREA)>="'+DTOS(MV_PAR17)+'" .And. DTOS(E1_VENCREA) <= "'+DTOS(MV_PAR18)+'" .And. '
 //cFilter		+= "!(E1_TIPO$MVABATIM) "
 cFilter		+= " ALLTRIM(E1_TIPO) $ 'NF/DP/BOL/MUT/FT' "
-//cFilter		+= " .AND. E1_XFORMA = 'BOL' "
+cFilter		+= " .AND. POSICIONE('SA1',1,xFILIAL('SA1') + E1_CLIENTE + E1_LOJA,'A1_BCO1') == '"+AllTrim(MV_PAR07)+"' "
+cFilter		+= " .AND. POSICIONE('SA1',1,xFILIAL('SA1') + E1_CLIENTE + E1_LOJA,'A1_YBOLETO') == 'S' "
 
 If MV_PAR19 == 1  // ReImpressao = SIM
 	cFilter		+= " .AND. !Empty(E1_NUMBCO) "
@@ -197,8 +198,8 @@ Else
 	
 EndIf
 
-DbSelectArea("SE1")
-Set Filter To ""
+//DbSelectArea("SE1")
+//Set Filter To ""
 
 Return Nil
 

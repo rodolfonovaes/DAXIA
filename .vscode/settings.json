@@ -131,7 +131,7 @@
             "name": "DAXIA__TESTE_INTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "teste",
+            "environment": "RODOLFO",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "18011",
@@ -144,7 +144,7 @@
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "suporte",
+            "environment": "rodolfo",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8002",
@@ -190,5 +190,5 @@
     "advpl.debug_showPrivates": true,
     "advpl.debug_showPublic": true,
     "totvsLanguageServer.welcomePage": false,
-    "advpl.selectedEnvironment": "DAXIA__PROD_INTERNO"
+    "advpl.selectedEnvironment": "DAXIA__EXTERNO"
 }

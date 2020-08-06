@@ -167,6 +167,7 @@ Static Function ProcINI(oProcess)
 	Local aTemp		:= {}
 	Local cSelect	:= ""
 	Local cFrom		:= ""
+	Local cTipoQry	:= ""
 	Private nTipArq   := 1 //Arquivo VA/VR
 	Private cForn410 := {}
 
@@ -217,14 +218,22 @@ Static Function ProcINI(oProcess)
 	EndIf
 
 	If cFilAnt == '0101'
-		If Left(cTiposSel,2) $ '86|87' 
-			nTipArq := 1 //VR
+		If Left(cTiposSel,2) $ '86' //VR
+			cTipoQry	:= "1"
+			nTipArq := 1 
+		ELSEIf Left(cTiposSel,2) $ '87' //VA
+			cTipoQry	:= "2"
+			nTipArq := 1 			
 		ElseIf Left(cTiposSel,2) $ '88' 
 			nTipArq := 2 //VT
 		EndIf
 	ElseIf cFilAnt == '0103'
-		If Left(cTiposSel,2) $ '89|90' 
-			nTipArq := 1 //VR
+		If Left(cTiposSel,2) $ '89' //VR
+			cTipoQry	:= "1"
+			nTipArq := 1 
+		ElseIf Left(cTiposSel,2) $ '90' //VA
+			cTipoQry	:= "2"
+			nTipArq := 1 			
 		ElseIf Left(cTiposSel,2) $ '91' 
 			nTipArq := 2 //VT
 		EndIf
@@ -474,7 +483,7 @@ Static Function ProcINI(oProcess)
 				AND SRA.RA_DEMISSA = ''
 				AND SRA.RA_SITFOLH <> 'D'
 				AND SR0.R0_VALCAL <> 0
-				AND SR0.R0_TPVALE IN ('1','2')
+				AND SR0.R0_TPVALE = %Exp:cTipoQry%
 				AND RFP.RFP_PRODSX <> '007'
 				AND RFP.RFP_FORMSX <> '002'
 				//AND SR0.R0_ANOMES = %Exp:cPeriodo% 
@@ -526,7 +535,7 @@ Static Function ProcINI(oProcess)
 	nSeq    += 1
 	fWrite( nHdl, RHGeraLinhas( aStruct[3] ) )
 
-	TRBSRA->(dbClosearea())
+	//TRBSRA->(dbClosearea())
 
 	nLin += 1	//-Indica que pode imprimir o Relatorio Final
 
@@ -572,6 +581,8 @@ Static Function fImpLis()
 
 	//Processa Impressao
 	RptStatus({|lEnd| fImpNota()},STR0021) //'Imprimindo...'
+
+	
 Return
 
 Static Function fImpNota()
@@ -589,8 +600,8 @@ Static Function fImpNota()
 	Local cFilReg		:= ""
 
 	// Posiciona Regitro
-	dbSelectArea("QD03VB")
-	QD03VB->(DbGoTop())
+	//dbSelectArea("QD03VB")
+	TRBSRA->(DbGoTop())
 
 	//Set Regua
 	SetRegua(0)
@@ -599,25 +610,25 @@ Static Function fImpNota()
 	If nOrd == 2
 		dbSelectArea("CTT")
 		dbSetOrder(1)	//-CTT_FILIAL+CTT_CUSTO
-		dbSeek(xFilial("CTT")+QD03VB->RA_CC,.F.)
+		dbSeek(xFilial("CTT")+TRBSRA->RA_CC,.F.)
 
-		cDet := Space(5) + AllTrim(QD03VB->RA_CC) + " - " + CTT->CTT_DESC01
+		cDet := Space(5) + AllTrim(TRBSRA->RA_CC) + " - " + CTT->CTT_DESC01
 		Impr(cDet,'C')
 	Endif
 
 	//Carrega Filial
 	If lNovoCalc
-		cFilialAnt := QD03VB->RA_FILIAL
+		cFilialAnt := TRBSRA->RA_FILIAL
 	Else
-		cFilialAnt := QD03VB->RG2_FILIAL
+		cFilialAnt := TRBSRA->RG2_FILIAL
 	EndIf
 
-	While !QD03VB->(Eof())
+	While !TRBSRA->(Eof())
 
 		If lNovoCalc
-			cFilReg := QD03VB->RA_FILIAL
+			cFilReg := TRBSRA->RA_FILIAL
 		Else
-			cFilReg := QD03VB->RG2_FILIAL
+			cFilReg := TRBSRA->RG2_FILIAL
 		EndIf
 
 
@@ -629,21 +640,24 @@ Static Function fImpNota()
 		EndIF
 
 		If lNovoCalc
-			nPos := Ascan(aItens,{|x| x[1]==QD03VB->RA_FILIAL+QD03VB->RA_MAT})
+			nVlr := TRBSRA->R0_VLRVALE
+			cDet := TRBSRA->RA_FILIAL + Space(2) + TRBSRA->RA_MAT + Space(2) + TRBSRA->RA_NOME + Space(10) + TRBSRA->R0_TPVALE + Space(9) +Transform(nVlr,'@E 999,999.99')
+			Impr(cDet,'C')		
+		/*	nPos := Ascan(aItens,{|x| x[1]==TRBSRA->RA_FILIAL+TRBSRA->RA_MAT})
 			For nI := 1 To Len(aItens[nPos][2])
 				//	aItens == QD05VB->R0_TPVALE,QD05VB->R0_CODIGO,QD05VB->R0_QDIACAL,QD05VB->R0_VALCAL,
 				//QD05VB->R0_VLRVALE,QD05VB->R0_VLRFUNC,QD05VB->R0_VLREMP,cItemCod,cItemNome
 
 				nVlr := aItens[nPos][2][nI][2]
-				cDet := QD03VB->RA_FILIAL + Space(2) + QD03VB->RA_MAT + Space(2) + QD03VB->RA_NOME + Space(10) + aItens[nPos][2][nI][1] + Space(9) +Transform(nVlr,'@E 999,999.99')
+				cDet := TRBSRA->RA_FILIAL + Space(2) + TRBSRA->RA_MAT + Space(2) + TRBSRA->RA_NOME + Space(10) + aItens[nPos][2][nI][1] + Space(9) +Transform(nVlr,'@E 999,999.99')
 				Impr(cDet,'C')
-			Next nI
+			Next nI*/
 		Else
-			nVlr := QD03VB->RG2_VALCAL
-			cDet := QD03VB->RG2_FILIAL + Space(2) + QD03VB->RG2_MAT + Space(2) + QD03VB->RA_NOME + Space(10) + QD03VB->RG2_TPBEN + Space(9) +Transform(nVlr,'@E 999,999.99')
+			nVlr := TRBSRA->RG2_VALCAL
+			cDet := TRBSRA->RG2_FILIAL + Space(2) + TRBSRA->RG2_MAT + Space(2) + TRBSRA->RA_NOME + Space(10) + TRBSRA->RG2_TPBEN + Space(9) +Transform(nVlr,'@E 999,999.99')
 			Impr(cDet,'C')
 		EndIf
-		QD03VB->(dbSkip())
+		TRBSRA->(dbSkip())
 
 		IncRegua(STR0021)
 
@@ -656,8 +670,8 @@ Static Function fImpNota()
 		nTFlBen  += nVlr
 
 		If nOrd == 2
-			If cCcAnt != QD03VB->RA_CC .Or. cFilialAnt != cFilReg
-				cCcAnt := QD03VB->RA_CC
+			If cCcAnt != TRBSRA->RA_CC .Or. cFilialAnt != cFilReg
+				cCcAnt := TRBSRA->RA_CC
 
 				cDet := STR0022 + Space(10) + Transform(nTccBen,'@E 999,999,999.99') //'Valores Totais Centro de Custo: '
 				Impr(cDet,'C')
@@ -670,12 +684,12 @@ Static Function fImpNota()
 				nTccFunc := 0
 				nTccBen  := 0
 
-				If !QD03VB->(Eof()) .And. cFilialAnt == cFilReg
+				If !TRBSRA->(Eof()) .And. cFilialAnt == cFilReg
 					dbSelectArea("CTT")
 					dbSetOrder(1)	//-CTT_FILIAL+CTT_CUSTO
-					dbSeek(xFilial("CTT")+QD03VB->RA_CC,.F.)
+					dbSeek(xFilial("CTT")+TRBSRA->RA_CC,.F.)
 
-					cDet := Space(5) + AllTrim(QD03VB->RA_CC) + " - " + CTT->CTT_DESC01
+					cDet := Space(5) + AllTrim(TRBSRA->RA_CC) + " - " + CTT->CTT_DESC01
 					Impr(cDet,'C')
 				Endif
 
@@ -701,12 +715,12 @@ Static Function fImpNota()
 			nTFlFunc := 0
 			nTFlBen  := 0
 
-			If !QD03VB->(Eof())
+			If !TRBSRA->(Eof())
 				dbSelectArea("CTT")
 				dbSetOrder(1)	//-CTT_FILIAL+CTT_CUSTO
-				dbSeek(xFilial("CTT")+QD03VB->RA_CC,.F.)
+				dbSeek(xFilial("CTT")+TRBSRA->RA_CC,.F.)
 
-				cDet := Space(5) + AllTrim(QD03VB->RA_CC) + " - " + CTT->CTT_DESC01
+				cDet := Space(5) + AllTrim(TRBSRA->RA_CC) + " - " + CTT->CTT_DESC01
 				Impr(cDet,'C')
 			Endif
 
@@ -732,6 +746,8 @@ Static Function fImpNota()
 	Endif
 
 	MS_FLUSH()
+
+	TRBSRA->(dbClosearea())
 	Return
 
 	//-------------------------------------------------------------------
@@ -958,7 +974,7 @@ End
 
 //         Retorno,Titulo,opcoes,Strin Ret,lin,col, Tipo Sel,tam chave , n. ele ret, Botao
 IF f_Opcoes(@MvPar, STR0017, aItens, MvParDef, 12, 49, .F., 2)  // "Opções"
-	&MvRet := MvPar                                      // Devolve Resultado
+	&MvRet := Strtran(MvPar,'*','')                                      // Devolve Resultado
 EndIF
 
 RestArea(aArea)                                  // Retorna Alias

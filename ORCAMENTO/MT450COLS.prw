@@ -27,7 +27,7 @@ Local nPosPed := aScan(aRet,{|x| AllTrim(x[1])=="Pedido Atual"})
 Local nPosIt  := aScan(aRet,{|x| AllTrim(x[1])=="Item Pedido Atual"})
 
 SC6->(DbSetOrder(1))
-If SC6->(DbSeek(xFilial('SC6') + cPedido))
+If SC6->(DbSeek(xFilial('SC6') + cPedido))  
     While SC6->C6_NUM == cPedido
         If !Empty(SC6->C6_XMOEDA)
             nValor := xMoeda(SC6->C6_VALOR,Val(SC6->C6_XMOEDA),1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
@@ -36,14 +36,18 @@ If SC6->(DbSeek(xFilial('SC6') + cPedido))
             nValor := SC6->C6_VALOR
         EndIf
         If cItem == SC6->C6_ITEM
-            aRet[nPosIt,2] := Transform( nValor, "@E 999,999,999,999.99" )
-            aRet[nPosIt,3] := Transform( nValor, "@E 999,999,999,999.99" )
+            If nPosIt > 0 
+                aRet[nPosIt,2] := Transform( nValor, "@E 999,999,999,999.99" )
+                aRet[nPosIt,3] := Transform( nValor, "@E 999,999,999,999.99" )
+            EndIf
         EndIf
         nTotal += nValor
         SC6->(DbSkip())
     EndDo
-    aRet[nPosPed,2] := Transform( nTotal, "@E 999,999,999,999.99" )
-    aRet[nPosPed,3]  := Transform( nTotal, "@E 999,999,999,999.99" )    
+    If nPosPed > 0        
+        aRet[nPosPed,2] := Transform( nTotal, "@E 999,999,999,999.99" )
+        aRet[nPosPed,3]  := Transform( nTotal, "@E 999,999,999,999.99" )    
+    EndIf
 EndIf
 RestArea(aArea)
 Return aRet

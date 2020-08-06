@@ -130,6 +130,11 @@ AADD(aCampos,{"VUNIT"		    ,"N", 26, 8})
 AADD(aCampos,{"VTOTAL"		    ,"C", 26, 8})
 AADD(aCampos,{"CUSTOEST"		,"N", 26, 8})
 AADD(aCampos,{"CUSTOEFT"		,"N", 26, 8})
+AADD(aCampos,{"CUSTOFIN"   		,"N", 26, 8})
+AADD(aCampos,{"VLRPAGO" 		,"N", 26, 8})
+AADD(aCampos,{"VLRDI"    		,"N", 26, 8})
+AADD(aCampos,{"VARCAMB"   		,"N", 26, 8})
+AADD(aCampos,{"VARUNIT"   		,"N", 26, 8})
 AADD(aCampos,{"VARIACAO"		,"N", 26, 8})
 AADD(aCampos,{"W6_DTRECDO"		,"D", TAMSX3('W6_DTRECDO')[1], 0})
 AADD(aCampos,{"Y5_NOME"		    ,"C", TAMSX3('Y5_NOME')[1], 0})
@@ -197,7 +202,8 @@ cQuery += " ( SELECT TOP 1((SUM(EI2_CIF+EI2_DESPES) / SM2.M2_MOEDA2) / SUM(EI2_Q
 cQuery += " ( SELECT TOP 1 SUM(W7_QTDE) FROM SW7010 SW7A WHERE SW7A.D_E_L_E_T_ = '' AND  W2_PO_NUM = SW7A.W7_PO_NUM AND SW7A.W7_FILIAL = '" + xFilial('SW7') + "'  	 )AS QUANT,
 cQuery += " W7_PRECO AS VUNIT,
 cQuery += " W2_FOB_TOT AS VTOTAL,
-cQuery += " ((SELECT SUM(ZH_VALOR)    FROM SZH010 SZH    WHERE ZH_PO_NUM = SW2.W2_PO_NUM    AND REPLICATE('0',(4 -LEN(ZH_NR_CONT)))+CAST(ZH_NR_CONT AS VARCHAR(4)) = SW7.W7_POSICAO    AND ZH_FILIAL = '" + xFilial('SZH') + "'    AND SZH.D_E_L_E_T_ = ' '    AND ZH_PO_NUM = SW2.W2_PO_NUM	AND ZH_DESPESA IN (SELECT ZH_DESPESA FROM SZH010 WHERE                         SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '101' AND '899'						AND ZH_DESPESA NOT IN (SELECT ZH_DESPESA FROM SZH010 WHERE SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '201' AND '299'						AND ZH_DESPESA NOT IN ('104')))		)/W7_QTDE) AS CUSTOEST " 
+cQuery += " ((SELECT SUM(ZH_VALOR)    FROM SZH010 SZH    WHERE ZH_PO_NUM = SW2.W2_PO_NUM    AND REPLICATE('0',(4 -LEN(ZH_NR_CONT)))+CAST(ZH_NR_CONT AS VARCHAR(4)) = SW7.W7_POSICAO    AND ZH_FILIAL = '" + xFilial('SZH') + "'    AND SZH.D_E_L_E_T_ = ' '    AND ZH_PO_NUM = SW2.W2_PO_NUM	AND ZH_DESPESA IN (SELECT ZH_DESPESA FROM SZH010 WHERE                         SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '101' AND '899'						AND ZH_DESPESA NOT IN (SELECT ZH_DESPESA FROM SZH010 WHERE SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '201' AND '299'						AND ZH_DESPESA NOT IN ('104')))		)/W7_QTDE) AS CUSTOEST ," 
+cQuery += " EI2_HAWB PROCESSO, SUM(EI2_RATEIO) RATEIO, SUM(EI2_FOB_R) VLRDI, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ) VLRPAGO, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ)-SUM(EI2_FOB_R) VARCAMB, SUM(EI2_QUANT) QUANT, (SUM((EI2_FOB_R/EI1_FOB_R) *  E2_VALLIQ)-SUM(EI2_FOB_R))/SUM(EI2_QUANT) VARUNIT"
 cQuery += "  FROM " + RetSqlName("SW2") + " SW2 "
 cQuery += " INNER JOIN "  + RetSqlName("SW6") + " SW6 ON W2_PO_NUM = W6_PO_NUM  "
 cQuery += "  LEFT JOIN "  + RetSqlName("SW9") + " SW9 ON W2_PO_NUM = W9_HAWB AND W9_FILIAL = '" + xFilial('SW9') + "'"
@@ -214,6 +220,9 @@ cQuery += "  INNER JOIN "  + RetSqlName("SW7") + " SW7 ON W2_PO_NUM = W7_PO_NUM 
 cQuery += "  INNER JOIN "  + RetSqlName("SB1") + " SB1 ON W7_COD_I = B1_COD "
 cQuery += "  INNER JOIN "  + RetSqlName("SA2") + " SA2 ON A2_COD = W2_FORN  AND A2_LOJA = W2_FORLOJ "
 cQuery += "  INNER JOIN "  + RetSqlName("SY4") + " SY4 ON Y4_FILIAL = '" + xFilial('SY4') +"' AND Y4_COD = W2_AGENTE AND SY4.D_E_L_E_T_ = ' ' "
+cQuery += "  LEFT JOIN "  + RetSqlName("EI2") + " EI2 ON EI2_FILIAL = '" + xFilial('EI2') +"' AND W2_PO_NUM = EI2_PO_NUM AND EI2_PRODUT = W8_COD_I AND EI2.D_E_L_E_T_ = ' ' "
+cQuery += "  LEFT JOIN "  + RetSqlName("SE2") + " SE2 ON E2_FILIAL = '" + xFilial('SE2') +"' AND SUBSTRING(E2_HIST,4,7) = EI2_HAWB AND SE2.E2_TIPO = 'INV' AND EI2.D_E_L_E_T_ = ' ' "
+cQuery += "  LEFT JOIN "  + RetSqlName("EI1") + " EI1 ON EI1_FILIAL = '" + xFilial('EI1') +"' AND EI1_HAWB = EI2_HAWB AND EI1_DOC = EI2_DOC AND EI1.D_E_L_E_T_='' "
 cQuery += " WHERE "
 cQuery += "   SW2.D_E_L_E_T_ = ''" 
 cQuery += " AND SW6.D_E_L_E_T_ = ''" 
@@ -239,7 +248,7 @@ EndIf
 cQuery += " AND W8_COD_I BETWEEN '" + cProdDe + "' AND '" + cProdAte + "' "
 cQuery += " AND W6_DEST BETWEEN '" + cPortDe + "' AND '" + cPortAte + "' "
 cQuery += " AND A2_PAIS BETWEEN '" + cPaisDe + "' AND '" + cPaisAte + "' "
-cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTRECDO ,W6_DEST , W7_QTDE ,W7_PRECO   "
+cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTRECDO ,W6_DEST , W7_QTDE ,W7_PRECO   ,EI2_HAWB, EI2_POSICA"
 cQuery += " ORDER BY PO ,EMISPO DESC " 
 
 
@@ -308,9 +317,14 @@ While TMPREL->(!EOF())
         TRBREL->VTOTAL       := Alltrim(TRANSFORM(TMPREL->VTOTAL,"@E 999,999,999,999.99"))
         cPoOld := TMPREL->PO
     EndIf    
-    TRBREL->VUNIT    := TMPREL->VUNIT        
+    TRBREL->VLRPAGO     := TMPREL->VLRPAGO        
+    TRBREL->VLRDI       := TMPREL->VLRDI        
+    TRBREL->VARCAMB     := TMPREL->VARCAMB        
+    TRBREL->VARUNIT     := TMPREL->VARUNIT        
+    TRBREL->VUNIT       := TMPREL->VUNIT        
     TRBREL->CUSTOEST    := TMPREL->CUSTOEST + TMPREL->II
     TRBREL->CUSTOEFT    := TMPREL->CUSTOEFT 
+    TRBREL->CUSTOFIN    := TMPREL->CUSTOEFT + TMPREL->VARUNIT
     TRBREL->VARIACAO    := TRBREL->CUSTOEFT - TRBREL->CUSTOEST 
     TRBREL->W6_DTRECDO   := STOD(TMPREL->RECDOCTO)
 
@@ -381,8 +395,13 @@ oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020
 oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))//31
 oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))//32
 oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))//33		
-oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//34		
-oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//35	
+oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,999.99",2,020,0))//34		
+oBrowse:SetColumns(MontaColunas("VLRPAGO"       ,"Valor Pago R$"	,34,"@E 9,999,999.99",2,020,0))//35		
+oBrowse:SetColumns(MontaColunas("VLRDI"         ,"Valor DI"	        ,34,"@E 9,999,999.99",2,020,0))//36		
+oBrowse:SetColumns(MontaColunas("VARCAMB"       ,"Var. Cambial"	    ,34,"@E 9,999,999.99",2,020,0))//37		
+oBrowse:SetColumns(MontaColunas("VARUNIT"       ,"Var  Unitaria"	,34,"@E 9,999,999.99",2,020,0))//38		
+oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//39		
+oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//40	
 oBrowse:Activate()
 
 If !Empty(cArqTrb)
@@ -483,8 +502,13 @@ oFWMsExcel:AddColumn("RESUMO","ITENS","Transito Total",1)       //30
 oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Total",2)          //31
 oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Estimado",2)       //32
 oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Efetivo"	,2)     //33
-oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //34
-oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //35
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Real"	,2)         //34
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Pago R$"	,2)     //35
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor DI R$"	,2)         //36
+oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Cambial"	,2)     //37
+oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Unitaria"	,2)     //38
+oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //39
+oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //40
 
 TRBREL->(DbGoTop()) 		
 While TRBREL->(!Eof())
@@ -522,8 +546,13 @@ While TRBREL->(!Eof())
     TRBREL->VTOTAL          ,;//31
     TRBREL->CUSTOEST        ,;//32
     TRBREL->CUSTOEFT        ,;//33
-    TRBREL->VARIACAO        ,;//34
-    TRBREL->W6_DTRECDO      ; //35
+    TRBREL->CUSTOFIN        ,;//34
+    TRBREL->VLRPAGO         ,;//35
+    TRBREL->VLRDI           ,;//36
+    TRBREL->VARCAMB         ,;//37
+    TRBREL->VARUNIT         ,;//38
+    TRBREL->VARIACAO        ,;//39
+    TRBREL->W6_DTRECDO      ; //40
     })
     TRBREL->(dbSkip())
 EndDo

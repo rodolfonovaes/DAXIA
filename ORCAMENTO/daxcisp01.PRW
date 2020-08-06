@@ -619,7 +619,7 @@ Static Function EXECUTA(_oRegua)
 				nSaldoDia		:= Round( nSaldoDia , 2 ) + Round( EMI->VALOR_FAT , 2 )
 				nSaldoDia		:= Round( nSaldoDia , 2 ) - Round( EMI->VALOR_REC , 2 )
 				//nValorDA		:= Round( nValorDA , 2 ) + Round( EMI->VALOR_FAT , 2 )
-				If Round( nSaldoDia , 2 ) > Round( nValorMA , 2 )
+				If Round( nSaldoDia , 2 ) >= Round( nValorMA , 2 )
 					nValorMA	:= Round( nSaldoDia , 2 )
 					dDataMA		:= EMI->EMISSAO
 				EndIf
@@ -939,7 +939,7 @@ Static Function Limpa()
 		cCampo	:= StrTran( cCampo , cSimb , " " )
 	Next nC
 
-	cCampo	:= AllTrim( cCampo )	
+	cCampo	:= AllTrim( cCampo )
 	Return
 
 	//*----------------------------------------------------------------------------

@@ -932,6 +932,7 @@ If lContinua
 			cQuery += "  AND '" + cCodProd + "' = CFD_COD "
 			cQuery += "  AND D_E_L_E_T_ = ' '"
 			cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+			cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 			TcQuery cQuery new Alias ( cAliasQry )
 
@@ -975,6 +976,7 @@ If lContinua
 		cQuery += "  AND '" + cCodProd + "' = CFD_COD "
 		cQuery += "  AND D_E_L_E_T_ = ' '"
 		cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+		cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 		TcQuery cQuery new Alias ( cAliasQry )
 
@@ -1594,6 +1596,7 @@ If nSuframa > 0 .And. SA1->A1_CALCSUF $ 'S|I'
 		cQuery += "  AND '" + TMP1->CK_PRODUTO + "' = CFD_COD "
 		cQuery += "  AND D_E_L_E_T_ = ' '"
 		cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+		cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 		TcQuery cQuery new Alias ( cAliasQry )
 
@@ -1638,6 +1641,7 @@ ElseIf SB1->B1_ORIGEM $ '3|5'
 	cQuery += "  AND '" + cCodProd + "' = CFD_COD "
 	cQuery += "  AND D_E_L_E_T_ = ' '"
 	cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+	cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 	TcQuery cQuery new Alias ( cAliasQry )
 
@@ -2528,6 +2532,7 @@ While !TMP1->(EOF()) .And. !lSZL
 			cQuery += "  AND '" + TMP1->CK_PRODUTO + "' = CFD_COD "
 			cQuery += "  AND D_E_L_E_T_ = ' '"
 			cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+			cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 			TcQuery cQuery new Alias ( cAliasQry )
 
@@ -2573,6 +2578,7 @@ While !TMP1->(EOF()) .And. !lSZL
 				cQuery += "  AND '" + TMP1->CK_PRODUTO + "' = CFD_COD "
 				cQuery += "  AND D_E_L_E_T_ = ' '"
 				cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+				cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 				TcQuery cQuery new Alias ( cAliasQry )
 
@@ -4128,6 +4134,7 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. !lSZL
 				cQuery += "  AND '" + SC6->C6_PRODUTO + "' = CFD_COD "
 				cQuery += "  AND D_E_L_E_T_ = ' '"
 				cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+				cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 				TcQuery cQuery new Alias ( cAliasQry )
 
@@ -4175,6 +4182,7 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. !lSZL
 					cQuery += "  AND '" + SC6->C6_PRODUTO + "' = CFD_COD "
 					cQuery += "  AND D_E_L_E_T_ = ' '"
 					cQuery += "  GROUP BY CFD_PERVEN, CFD_ORIGEM "
+					cQuery += "  ORDER BY SUBSTRING(CFD_PERVEN,3,4) DESC , SUBSTRING(CFD_PERVEN,1,2) DESC "
 
 					TcQuery cQuery new Alias ( cAliasQry )
 
@@ -5005,3 +5013,6 @@ EndIf
 (cAliasQry)->(DbCloseArea())
 
 Return nQtd
+
+User Function RetLib()
+Return IIF(Posicione('SC5',1,SC9->C9_FILIAL + SC9->C9_PEDIDO,'C5_TIPLIB') == '2','LIBERA TOTAL','LIBERA PARCIAL')

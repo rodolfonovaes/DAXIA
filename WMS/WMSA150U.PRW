@@ -739,6 +739,22 @@ Public	_arrDCF	:= {} // utilizado para mapear a D14 no PE WMSATD14
 			If lAglutinado .And. !lSegSepara
 				If Len(aEndereco) == len(aOrdSerExe)
 					oOrdSerExe:ExecuteDCF()
+					//Gravo o status da liberação do WMS
+					SC9->(DbSetOrder(9))
+					If SC9->(DbSeek(xFilial('SC9') + DCF->DCF_ID  ))
+						While SC9->(C9_FILIAL + C9_IDDCF) == xFilial('SC9')  + DCF->DCF_ID
+							RecLock('SC9',.F.)
+							SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + " Execução de serviço;" + SC9->C9_BLWMS
+							MsUnlock()	
+							SC5->(DbSetOrder(1))
+							If SC5->(DbSeek(xFilial('SC5') + SC9->C9_PEDIDO))
+								RecLock('SC5',.F.)
+								SC5->C5_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLWMS
+								MsUnLock()
+							EndIf
+							SC9->(DbSkip())
+						EndDo
+					EndIf					
 				Else
 					Alert('Não foram encontrados endereços disponivels!')
 				EndIf
@@ -1662,6 +1678,7 @@ If (cAliasQry)->( !Eof() )
 			EndIf
 		EndIf
 	Next
+	//SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + " Estorno de serviço;" + SC9->C9_BLWMS
 	MsUnLock()
 Else
 	lRet := .F.

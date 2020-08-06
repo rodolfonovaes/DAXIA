@@ -24,6 +24,13 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
         DbSelectArea('SC9')
         SC9->(DbSetOrder(01)) //C9_FILIAL+C9_PEDIDO+C9_ITEM+C9_SEQUEN+C9_PRODUTO     
         If SC9->(DbSeek(xFilial('SC9') + SC6->(C6_NUM + C6_ITEM)))
+            
+            Reclock('SC5',.F.)
+            SC5->C5_XBLWMS  := SC9->C9_BLWMS
+            SC5->C5_BLEST   := SC9->C9_BLEST
+            SC5->C5_BLCRED  := SC9->C9_BLCRED
+            MsUnlock()
+
             nQtdAux := 0
             While(xFilial('SC9') + SC6->(C6_NUM + C6_ITEM) == SC9->(C9_FILIAL + C9_PEDIDO + C9_ITEM))
                 nQtdAux += SC9->C9_QTDLIB
@@ -96,6 +103,7 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
     EndDo
 EndIf
 RestArea(aArea)
+
 Return lRet
 
 Static Function LoadPeso()
@@ -107,7 +115,7 @@ DBselectarea('SC9')
 SC9->(DBselectarea(1))
 If SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM ))
     While SC9->(C9_FILIAL + C9_PEDIDO) == xFilial('SC9') + SC5->C5_NUM
-        If  Empty(SC9->C9_BLEST) .And. Empty(SC9->C9_BLCRED)
+        If  Empty(SC9->C9_BLEST) .And. Empty(SC9->C9_BLCRED) .And. !SC9->C9_BLWMS $ '01|02|03'
             SB1->(dbSetOrder(1))
             If SB1->(DbSeek(xFilial('SB1') + SC9->C9_PRODUTO ))
                 nPesBrut += (SC9->C9_QTDLIB * SB1->B1_PESBRU)
@@ -115,6 +123,7 @@ If SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM ))
                 nVolume += IIF(SB1->B1_CONV > 0 ,SC9->C9_QTDLIB / SB1->B1_CONV ,SC9->C9_QTDLIB)
             EndIf    
         EndIf
+
         SC9->(DbSkip())
     EndDo
 EndIf

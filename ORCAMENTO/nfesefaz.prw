@@ -1574,7 +1574,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 								SELECT D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_ITEM,D2_CF,
 								D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
 								D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_ICMSRET,D2_VALPS3,
-								D2_ORIGLAN,D2_VALCF3,D2_VALACRS,D2_PICM,D2_PDV,D2_BRICMSO,D2_ICMRETO,D2_BRICMSD,D2_ICMRETD ,
+								D2_ORIGLAN,D2_VALCF3,D2_VALACRS,D2_PICM,D2_PDV,D2_BRICMSO,D2_ICMRETO,D2_BRICMSD,D2_ICMRETD  ,
 								(SELECT SUM(SD2A.D2_QUANT) FROM SD2010 SD2A 
 										WHERE
 										SD2A.D2_FILIAL  = %xFilial:SD2% AND
@@ -1713,7 +1713,130 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2M.D2_COD 	= CD2_CODPRO 	AND 
 										CD2.CD2_ITEM 	= SD2M.D2_ITEM AND
 										CD2.CD2_IMP		= 'ICM'
-									) AS CD2_VLTRIB																																																																																						
+									) AS VLTRIBICM,
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2N ON 
+										SD2N.D2_FILIAL  = %xFilial:SD2% AND
+										SD2N.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2N.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2N.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2N.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2N.D2_DOC		= CD2_DOC AND
+										SD2N.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2N.D2_COD 	= SD2.D2_COD 	AND
+										SD2N.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2N.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2N.D2_ITEM AND
+										CD2.CD2_IMP		= 'IPI'
+									) AS VLTRIBIPI,	
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2O ON 
+										SD2O.D2_FILIAL  = %xFilial:SD2% AND
+										SD2O.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2O.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2O.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2O.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2O.D2_DOC		= CD2_DOC AND
+										SD2O.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2O.D2_COD 	= SD2.D2_COD 	AND
+										SD2O.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2O.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2O.D2_ITEM AND
+										CD2.CD2_IMP		= 'PS2'
+									) AS VLTRIBPS2,			
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2P ON 
+										SD2P.D2_FILIAL  = %xFilial:SD2% AND
+										SD2P.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2P.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2P.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2P.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2P.D2_DOC		= CD2_DOC AND
+										SD2P.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2P.D2_COD 	= SD2.D2_COD 	AND
+										SD2P.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2P.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2P.D2_ITEM AND
+										CD2.CD2_IMP		= 'CF2'
+									) AS VLTRIBCF2,										
+								(SELECT SUM(F0A_QTDLOT) FROM F0A010 F0A									
+										WHERE
+										F0A.F0A_FILIAL  = %xFilial:F0A% AND
+										F0A.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0A.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0A.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0A.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0A.F0A_COD    	= SD2.D2_COD 		AND
+										F0A.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+									) AS F0A_QTDLOT,
+								(SELECT TOP 1 F0A_LOTE FROM F0A010 F0AB									
+										WHERE
+										F0AB.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AB.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AB.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AB.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AB.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AB.F0A_COD    	= SD2.D2_COD 		AND
+										F0AB.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+									) AS F0A_LOTE,		
+								(SELECT TOP 1 F0A_FABRIC FROM F0A010 F0AC									
+										WHERE
+										F0AC.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AC.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AC.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AC.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AC.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AC.F0A_COD    	= SD2.D2_COD 		AND
+										F0AC.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+									) AS F0A_FABRIC,	
+								(SELECT TOP 1 F0A_VALID FROM F0A010 F0AD									
+										WHERE
+										F0AD.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AD.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AD.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AD.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AD.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AD.F0A_COD    	= SD2.D2_COD 		AND
+										F0AD.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+									) AS F0A_VALID,		
+								(SELECT TOP 1 F0A_CODAGR FROM F0A010 F0AE									
+										WHERE
+										F0AE.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AE.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AE.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AE.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AE.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AE.F0A_COD    	= SD2.D2_COD 		AND
+										F0AE.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+									) AS F0A_CODAGR	,
+								(SELECT SUM(SDMF.D2_BASIMP5) FROM SD2010 SD2M
+										WHERE
+										SD2M.D2_FILIAL  = %xFilial:SD2% AND
+										SD2M.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2M.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2M.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2M.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2M.%NotDel% AND
+										SD2M.D2_COD 	= SD2.D2_COD AND
+										SD2M.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASIMP5,	
+								(SELECT SUM(SD2N.D2_BASIMP5) FROM SD2010 SD2N
+										WHERE
+										SD2N.D2_FILIAL  = %xFilial:SD2% AND
+										SD2N.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2N.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2N.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2N.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2N.%NotDel% AND
+										SD2N.D2_COD 	= SD2.D2_COD AND
+										SD2N.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASIMP6																																																																																																																																																															
 									%Exp:cField% 																				
 								FROM %Table:SD2% SD2
 								WHERE
@@ -1726,7 +1849,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 								GROUP BY D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_CF,
 								D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALISS,D2_PRUNIT,
 								D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_ICMSRET,D2_VALPS3,
-								D2_ORIGLAN,D2_VALCF3,D2_VALACRS,D2_PICM,D2_PDV	%Exp:cField% 									
+								D2_ORIGLAN,D2_VALCF3,D2_VALACRS,D2_PICM,D2_PDV 	%Exp:cField% 									
 								ORDER BY D2_FILIAL,D2_DOC,D2_SERIE,D2_CLIENTE,D2_LOJA,D2_ITEM,D2_COD
 						EndSql
 					Else
@@ -1873,7 +1996,135 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2M.D2_COD 	= CD2_CODPRO 	AND 
 										CD2.CD2_ITEM 	= SD2M.D2_ITEM AND
 										CD2.CD2_IMP		= 'ICM'
-									) AS CD2_VLTRIB																																																							
+									) AS VLTRIBICM,
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2N ON 
+										SD2N.D2_FILIAL  = %xFilial:SD2% AND
+										SD2N.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2N.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2N.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2N.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2N.D2_DOC		= CD2_DOC AND
+										SD2N.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2N.D2_COD 	= SD2.D2_COD 	AND
+										SD2N.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2N.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2N.D2_ITEM AND
+										CD2.CD2_IMP		= 'IPI'
+									) AS VLTRIBIPI,
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2O ON 
+										SD2O.D2_FILIAL  = %xFilial:SD2% AND
+										SD2O.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2O.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2O.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2O.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2O.D2_DOC		= CD2_DOC AND
+										SD2O.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2O.D2_COD 	= SD2.D2_COD 	AND
+										SD2O.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2O.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2O.D2_ITEM AND
+										CD2.CD2_IMP		= 'PS2'
+									) AS VLTRIBPS2,			
+								(SELECT SUM(CD2_VLTRIB) FROM CD2010 CD2
+										INNER JOIN SD2010 SD2P ON 
+										SD2P.D2_FILIAL  = %xFilial:SD2% AND
+										SD2P.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2P.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2P.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2P.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2P.D2_DOC		= CD2_DOC AND
+										SD2P.%NotDel% 										
+										WHERE
+										CD2.%NotDel% AND
+										SD2P.D2_COD 	= SD2.D2_COD 	AND
+										SD2P.D2_LOTECTL = SD2.D2_LOTECTL AND
+										SD2P.D2_COD 	= CD2_CODPRO 	AND 
+										CD2.CD2_ITEM 	= SD2P.D2_ITEM AND
+										CD2.CD2_IMP		= 'CF2'
+									) AS VLTRIBCF2,																
+								(SELECT SUM(F0A_QTDLOT) FROM F0A010 F0A									
+										WHERE
+										F0A.F0A_FILIAL  = %xFilial:F0A% AND
+										F0A.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0A.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0A.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0A.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0A.F0A_COD    	= SD2.D2_COD 		AND
+										F0A.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+										F0A.%NotDel% 	
+									) AS F0A_QTDLOT,
+								(SELECT TOP 1 F0A_LOTE FROM F0A010 F0AB									
+										WHERE
+										F0AB.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AB.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AB.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AB.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AB.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AB.F0A_COD    	= SD2.D2_COD 		AND
+										F0AB.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+										F0AB.%NotDel% 	
+									) AS F0A_LOTE,		
+								(SELECT TOP 1 F0A_FABRIC FROM F0A010 F0AC									
+										WHERE
+										F0AC.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AC.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AC.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AC.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AC.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AC.F0A_COD    	= SD2.D2_COD 		AND
+										F0AC.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+										F0AC.%NotDel% 	
+									) AS F0A_FABRIC,	
+								(SELECT TOP 1 F0A_VALID FROM F0A010 F0AD									
+										WHERE
+										F0AD.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AD.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AD.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AD.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AD.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AD.F0A_COD    	= SD2.D2_COD 		AND
+										F0AD.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+										F0AD.%NotDel% 	
+									) AS F0A_VALID,		
+								(SELECT TOP 1 F0A_CODAGR FROM F0A010 F0AE									
+										WHERE
+										F0AE.F0A_FILIAL  = %xFilial:F0A% AND
+										F0AE.F0A_SERIE   = %Exp:SF2->F2_SERIE% AND
+										F0AE.F0A_DOC     = %Exp:SF2->F2_DOC% AND
+										F0AE.F0A_CLIFOR  = %Exp:SF2->F2_CLIENTE% AND
+										F0AE.F0A_LOJA    = %Exp:SF2->F2_LOJA% AND
+										F0AE.F0A_COD    	= SD2.D2_COD 		AND
+										F0AE.F0A_LOTE   	= SD2.D2_LOTECTL 	AND
+										F0AE.%NotDel% 	
+									) AS F0A_CODAGR	,
+								(SELECT SUM(SD2M.D2_BASIMP5) FROM SD2010 SD2M
+										WHERE
+										SD2M.D2_FILIAL  = %xFilial:SD2% AND
+										SD2M.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2M.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2M.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2M.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2M.%NotDel% AND
+										SD2M.D2_COD 	= SD2.D2_COD AND
+										SD2M.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASIMP5,	
+								(SELECT SUM(SD2N.D2_BASIMP6) FROM SD2010 SD2N
+										WHERE
+										SD2N.D2_FILIAL  = %xFilial:SD2% AND
+										SD2N.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SD2N.D2_DOC     = %Exp:SF2->F2_DOC% AND
+										SD2N.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+										SD2N.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SD2N.%NotDel% AND
+										SD2N.D2_COD 	= SD2.D2_COD AND
+										SD2N.D2_LOTECTL = SD2.D2_LOTECTL
+									) AS D2_BASIMP6																																																																																							
 									%Exp:cField% 							
 							FROM %Table:SD2% SD2
 							WHERE
@@ -3197,12 +3448,13 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 						//쿟ratamento para Rastreamento de Lote - Cabecalho e Itens   
 						//Primeiro busca no compl. de rastreabilidade (F0A) e  depois compl.de medicamento (CD7)                �
 						//읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸	
-						If AliasIndic("F0A") .AND. F0A->(FieldPos("F0A_LOTE")) > 0 .And. !Empty(F0A->F0A_LOTE)
+						//Rodolfo - ajuste para agrupar os itens do rastro
+						If AliasIndic("F0A") .AND. F0A->(FieldPos("F0A_LOTE")) > 0 .And. !Empty((cAliasSD2)->F0A_LOTE)
 							aadd(aLote,{IIf(F0A->(FieldPos("F0A_LOTE")) > 0,F0A->F0A_LOTE,""),;
-							IIf(F0A->(ColumnPos("F0A_QTDLOT")) > 0,F0A->F0A_QTDLOT,""),;
-							IIf(F0A->(ColumnPos("F0A_FABRIC")) > 0,F0A->F0A_FABRIC,""),;
-							IIf(F0A->(ColumnPos("F0A_VALID")) > 0,F0A->F0A_VALID ,""),;  
-							IIf(F0A->(ColumnPos("F0A_CODAGR")) > 0,F0A->F0A_CODAGR ,"")})  
+							IIf(F0A->(ColumnPos("F0A_QTDLOT")) > 0,(cAliasSD2)->F0A_QTDLOT,""),;
+							IIf(F0A->(ColumnPos("F0A_FABRIC")) > 0,STOD((cAliasSD2)->F0A_FABRIC),""),;
+							IIf(F0A->(ColumnPos("F0A_VALID")) > 0,STOD((cAliasSD2)->F0A_VALID) ,""),;  
+							IIf(F0A->(ColumnPos("F0A_CODAGR")) > 0,(cAliasSD2)->F0A_CODAGR ,"")})  
 						ElseIf !Empty(aMed) .And. !Empty(aMed[1][1])
 							aadd(aLote,{CD7->CD7_LOTE,CD7->CD7_QTDLOT,CD7->CD7_FABRIC,CD7->CD7_VALID,""})
 						Else
@@ -3345,7 +3597,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 									                   If(lNfCupZero,0,nMargem),;
 													   If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->D2_BASEICM),; //Rodolfo - Base de calculo Aglutinada
 									Iif(cVerAmb == "4.00" .and. FindFunction("xFisRetFCP"), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,xFisRetFCP('4.0','CD2','CD2_ALIQ'),0)), If(lNfCupZero,0,Iif(CD2->CD2_BC>0,CD2->CD2_ALIQ,0))),;
-									If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->CD2_VLTRIB),; //RODOLFO
+									If(lNfCupZero .Or. lIcmsPR,0,(cAliasSD2)->VLTRIBICM),; //RODOLFO
 									0,;
 									(cAliasSD2)->D2_QUANT,; //Rodolfo
 									CD2->CD2_PAUTA,;
@@ -3472,7 +3724,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										(cAliasSD2)->D2_QUANT,; //Rodolfo
 										CD2->CD2_PAUTA,;
 										CD2->CD2_ALIQ,;
-										CD2->CD2_VLTRIB,;
+										(cAliasSD2)->VLTRIBIPI,;//Rodolfo
 										CD2->CD2_MODBC,;
 										IiF(CD2->CD2_PREDBC>0,IiF(CD2->CD2_PREDBC > 100,0,100-CD2->CD2_PREDBC),CD2->CD2_PREDBC)}
 										nValIPI := CD2->CD2_VLTRIB
@@ -3506,18 +3758,18 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 								EndIf			
 								Case AllTrim(CD2->CD2_IMP) == "PS2"
 									If !lNfCupZero
-										aTail(aPIS) := {CD2->CD2_CST,CD2->CD2_BC,CD2->CD2_ALIQ,CD2->CD2_VLTRIB,CD2->CD2_QTRIB,CD2->CD2_PAUTA}
+										aTail(aPIS) := {CD2->CD2_CST,(cAliasSD2)->D2_BASIMP6,CD2->CD2_ALIQ,(cAliasSD2)->VLTRIBPS2,CD2->CD2_QTRIB,CD2->CD2_PAUTA} //Rodolfo
 										If aAgrPis[Len(aAgrPis)][1]
-											aAgrPis[Len(aAgrPis)][2] := CD2->CD2_VLTRIB
+											aAgrPis[Len(aAgrPis)][2] := (cAliasSD2)->VLTRIBPS2
 										EndIf
 									Else
 										aTail(aPIS) := {SF4->F4_CSTPIS,0,0,0,CD2->CD2_QTRIB,CD2->CD2_PAUTA}								
 									EndIf
 								Case AllTrim(CD2->CD2_IMP) == "CF2"
 									If !lNfCupZero
-										aTail(aCOFINS) := {CD2->CD2_CST,CD2->CD2_BC,CD2->CD2_ALIQ,CD2->CD2_VLTRIB,CD2->CD2_QTRIB,CD2->CD2_PAUTA}
+										aTail(aCOFINS) := {CD2->CD2_CST,(cAliasSD2)->D2_BASIMP5,CD2->CD2_ALIQ,(cAliasSD2)->VLTRIBCF2,CD2->CD2_QTRIB,CD2->CD2_PAUTA} //Rodolfo
 										If aAgrCofins[Len(aAgrCofins)][1]
-											aAgrCofins[Len(aAgrCofins)][2] := CD2->CD2_VLTRIB
+											aAgrCofins[Len(aAgrCofins)][2] := (cAliasSD2)->VLTRIBCF2
 										EndIf
 									Else
 										aTail(aCOFINS) := {SF4->F4_CSTCOF,0,0,0,CD2->CD2_QTRIB,CD2->CD2_PAUTA}

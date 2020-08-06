@@ -13,11 +13,11 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   011                                                // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   014                                                // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
-#DEFINE MAXITEMP3 022                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC  051                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
+#DEFINE MAXITEMC  058                                                // Máxima de caracteres por linha de produtos/serviços
 
 /*******************************************************************************************************************************
 DAXIA INICIO - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
@@ -3330,7 +3330,7 @@ nL:=0
 For nY := 1 To nLenItens
 	nL++
 	If lPag1
-		If nL > MAXITEM .And. nFolha == 2
+		If nL > MAXITEM .And. nFolha == 2 //.And. nL < nLenItens 
 			oDanfe:EndPage()
 			oDanfe:StartPage()
 			nLinha    	:=	181
@@ -3392,8 +3392,12 @@ For nY := 1 To nLenItens
 		  	nxlin:=0
 			ImpProd(oDet,oDanfe,aColProd,nLenOdet,@cProd,@nxlin)
 		  	nXFolha := nFolhas 
+			Conout('DANFE - ANTES DE PERGUNTAR DO MV_PAR04')
+			MemoWrite("C:\TEMP\" + Alltrim(SF2->F2_DOC) + "-" +Alltrim(STR(nLenDet)) + ".txt", VarInfo("oDet[nLenOdet]", oDet[nLenOdet]))			  
+
 		  	//Imprime o Número do Lote abaixo da descrição do produto e FCI quando houver.
-			If MV_PAR04 == 2
+		//	If MV_PAR04 == 2 .Or. IsIncallStack('DISTMAIL')			
+
 		  			DbSelectArea("SD2")
 		  			dbSetOrder(3)	
 					lLote := .T.
@@ -3447,7 +3451,7 @@ For nY := 1 To nLenItens
 							EndIf		
 						EndIf						
 					EndIf
-				EndIf
+			//	EndIf
 
 		  	lLenOdet := .F.
 		  	nP++
@@ -3496,10 +3500,19 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
-		nLinha := nLinha + 9
+		If !Empty(cFCI)
+			nLinha := nLinha + 10
+		Else
+			nLinha := nLinha + 9
+		EndIf
 	else 
-		nLinha := nLinha + 14
-	endif		
+		If !Empty(cFCI)
+			nLinha := nLinha + 16
+		Else
+			nLinha := nLinha + 14
+		EndIf
+		
+	endif			
 Next nY 
 
 If nL <= MAXITEM .And. Len(aMensagem) > MAXMSG .And. nFolha == 2 .And. nLenItens <= MAXMSG

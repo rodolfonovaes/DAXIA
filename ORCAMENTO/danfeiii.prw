@@ -17,7 +17,7 @@
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC  051                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXITEMC  058                                                // Máxima de caracteres por linha de produtos/serviços
 
 /*******************************************************************************************************************************
 DAXIA INICIO - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
@@ -2656,6 +2656,11 @@ If !Empty(cMsgRet)
 	aEval( aMsgRet, {|x| aadd( aResFisco, alltrim(x) ) } )
 endif
         
+//Rodolfo - retiro a ultima linha pontilhada
+aItens := TiraLinha(aItens)
+
+
+
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Calculo do numero de folhas                                             ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -2663,6 +2668,7 @@ nFolhas	  := 1
 nLenItens := Len(aItens) - MAXITEM // Todos os produtos/serviços excluindo a primeira página
 nMsgCompl := Len(aMensagem) - MAXMSG // Todas as mensagens complementares excluindo a primeira página
 lFlag     := .T.
+
 While lFlag
 	// Caso existam produtos/serviços e mensagens complementares a serem escritas
 	If nLenItens > 0 .And. nMsgCompl > 0
@@ -3298,7 +3304,7 @@ nL:=0
 For nY := 1 To nLenItens
 	nL++
 	If lPag1
-		If nL > MAXITEM .And. nFolha == 2
+		If nL > MAXITEM .And. nFolha == 2 .And. nL <= nLenItens
 			oDanfe:EndPage()
 			oDanfe:StartPage()
 			nLinha    	:=	181
@@ -3396,7 +3402,7 @@ For nY := 1 To nLenItens
 									If nxlin == 0
 										oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 									Else
-										oDanfe:Say(nLinha-5, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+										oDanfe:Say(nLinha-4, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 									EndIf
 								EndIf
 							EndIf		
@@ -3451,9 +3457,18 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 	if nxlin == 0
-		nLinha := nLinha + 9
+		If !Empty(cFCI)
+			nLinha := nLinha + 10
+		Else
+			nLinha := nLinha + 9
+		EndIf
 	else 
-		nLinha := nLinha + 14
+		If !Empty(cFCI)
+			nLinha := nLinha + 16
+		Else
+			nLinha := nLinha + 14
+		EndIf
+		
 	endif		
 Next nY 
 
@@ -5128,44 +5143,13 @@ endif
 cProd := aProd[nLenOdet][1]
 Return
 
-//Aglutina os itens que foram quebrados no WMS
-Static Function AglutItens(aItens)
-Local aRetorno  := {}
-Local aItensAux  := {}
-Local nPos		:= 0
-Local nPosAitens:= 0
-Local n			:= 0
-Local nItem		:= 0
+Static Function TiraLinha(aItens)
+Local aRet := {}
+Local n	   := 0
 
-For n := 1 to Len(aItens)
-	if Len(Alltrim(aItens[n][1])) > 2
-		nItem ++
-	EndIf
-
-	DbSelectArea("SD2")
-	dbSetOrder(3)//SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_COD+SD2->D2_ITEM)
-	If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(aItensAux2[n][1],TamSX3('D2_COD')[1])+STRZERO(nItem,TAMSX3("D2_ITEM")[1]))
-		nPos := aScan(aItensAux,{|x| AllTrim(x[1])==Alltrim(SD2->D2_COD + SD2->D2_LOTECTL)})
-		If nPos > 0
-			nPosAitens := aItensAux[nPos][2]
-		Else
-			Aadd(aItensAux,{Alltrim(SD2->D2_COD + SD2->D2_LOTECTL),Len(aItensAux) + 1})
-			nPosAitens := 0
-		EndIf
-	Else
-		nPosAitens := 0
-	EndIf
-	
-	If nPosAitens > 0 .And. Len(Alltrim(aItens[n][1])) > 2
-		aRetorno[nPosAitens][4] 	:=   AllTrim((Val(aRetorno[nPosAitens][4]) 	+ Val(aItens[n][4])))
-		aRetorno[nPosAitens][9] 	:=   AllTrim((Val(aRetorno[nPosAitens][9]) 	+ Val(aItens[n][9])))
-		aRetorno[nPosAitens][11] 	:=   AllTrim((Val(aRetorno[nPosAitens][11]) 	+ Val(aItens[n][11]))) //VLR ICMS
-		aRetorno[nPosAitens][12] 	:=   AllTrim((Val(aRetorno[nPosAitens][12]) 	+ Val(aItens[n][12]))) //Vlr IPI
-		aRetorno[nPosAitens][13] 	:=   AllTrim((Val(aRetorno[nPosAitens][13]) 	+ Val(aItens[n][13]))) //Aliq ICMS
-	Else
-		Aadd(aRetorno,aItens[n])
-	EndIf		
+For n := 1 to Len(aItens) - 1
+	aadd(aRet,aItens[n])
 Next
-Return aRetorno
 
+Return aRet
 

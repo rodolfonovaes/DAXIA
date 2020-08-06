@@ -79,8 +79,8 @@ Local nX			:= 0
 Local dDtVazia		:= Stod(' ')
 Private nPagina		:= 1
 		
-For nX	:= 1 to Len(aSM0)
-	cFilAnt := aSM0[nX][2]
+//For nX	:= 1 to Len(aSM0)
+	//cFilAnt := aSM0[nX][2]
 	nTotal	:= 0
 	BeginSQL Alias cAliasQry
 
@@ -94,42 +94,42 @@ For nX	:= 1 to Len(aSM0)
 				SE1A.E1_NUM  	 = SE3.E3_NUM AND
 				SE1A.E1_TIPO     = SE3.E3_TIPO    
 			) AS TOTPARC
-		FROM %TABLE:SE3% SE3					
+		FROM %TABLE:SE1% SE1					
 		INNER JOIN  %TABLE:SA3% SA3 ON 			
 			SA3.A3_FILIAL   = %Exp:FWxFilial("SA3")% AND 
-			SA3.A3_COD      = SE3.E3_VEND 
+			SA3.A3_COD      = SE1.E1_VEND1 
 		INNER JOIN  %TABLE:SA1% SA1 ON 			
 			SA1.A1_FILIAL   = %Exp:FWxFilial("SA1")% AND 
-			SA1.A1_COD      = SE3.E3_CODCLI AND
-			SA1.A1_LOJA     = SE3.E3_LOJA  AND
+			SA1.A1_COD      = SE1.E1_CLIENTE AND
+			SA1.A1_LOJA     = SE1.E1_LOJA  AND
 			SA1.%NotDel%         
 		LEFT JOIN  %TABLE:SF2% SF2 ON 			
 			SF2.F2_FILIAL   = %Exp:FWxFilial("SF2")% AND 
-			SF2.F2_DOC      = SE3.E3_NUM AND
-			SF2.F2_SERIE    = SE3.E3_SERIE AND
+			SF2.F2_DOC      = SE1.E1_NUM AND
+			SF2.F2_SERIE    = SE1.E1_PREFIXO AND
 			SF2.%NotDel%   
-		INNER JOIN  %TABLE:SE1% SE1 ON 			
+		INNER JOIN  %TABLE:SE3% SE3 ON 			
 			SE1.E1_FILIAL    = %Exp:FWxFilial("SE1")% AND 
 			SE1.E1_NUM       = SE3.E3_NUM AND
 			SE1.E1_PREFIXO   = SE3.E3_PREFIXO AND
 			SE1.E1_PARCELA	 = SE3.E3_PARCELA AND
-			SE1.%NotDel%   			            
+			SE3.%NotDel%   			            
 		WHERE SA3.%NotDel%	AND
-			SE3.E3_DATA     = %Exp:DTOS(dDtVazia)% AND 
-			SE3.E3_VEND     = %Exp:aRet[1]% AND 
-			SE1.E1_VENCREA  >= %Exp:DTOS(aRet[2])% AND 
-            SE1.E1_VENCREA  <= %Exp:DTOS(aRet[3])% AND
-			SE3.%NotDel%
+			SE1.E1_VEND1     = %Exp:aRet[1]% AND 
+			SE3.E3_EMISSAO  >= %Exp:DTOS(aRet[2])% AND 
+            SE3.E3_EMISSAO  <= %Exp:DTOS(aRet[3])% AND
+			SE1.E1_TIPO NOT IN ('NCC','RA') AND
+			SE1.%NotDel%
 	EndSQL
 
 	If !(cAliasQry)->(EOF())
 		lRet:= .T.
 	Else
-		(cAliasQry)->(dbClosearea())
-		Loop
+	//	(cAliasQry)->(dbClosearea())
+	//	Loop
 	EndIf
 
-	Cabecalho(oPrint, cAliasQry,aRet,aSM0[nX][7]) //Imprime Cabeçalho
+	Cabecalho(oPrint, cAliasQry,aRet,FWFilialName()/*aSM0[nX][7]*/) //Imprime Cabeçalho
 	nLinha := 0500
 	While (cAliasQry)->( ! Eof() )
 		//nLinha += 50
@@ -150,13 +150,13 @@ For nX	:= 1 to Len(aSM0)
 		oPrint:Say(nLinha, 0150        	, Alltrim( (cAliasQry)->E3_PEDIDO)	, oFont10 ) //PEDIDO
 		//oPrint:Say(nLinha, 0400        	, DTOC(STOD((cAliasQry)->E3_EMISSAO))		, oFont10 ) //Fechamento
 		If Empty((cAliasQry)->F2_EMISSAO) //Não tem F2- registros importados
-			oPrint:Say(nLinha, 0400     	, DTOC(STOD((cAliasQry)->E3_EMISSAO))	, oFont10 ) //Emissao NF
+			oPrint:Say(nLinha, 0400     	, DTOC(STOD((cAliasQry)->E1_EMISSAO))	, oFont10 ) //Emissao NF
 			If  (cAliasQry)->TOTPARC > 1
 				oPrint:Say(nLinha, 0700     	, (cAliasQry)->E3_NUM + ' - Parc ' + Alltrim( (cAliasQry)->E1_PARCELA) + ' de ' +  Alltrim(STR( (cAliasQry)->TOTPARC))						, oFont10 ) //Num NF
 			Else
 				oPrint:Say(nLinha, 0700     	, (cAliasQry)->E3_NUM						, oFont10 ) //Num NF
 			EndIf
-			oPrint:Say(nLinha, 1070      	, DTOC(STOD((cAliasQry)->E3_EMISSAO))		, oFont10 ) //Data Transação
+			oPrint:Say(nLinha, 1070      	, DTOC(STOD((cAliasQry)->E1_EMISSAO))		, oFont10 ) //Data Transação
 			oPrint:Say(nLinha, 1550     	, Transform( (cAliasQry)->E3_BASE ,PesqPict("SF2","F2_VALMERC"))		, oFont10 ) //Valor Transação
 			oPrint:Say(nLinha, 2000     	, Transform((cAliasQry)->E3_PORC ,PesqPict("SE3","E3_PORC"))		, oFont10 ) //% medio da transação
 			oPrint:Say(nLinha, 2500     	, Transform((cAliasQry)->E3_COMIS ,PesqPict("SE3","E3_COMIS"))		, oFont10 ) //valor comissaão sem DSR		
@@ -183,7 +183,7 @@ For nX	:= 1 to Len(aSM0)
 	(cAliasQry)->(dbClosearea())
 
 	trailer(oPrint,nLinha,nTotal,nTotTrans,nTotValIPI)
-Next
+//Next
 
 cFilAnt := cFilBkp
 

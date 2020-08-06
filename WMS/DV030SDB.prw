@@ -77,12 +77,14 @@ Local lContinua   := .F.
 Private cSequen   := ''
 Private nFatCnv    := 0
 
+Conout('DV030SDB - entrou no gerasegsep - Produto : ' + oMovimento:oMovPrdLot:GetProduto())
 /*-----------------------------------------------------------------+
 | Posicionamento do cadastro DCR - Relac. Mov. Distribuicao        |
 +-----------------------------------------------------------------*/
 DbSelectArea( "DCR" ) // Cadastro Relac. Mov. Distribuicao
 DbSetOrder( 2 ) // DCR_FILIAL + DCR_IDMOV + DCR_IDOPER + DCR_IDORI + DCR_IDDCF
 If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpera() ) ) 
+   Conout('DV030SDB - Achou DCR')
    While  ( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpera() ) == xFilial('DCR') + DCR->(DCR_IDMOV + DCR_IDOPER) 
       cQuery := "SELECT R_E_C_N_O_ AS REC"
       cQuery += "  FROM " + RetSQLTab('SC9') 
@@ -195,12 +197,13 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                EndIf
                TcQuery cQuery new Alias ( cAliasSZG )   
                While !(cAliasSZG)->(EOF())       
-                  
+                  Conout('DV030SDB - entrou no while da SZG')
                   //SE ACHAR , TRAZER O SZG->ZG_LOCALIZ
                   SBE->(DbSetOrder(1))
                   If SBE->(DbSeek(xFilial('SBE') + (cAliasSZG)->ZG_LOCAL + (cAliasSZG)->ZG_LOCALIZ))
                       If  SBE->BE_CODZON == cCodZon
                            If SZG->ZG_SALDO >= (oMovimento:GetQtdMov() * nPesoLiq)
+                              Conout('DV030SDB - vai chamar o grava DCF')
                               aAdd( _aSeparaca, { DCF->DCF_FILIAL, DCF->DCF_LOCAL, (cAliasSZG)->ZG_LOCALIZ, cCateg, DCF->DCF_CODPRO, ( oMovimento:GetQtdMov() * nPesoLiq ), oMovimento:oMovPrdLot:GetLoteCtl(), DCF->DCF_CLIFOR, DCF->DCF_LOJA, cCdEstFis, DCF->DCF_DOCTO, DCF->DCF_ENDDES } ) 
                               GravaDCF()
                               SZG->(DbGoTo((cAliasSZG)->R_E_C_N_O_))
@@ -229,6 +232,7 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                   If SBE->( DbSeek( xFilial( "SBE" ) + "000002" + "000010" + cCodZon + "1" + DCF->DCF_LOCAL ) )
                      Do While SBE->( BE_FILIAL + BE_ESTFIS + BE_CODCFG + BE_CODZON + BE_STATUS + BE_LOCAL ) == xFilial( "SBE" ) + "000002" + "000010" + cCodZon + "1" + DCF->DCF_LOCAL .and. .not. SBE->( EoF() )
                         nNorma   := SBE->BE_CAPACID
+                        Conout('DV030SDB - entrou no while da SBE')
                         /*----------------------------------------------------------------------+
                         | Trecho que verifica a capacidade da norma no endereco a possibilidade |
                         | de armazenar no endereco e de acordo com a categoria.                 | 
@@ -237,7 +241,8 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                         If EndUsado(SBE->BE_LOCAL, SBE->BE_LOCALIZ , DCF->DCF_CODPRO , DCF->DCF_DOCTO, nNorma, oMovimento:GetQtdMov() * nPesoLiq) 
                               SBE->( DbSkiP() ) // Avanca para buscar o proximo endereco com capacidade disponivel
                            Loop
-                        EndIf                       
+                        EndIf             
+                        Conout('DV030SDB - vai chamar gravadcf')          
                         aAdd( _aSeparaca, { DCF->DCF_FILIAL, DCF->DCF_LOCAL, SBE->BE_LOCALIZ, cCateg, DCF->DCF_CODPRO, ( oMovimento:GetQtdMov() * nPesoLiq ), oMovimento:oMovPrdLot:GetLoteCtl(), DCF->DCF_CLIFOR, DCF->DCF_LOJA, cCdEstFis, DCF->DCF_DOCTO, DCF->DCF_ENDDES } ) 
                         GravaDCF()
 
@@ -282,6 +287,7 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                      /*--------------------------------------------------+
                      | Nao encontrou endereco disponivel para armazenar. |
                      +--------------------------------------------------*/
+                     Conout('DV030SDB - Else do SBE , não encontrou endereco disponivel')
                      DbSelectArea( "SBE" )
                      DbSetOrder( 5 ) // BE_FILIAL + BE_CODCFG
                      If DbSeek( xFilial( "SBE" ) + AllTrim( SuperGetMV( "ES_CODCFG", .F., "000009", cFilAnt ) ) )
@@ -299,11 +305,13 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                         /*----------------------------------------------------------+
                         | Realiza a gravacao do DCF pela funcao estatica GravaDCF() |
                         +----------------------------------------------------------*/
+                        Conout('DV030SDB - vai chamar grava dcf')
                         GravaDCF()
 
                      EndIf
                   EndIf
                Else
+                  Conout('DV030SDB - entrou no outro else da SBE')
                   DbSelectArea( "SBE" ) // Cadastro de Enderecos
                   DbSetOrder( 5 ) // BE_FILIAL + BE_CODCFG
                   If DbSeek( xFilial( "SBE" ) + AllTrim( SuperGetMV( "ES_CODCFG", .F., "000009", cFilAnt ) ) )
@@ -321,6 +329,7 @@ If DCR->( DbSeek( xFilial('DCR') +oMovimento:GetIdMovto()  + oMovimento:GetIdOpe
                      /*----------------------------------------------------------+
                      | Realiza a gravacao do DCF pela funcao estatica GravaDCF() |
                      +----------------------------------------------------------*/
+                     Conout('DV030SDB - vai chamar o grava dcf')
                      GravaDCF()
 
                   EndIf
@@ -373,7 +382,7 @@ Local cIdDCF   := ''
 Local aCampos    := 0 
 Local bCampo     := {|x| FieldName(x)}
 Local nCountA    := 0
-
+Conout('DV030SDB - Entrou no grava dcf')
 //ler e excluir a c9 , criar uma nova
 If Empty(cSequen)
    cSequen := RetSeq(SC9->C9_PEDIDO)
@@ -402,11 +411,12 @@ next
 
 //gravo backup da SC9
 GravaSZZ(cIdDCF)
-
+Conout('DV030SDB - Gravou SZZ')
 //Apago o registro da primeira separação
 RecLock('SC9',.F.)
 SC9->(DbDelete())
 MsUnlock()
+Conout('DV030SDB - Excluiu SC9 da primeira separação')
 
 Reclock('SC9',.T.)
 For nCountA := 1 To SC9->(FCount())
@@ -414,7 +424,7 @@ For nCountA := 1 To SC9->(FCount())
 Next
 SC9->C9_XLOGWMS := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLWMS
 MsUnlock() 
-
+Conout('DV030SDB - Gravou SC9 da segunda separacao')
 aCampos := {}
 for nCountA := 1 to DCF->(Fcount())
       If DCF->(Eval(bCampo, nCountA)) $ 'DCF_SERVIC'
@@ -447,7 +457,7 @@ For nCountA := 1 To DCF->(FCount())
    DCF->(FieldPut(nCountA,aCampos[nCountA]))
 Next
 MsUnlock()
-
+Conout('DV030SDB - Gravou DCF da segunda separacao')
 
 SC6->(DbSetOrder(1))
 If SC6->(DbSeek(xFilial('SC6') + PADR(DCF->DCF_DOCTO,TamSX3('C6_NUM')[1]) + PADR(DCF->DCF_SERIE,TamSX3('C6_ITEM')[1]) + PADR(DCF->DCF_CODPRO,TamSX3('C6_PRODUTO')[1])))

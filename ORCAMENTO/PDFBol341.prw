@@ -408,7 +408,7 @@ Static Function GetBolDado(aItens, aLog, nTipoCart)
 	//SM0->(dbGoBottom())
 	
 	cCedentNom := SM0->M0_NOMECOM
-	cCedentCNP := SM0->M0_CGC
+	cCedentCNP := '74581091000132' //SM0->M0_CGC CHUMBADO O CNPJ DO TATUAPÉ a pedido da daxia
 	cCedentEnd := SM0->M0_ENDCOB
 	cCedentBai := SM0->M0_BAIRCOB
 	cCedentMun := SM0->M0_CIDCOB
