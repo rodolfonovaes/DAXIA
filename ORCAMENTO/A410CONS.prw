@@ -543,7 +543,7 @@ Else
 		cSerie   	:= ( cAliasSB8 )->B8_SERIE
 		cFornece 	:= ( cAliasSB8 )->B8_CLIFOR
 		cLoja    	:= ( cAliasSB8 )->B8_LOJA
-        cFabric 	:= ( cAliasSB8 )->A2_NOME
+        cFabric 	:= ( cAliasSB8 )->B8_NFABRIC
         cPais   	:= ( cAliasSB8 )->B8_XPAISOR
 
 		lAdd	  :=.F.

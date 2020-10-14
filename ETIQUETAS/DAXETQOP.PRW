@@ -169,7 +169,7 @@ Static Function MenuDefOp()
 	Local aRotina1  := {}
 	
 	AADD(aRotina1,  {"Etiqueta por OP"		, "U_DAXPRT02()"	, 0, 6, 0, Nil })
-	AADD(aRotina,   {"Pesquisar"			, "PesqBrw"			, 0, 1, 0, .T. })
+	//AADD(aRotina,   {"Pesquisar"			, "PesqBrw"			, 0, 1, 0, .T. })
 	AADD(aRotina,   {"Imprimir" 			, aRotina1          , 0, 4, 0, Nil })
 	
 Return( aRotina )

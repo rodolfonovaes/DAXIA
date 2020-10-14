@@ -5016,3 +5016,15 @@ Return nQtd
 
 User Function RetLib()
 Return IIF(Posicione('SC5',1,SC9->C9_FILIAL + SC9->C9_PEDIDO,'C5_TIPLIB') == '2','LIBERA TOTAL','LIBERA PARCIAL')
+
+User Function AXCADZZA()
+AxCadastro('ZZA','Tipos de Perigo')
+Return
+
+User Function AXCADZZB()
+AxCadastro('ZZB','Tipos de Indicadores')
+Return
+
+User Function AXCADZZC()
+AxCadastro('ZZC','Indicadores x Meses')
+Return

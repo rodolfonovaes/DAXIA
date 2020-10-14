@@ -13,7 +13,7 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   014                                                // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   013                                                // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
@@ -36,7 +36,7 @@ DAXIA FIM - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO
 #DEFINE MAXMENL   080                                                // Máximo de caracteres por linha de dados adicionais
 #DEFINE MAXVALORC 012                                                // Máximo de caracteres por linha de valores numéricos
 #DEFINE MAXCODPRD 040                                                // Máximo de caracteres do codigo de produtos/servicos
-
+#DEFINE MAXITEMP4 010
 /*/
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -1145,7 +1145,7 @@ Local cFCI			:= ""
 lOCAL cMsgPad 		:= ""
 
 Local nPos2			 := 0
-
+Local nAjuste		:= 0
 
 Default cDtHrRecCab := ""
 Default dDtReceb    := CToD("")
@@ -2687,7 +2687,11 @@ If !Empty(cMsgRet)
 	aMsgRet := StrTokArr( cMsgRet, "|")
 	aEval( aMsgRet, {|x| aadd( aResFisco, alltrim(x) ) } )
 endif
-        
+
+
+//Rodolfo - retiro a ultima linha pontilhada
+aItens := TiraLinha(aItens)
+
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Calculo do numero de folhas                                             ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -3330,7 +3334,7 @@ nL:=0
 For nY := 1 To nLenItens
 	nL++
 	If lPag1
-		If nL > MAXITEM .And. nFolha == 2 //.And. nL < nLenItens 
+		If nL > MAXITEM .And. nFolha == 2 .And. nL <= nLenItens 
 			oDanfe:EndPage()
 			oDanfe:StartPage()
 			nLinha    	:=	181
@@ -3382,7 +3386,11 @@ For nY := 1 To nLenItens
 	EndIf
 	
 	If aAux[1][1][nY] == "-"
-		oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		If nLenOdet == 1
+			oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		Else
+			oDanfe:Say(nLinha-25 - 5, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		EndIf
 		lLenOdet := .T.
 	Else
 		 
@@ -3431,21 +3439,32 @@ For nY := 1 To nLenItens
 							Conout('DANFEII - Lote = .F.' + SD2->D2_LOTECTL)
 						EndIf
 						If lLote
+							If nLenOdet == 1
+								nAjuste	:= 0
+							Else
+								nAjuste := 8
+							EndIf						
 							Conout('DANFEII - Lote = .T.' + SD2->D2_LOTECTL)
 							Lotectl := SD2->D2_LOTECTL
 							cFCI := SD2->D2_FCICOD
 							cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
 							
 							If !Empty(cFCI)
-								oDanfe:Say(nLinha-nAjustaPro-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-								oDanfe:Say(nLinha+nAjustaPro+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
-								oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								If nxlin == 0
+									oDanfe:Say(nLinha-nAjustaPro-12 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro - 3 - nAjuste, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 6 - nAjuste, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								Else							
+									oDanfe:Say(nLinha-nAjustaPro-7 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 2 - nAjuste, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 11 - nAjuste, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								EndIf
 							Else
 								If !Empty(Lotectl)
 									If nxlin == 0
-										oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+										oDanfe:Say(nLinha-10 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 									Else
-										oDanfe:Say(nLinha-5, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+										oDanfe:Say(nLinha-5 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 									EndIf
 								EndIf
 							EndIf		
@@ -3501,7 +3520,7 @@ For nY := 1 To nLenItens
 	EndIf	
 	if nxlin == 0
 		If !Empty(cFCI)
-			nLinha := nLinha + 10
+			nLinha := nLinha + 9
 		Else
 			nLinha := nLinha + 9
 		EndIf
@@ -3510,9 +3529,14 @@ For nY := 1 To nLenItens
 			nLinha := nLinha + 16
 		Else
 			nLinha := nLinha + 14
-		EndIf
-		
-	endif			
+		EndIf		
+	endif	
+
+	// Rodolfo - Tratamento para não imprimir a segunda folha em branco
+	If nL >= nLenItens - 4 .And. lPag1 .And. nFolhas > 1
+		nL := 99
+	EndIf
+			
 Next nY 
 
 If nL <= MAXITEM .And. Len(aMensagem) > MAXMSG .And. nFolha == 2 .And. nLenItens <= MAXMSG
@@ -5823,11 +5847,30 @@ For nX := 1 To nLenDet
 	Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
 Next
 
-oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
-oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
-if len(aDesc[nLenOdet][1])>MAXITEMC
-	oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
-	nxlin := 7
-endif	
+If nLenOdet == 1
+	oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+	oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
+	if len(aDesc[nLenOdet][1])>MAXITEMC
+		oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
+		nxlin := 7
+	endif
+Else
+	oDanfe:Say(nLinha-27, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+	oDanfe:Say(nLinha-27, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
+	if len(aDesc[nLenOdet][1])>MAXITEMC
+		oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
+		nxlin := 7
+	endif
+EndIf
 cProd := aProd[nLenOdet][1]
 Return
+
+Static Function TiraLinha(aItens)
+Local aRet := {}
+Local n	   := 0
+
+For n := 1 to Len(aItens) - 1
+	aadd(aRet,aItens[n])
+Next
+
+Return aRet

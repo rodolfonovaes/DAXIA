@@ -71,10 +71,10 @@ Static Function fMSNewGetDados1()
 //------------------------------------------------ 
   Local nX
   Local aFieldFill := {}
-  Local aFields := {"CJ_NUM","CJ_EMISSAO","CK_NUMPV","D2_DOC","CK_PRODUTO","CK_DESCRI","CK_QTDVEN","CK_UM","Preço em Dólar","Preço em Real","CK_VALOR","CK_XMOTIVO","CK_XDSCMOT","CK_XJUSTIF"}
+  Local aFields := {"CJ_NUM","CJ_EMISSAO","CK_NUMPV","D2_DOC","F2_EMISSAO","CK_PRODUTO","CK_DESCRI","CK_QTDVEN","CK_UM","Preço em Dólar","Preço em Real","CK_VALOR","CK_XMOTIVO","CK_XDSCMOT","CK_XJUSTIF"}
 //Local aFields := {"CJ_NUM","CK_NUMPV",/*"N. NF"*/,"CK_PRODUTO","CK_DESCRI","CK_QTDVEN","CK_UM",/*"Preco Neg","Moeda",*/"CK_VALOR"/* ,"Status ","Justificativa"*/}
   Local aAlterFields := {}
-
+  Local ctitulo := ''
   aHeadOrc := {}
   aColsOrc := {}
 
@@ -83,7 +83,12 @@ Static Function fMSNewGetDados1()
   SX3->(DbSetOrder(2))
   For nX := 1 to Len(aFields)
     If SX3->(DbSeek(aFields[nX]))
-      Aadd(aHeadOrc, {AllTrim(X3Titulo()),SX3->X3_CAMPO,SX3->X3_PICTURE,SX3->X3_TAMANHO,SX3->X3_DECIMAL,SX3->X3_VALID,;
+      If aFields[nX] == "F2_EMISSAO"
+        cTitulo := 'Dt Faturamento'
+      Else
+        cTitulo := AllTrim(X3Titulo())
+      EndIf
+      Aadd(aHeadOrc, {cTitulo,SX3->X3_CAMPO,SX3->X3_PICTURE,SX3->X3_TAMANHO,SX3->X3_DECIMAL,SX3->X3_VALID,;
         SX3->X3_USADO,SX3->X3_TIPO,SX3->X3_F3,SX3->X3_CONTEXT,SX3->X3_CBOX,SX3->X3_RELACAO})
     Elseif aFields[nX] == "Preço em Real"
       Aadd(aHeadOrc, {aFields[nX],"VLREAL",PesqPict("SCK","CK_PRCVEN"),TamSx3("CK_PRCVEN")[1],TamSx3("CK_PRCVEN")[2],".T.",;
@@ -249,6 +254,14 @@ Static Function LoadaCols()
 
       Elseif Alltrim(aHeadOrc[nCont][2]) == "CK_VALOR" .And. (cAliasQry)->CK_MOEDA == "2"
           aColsOrc[Len(aColsOrc)][nCont] :=  (cAliasQry)->CK_VALOR * nValConv
+      Elseif Alltrim(aHeadOrc[nCont][2]) == "F2_EMISSAO"   
+          If Empty(cNF)
+              aColsOrc[Len(aColsOrc)][nCont] := STOD('')
+          Else
+              SF2->(dbSetOrder(1))
+              SF2->(dbSeek(FWxFilial("SF2")+cNF))          
+              aColsOrc[Len(aColsOrc)][nCont] := SF2->F2_EMISSAO
+          EndIf             
       Else
         aColsOrc[Len(aColsOrc)][nCont] :=  (cAliasQry)->&(aHeadOrc[nCont][2])
       Endif

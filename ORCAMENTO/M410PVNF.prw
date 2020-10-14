@@ -131,6 +131,6 @@ Reclock('SC5',.F.)
 SC5->C5_PESOL     := nPesLiq
 SC5->C5_PBRUTO    := nPesBrut
 SC5->C5_VOLUME1   := nVolume
-SC5->C5_ESPECI1   := 'VOLUMES'
+//SC5->C5_ESPECI1   := 'VOLUMES'
 MsUnlock()
 Return

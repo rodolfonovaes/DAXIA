@@ -16,6 +16,7 @@ Local aArea  := GetArea()
 Local aLeg   := ParamIXB
 
 aAdd( aLeg, { "BR_VIOLETA" , "*Orcamento Perdido"  } ) // Orcamento Perdido
+aAdd( aLeg, { "BR_CINZA"   , "*Perda por eliminação de residuos"  } ) // Perda por eliminação de residuos
 
 RestArea( aArea )
 Return( aLeg )

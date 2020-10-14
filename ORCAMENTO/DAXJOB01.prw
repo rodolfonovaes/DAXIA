@@ -68,7 +68,7 @@ Local n         := 0
 Local dDataDe   := Posicione('DA0',1,xFilial('DA0') + cCodTab,'DA0_DATDE')
 PRIVATE lMsErroAuto := .F.
 
-
+Conout('DAXTAB - Inicio do processo - ' + time())
 //Atualizo MP e PI
 UpdPA(aRet)
 
@@ -98,6 +98,7 @@ If !(cAliasQry)->(Eof())
     (cAliasQry)->(DbGoTop())
 
     While !(cAliasQry)->(Eof())	
+		Conout('DAXTAB - Incluindo produto no array - ' +Alltrim((cAliasQry)->BZ_COD) + " - " + time())
         DA1->(DbSetOrder(1))
         IncProc()
         If aScan(aItens,{|x| AllTrim(x[1][2])==Alltrim((cAliasQry)->BZ_COD)}) == 0
@@ -176,6 +177,7 @@ If !(cAliasQry)->(Eof())
     
         begin transaction
         IncProc('Atualizando Registros')
+		Conout('DAXTAB - Atualizando produtos Omsa010 - ' + time())
         Omsa010(aCab,aItens,nOpc)
         If lMsErroAuto 
             DisarmTransaction()
@@ -184,6 +186,7 @@ If !(cAliasQry)->(Eof())
             MsgInfo('Tabela Atualizada!')
         EndIf
         End transaction 
+		Conout('DAXTAB - Registros atualizados na tabela  - ' + time())
         (cAliasQry)->(DbCloseArea())
 
         If MsgYesNo('Deseja atualizar os orçamentos?')
@@ -415,6 +418,8 @@ Local aAux      := {}
 Private cPilha  := ''
 Private nChamadas := 0 
 
+Conout('DAXTAB - Atualizando PA - ' + time())
+
 cQuery := "	SELECT CONVERT(INT,G1_NIV) AS NIVEL , BZ_COD , SBZ.R_E_C_N_O_ AS BZREC " 
 cQuery += " FROM " + RetSqlName( "SBZ" ) + " SBZ "
 cQuery += " INNER JOIN " + RetSqlName( "SG1" ) + " SG1 "
@@ -446,6 +451,7 @@ If !(cAliasQry)->(Eof())
     (cAliasQry)->(DbGoTop())
 
     While !(cAliasQry)->(Eof())	
+		Conout('DAXTAB - Atualizando PA do  - '+  Alltrim((cAliasQry)->BZ_COD) +" - "  + time())
         IncProc()
         nValor := 0
         cProduto := (cAliasQry)->BZ_COD
@@ -509,11 +515,13 @@ If !(cAliasQry)->(Eof())
                 SG1->(DbSkip())
             EndDo
         EndIf
-
+		Conout('DAXTAB - Fim da Atualizacao PA do  - '+  Alltrim((cAliasQry)->BZ_COD) + " - " + time())
         (cAliasQry)->(DbSkip())
     EndDo
     
 EndIf
+
+Conout('DAXTAB - Fim da atualização PA - ' + time())
 Return 
 
 

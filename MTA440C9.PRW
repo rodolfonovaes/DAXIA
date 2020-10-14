@@ -29,6 +29,8 @@ User Function MTA440C9()
      IF   ( EMPTY(ALLTRIM(cAntesCRD)) .OR. ; // CASO O STATUS ANTERIOR SEJA  VAZIO EU ATUALIZO
           ALLTRIM(cAntesCRD) <> ALLTRIM(cStatusCred) ) // CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
 
+        If       Empty(SC9->C9_XLOGCRE) .And. EMPTY(ALLTRIM(cAntesCRD))
+
         // REGISTRO QUEM LIBEROU
         Reclock("SC9",.F.)
         // Log de Atualização

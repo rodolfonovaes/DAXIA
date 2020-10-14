@@ -16,6 +16,7 @@ Local aArea   := GetArea()
 Local aCores  := ParamIXB
 
 aAdd( aCores, { "SCJ->CJ_STATUS=='P'" , "BR_VIOLETA" } ) // Orcamento Perdido
+aAdd( aCores, { "SCJ->CJ_STATUS=='R'" , "BR_CINZA" } ) // PERDA POR ELIMINAÇÂO DE RESIDUOS
 
 RestArea( aArea )
 Return( aCores )

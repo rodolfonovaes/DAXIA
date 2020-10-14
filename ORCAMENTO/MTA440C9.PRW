@@ -67,13 +67,17 @@ User Function MTA440C9()
         
     ENDIF
 
-    If Empty(SC9->C9_XLOGCRE) .And. Empty(cStatusCred) //Caso o log esteja vazio e esteja liberado no credito 
+    If Empty(SC9->C9_XLOGCRE) .And. Empty(cStatusCred) .And. IsInCallStack('MATA450') //Liberação comercial//Caso o log esteja vazio e esteja liberado no credito 
         Reclock("SC9",.F.)
         // Log de Atualização
         // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
         // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
         SC9->C9_XLOGCRE := RecLog(SC9->C9_PEDIDO , 2)
-        SC9->(MsUnLock())        
+        SC9->(MsUnLock())  
+
+        Reclock("SC5",.F.)
+        SC5->C5_XLOGCRE := SC9->C9_XLOGCRE
+        SC5->(MsUnLock())              
     EndIf
 
     //ATUALIZA SITUACAO DO ESTOQUE

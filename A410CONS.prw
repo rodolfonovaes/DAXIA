@@ -543,7 +543,7 @@ Else
 		cSerie   	:= ( cAliasSB8 )->B8_SERIE
 		cFornece 	:= ( cAliasSB8 )->B8_CLIFOR
 		cLoja    	:= ( cAliasSB8 )->B8_LOJA
-        cFabric 	:= ( cAliasSB8 )->A2_NOME
+        cFabric 	:= ( cAliasSB8 )->B8_NFABRIC
         cPais   	:= ( cAliasSB8 )->B8_XPAISOR
 
 		lAdd	  :=.F.
@@ -589,7 +589,7 @@ Else
 			EndIf		
 		EndIf	
 		If QtdComp(nSalLote) > QtdComp(0) .Or. ((cProg == "A270" .And. !lParam) .Or. (cProg == "A685" .And. !lParam) .Or. ((cProg == "A240" .Or. cProg == "A241") .And. SF5->F5_TIPO == "D") .Or. (cProg == "A242" .And. cCpo == "M->D3_LOTECTL"))
-			AADD(aArrayF4, F4LoteArray(cProg, lSLote, "", "", {cLoteAnt,cCod,Str(nSalLote,aTamSX3[1],aTamSX3[2]),Str(nSalLote2,aTamSX3[1],aTamSX3[2]), (dDataVali), cLoteFor, dDataCria,nPotencia,cNumDoc,cSerie,cFornece,cLoja,cFabric, cPais}))
+			AADD(aArrayF4, F4LoteArray(cProg, lSLote, "", "", {cLoteAnt,cCod,Str(nSalLote,aTamSX3[1],aTamSX3[2]),Str(nSalLote2,aTamSX3[1],aTamSX3[2]), (dDataVali), cLoteFor, dDataCria,nPotencia,cNumDoc,cSerie,cFornece,cLoja,cPais}))
 		EndIf
 	EndDo
 	

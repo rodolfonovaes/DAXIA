@@ -409,11 +409,11 @@ Static Function GetBolDado(aItens, aLog, nTipoCart)
 	
 	cCedentNom := SM0->M0_NOMECOM
 	cCedentCNP := '74581091000132' //SM0->M0_CGC CHUMBADO O CNPJ DO TATUAPÉ a pedido da daxia
-	cCedentEnd := SM0->M0_ENDCOB
-	cCedentBai := SM0->M0_BAIRCOB
-	cCedentMun := SM0->M0_CIDCOB
+	cCedentEnd := 'RUA CANTAGALO 74 CONJ 1701' //SM0->M0_ENDCOB
+	cCedentBai := 'V GOMES CARDIM' //SM0->M0_BAIRCOB
+	cCedentMun := 'SAO PAULO' //SM0->M0_CIDCOB
 	cCedentEst := SM0->M0_ESTCOB
-	cCedentCEP := SM0->M0_CEPCOB
+	cCedentCEP := '03319000'//SM0->M0_CEPCOB
 
 	cCliNome   := SA1->A1_NOME
 	cCliEndere := Iif( Empty( SA1->A1_ENDCOB ), SA1->A1_END, SA1->A1_ENDCOB )
@@ -967,7 +967,7 @@ STATIC Function PDFPrinter()
 	oPrn:Box( 0415, 0010, 0515, 0400 )
 	oPrn:Say( 0430, 0015, "Instruções de responsabilidade do Beneficiário. Qualquer dúvida sobre este boleto, contate o Beneficiário.", oFont1,100 )
 	oPrn:Say( 0445, 0015, "PROTESTAR APÓS 05 DIAS CORRIDOS DO VENCIMENTO", oFont1,100 )
-	oPrn:Say( 0460, 0015, "APÓS VENCIMENTO COBRAR JUROS DE R$ " + Alltrim(Transform(nBolValDoc * 0.002 ,"@E 999,999,999.99")), oFont1,100 )
+	oPrn:Say( 0460, 0015, "APÓS VENCIMENTO COBRAR JUROS DE R$ " + Alltrim(Transform(nBolValDoc * 0.002 ,"@E 999,999,999.99")) + ' AO DIA.', oFont1,100 )
 
 	//oPrn:Box( 0420, 0100, 1510, 1500 )// box manual
 
@@ -1067,7 +1067,7 @@ STATIC Function PDFPrinter()
 	oPrn:Box( 0670, 0010, 0750, 0400 )
 	oPrn:Say( 0680, 0015, "Instruções de responsabilidade do Beneficiário. Qualquer dúvida sobre este boleto, contate o Beneficiário.", oFont1, 100 )
 	oPrn:Say( 0695, 0015, "PROTESTAR APÓS 05 DIAS CORRIDOS DO VENCIMENTO", oFont1,100 )
-	oPrn:Say( 0710, 0015, "APÓS VENCIMENTO COBRAR JUROS DE R$ " + Alltrim(Transform(nBolValDoc * 0.2 ,"@E 999,999,999.99")), oFont1,100 )
+	oPrn:Say( 0710, 0015, "APÓS VENCIMENTO COBRAR JUROS DE R$ " + Alltrim(Transform(nBolValDoc * 0.002 ,"@E 999,999,999.99")) + ' AO DIA.', oFont1,100 )
 
 	oPrn:Box( 0670, 0400, 0690, 0600 )
 	oPrn:Say( 0680, 0405, "(-) Desconto/Abatimento", oFont1, 100 )

@@ -346,7 +346,7 @@ nMora      := 0
 _cCart   := 	Alltrim(SEE->EE_CARTEIR)
 
 _cNum := SE1->E1_PREFIXO+" "+SE1->E1_NUM+" "+SE1->E1_PARCELA
-_aTitulos[_nCont][01] := SE1->E1_PREFIXO+SE1->E1_NUM+SE1->E1_PARCELA           // Prexifo+Numero+Parcela do Titulo
+_aTitulos[_nCont][01] := SE1->E1_NUM//SE1->E1_PREFIXO+SE1->E1_NUM+SE1->E1_PARCELA           // Prexifo+Numero+Parcela do Titulo
 _aTitulos[_nCont][02] := dVencto   												 // Vencimento
 _aTitulos[_nCont][03] := nValor                                                 // Valor
 _aTitulos[_nCont][04] := SE1->E1_NUMBCO   										//  Nosso Numero
@@ -735,10 +735,17 @@ oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+10,_nPosVer+0010,"Instruções
 //
 //MENSAGENS
 //_nMoraDia:=Round((_aTitulos[_nCont][17]*nXTxJurBco)/30,2)
-oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+50 ,_nPosVer+0010,"Após o vencimento, cobrar juros de 6% ao mês.",ofont09,100)
-//oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+100 ,_nPosVer+0010,"Após o vencimento cobrar multa de 2%.",ofont09,100)
-//oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+150,_nPosVer+0010,"Sujeito a Protesto após o vencimento.",ofont09,100)
+oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+50 ,_nPosVer+0010,"Após o vencimento, cobrar mora de R$ " + Alltrim(transform(_aTitulos[_nCont][17] * 0.002 ,"@E 999,999,999.99")) + " ao dia.",ofont09,100)
+oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+100 ,_nPosVer+0010,"PROTESTAR APÓS 05 DIAS CORRIDOS DO VENCIMENTO",ofont09,100)
 
+If _nVia == 1
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+200,_nPosVer+0010,"NOME DO RECEBEDOR(LEGIVEL)" ,ofont09,100)
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+200,_nPosVer+0600,Repl("_",50) ,ofont09,100)
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+250,_nPosVer+0010,"DOCUMENTO RG/CPF",ofont09,100)
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+250,_nPosVer+0600,Repl("_",50) ,ofont09,100)
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+300,_nPosVer+0010,"DATA DO RECEBIMENTO",ofont09,100)
+	oPrint:say(_nPosHor+((_nLinha-1)*_nEspLin)+_nTxtBox+300,_nPosVer+0600,Repl("_",50) ,ofont09,100)
+EndIf
 
 // Box Outras deducoes
 _nLinha  += 1

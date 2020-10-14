@@ -13,7 +13,7 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   011                                                // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   013 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
@@ -1114,7 +1114,7 @@ Local lLote			:= .F.
 
 Local nPos2			 := 0
 
-
+Local nAjuste		:= 0
 Default cDtHrRecCab := ""
 Default dDtReceb    := CToD("")
 
@@ -2849,33 +2849,68 @@ If valType(oEntrega)=="O"
 	oDanfe:Say(nLine+230+nAjustaEnt,nBaseTxt - 27," LOCAl" ,oFont08N:oFont, , CLR_WHITE, 270)
 	oDanfe:Say(nLine+230+nAjustaEnt,nBaseTxt - 21,"ENTREGA",oFont08N:oFont, ,CLR_WHITE , 270 )
 
-	oDanfe:Box(nLine+187+nAjustaEnt,nBaseCol+30,nLine+222+nAjustaEnt,542)
-	oDanfe:Say(nLine+195+nAjustaEnt,nBaseTxt, "NOME/RAZÃO SOCIAL",oFont08N:oFont)
-	oDanfe:Say(nLine+205+nAjustaEnt,nBaseTxt,NoChar(aEntrega[1],lConverte),oFont08:oFont)
-	oDanfe:Box(nLine+187+nAjustaEnt,542,nLine+212+nAjustaEnt,MAXBOXH-40)
-	oDanfe:Say(nLine+195+nAjustaEnt,552,"CNPJ/CPF",oFont08N:oFont)
-	oDanfe:Say(nLine+210+nAjustaEnt,552,cAux,oFont08:oFont)
-	oDanfe:Box(nLine+212+nAjustaEnt,nBaseCol+30,nLine+237+nAjustaEnt,502)
-	oDanfe:Say(nLine+220+nAjustaEnt,nBaseTxt,"ENDEREÇO",oFont08N:oFont)
-	oDanfe:Say(nLine+230+nAjustaEnt,nBaseTxt,MontaEnd(oEntrega),oFont08:oFont)
-	oDanfe:Box(nLine+212+nAjustaEnt,402,nLine+237+nAjustaEnt,802)
-	oDanfe:Say(nLine+220+nAjustaEnt,412,"BAIRRO/DISTRITO",oFont08N:oFont)
-	oDanfe:Say(nLine+230+nAjustaEnt,412,aEntrega[7],oFont08:oFont)
-	oDanfe:Box(nLine+237+nAjustaEnt,nBaseCol+30,nLine+260+nAjustaEnt,730)
-	oDanfe:Say(nLine+245+nAjustaEnt,nBaseTxt,"MUNICIPIO",oFont08N:oFont)
-	oDanfe:Say(nLine+255+nAjustaEnt,nBaseTxt,aEntrega[8],oFont08:oFont)
-	oDanfe:Box(nLine+237+nAjustaEnt,725,nLine+260+nAjustaEnt,MAXBOXH-40)
-	oDanfe:Say(nLine+245+nAjustaEnt,735,"UF",oFont08N:oFont)
-	oDanfe:Say(nLine+255+nAjustaEnt,735,aEntrega[9],oFont08:oFont)
-	oDanfe:Box(nLine+187+nAjustaEnt,MAXBOXH-40,nLine+212+nAjustaEnt,MAXBOXH+70)
-	oDanfe:Say(nLine+195+nAjustaEnt,MAXBOXH-30,"INSCRIÇÃO ESTADUAL",oFont08N:oFont)
-	oDanfe:Say(nLine+205+nAjustaEnt,MAXBOXH-30,aEntrega[10],oFont08:oFont)
-	oDanfe:Box(nLine+212+nAjustaEnt,MAXBOXH-40,nLine+237+nAjustaEnt,MAXBOXH+70)
-	oDanfe:Say(nLine+220+nAjustaEnt,MAXBOXH-30,"CEP",oFont08N:oFont)
-	oDanfe:Say(nLine+230+nAjustaEnt,MAXBOXH-30,aEntrega[11],oFont08:oFont)
-	oDanfe:Box(nLine+237+nAjustaEnt,MAXBOXH-40,nLine+260+nAjustaEnt,MAXBOXH+70)
-	oDanfe:Say(nLine+245+nAjustaEnt,MAXBOXH-30,"FONE/FAX entrega",oFont08N:oFont)
-	oDanfe:Say(nLine+255+nAjustaEnt,MAXBOXH-30,aEntrega[12],oFont08:oFont)
+	if SF2->F2_DOC == "000228287"
+		//AJUSTE PARA NAO PEGAR CLIENTE DE ENTREGA QUANDO FOR A NF 000228287
+		dbSelectArea("SA1")
+		dbSetOrder(1)
+		If SA1->(MsSeek(xFilial("SA1")+ SF2->F2_CLIENTE + SF2->F2_LOJA,.T.))		
+			oDanfe:Box(nLine+187+nAjustaEnt,nBaseCol+30,nLine+222+nAjustaEnt,542)
+			oDanfe:Say(nLine+195+nAjustaEnt,nBaseTxt, "NOME/RAZÃO SOCIAL",oFont08N:oFont)
+			oDanfe:Say(nLine+205+nAjustaEnt,nBaseTxt,NoChar(SA1->A1_NOME,lConverte),oFont08:oFont)
+			oDanfe:Box(nLine+187+nAjustaEnt,542,nLine+212+nAjustaEnt,MAXBOXH-40)
+			oDanfe:Say(nLine+195+nAjustaEnt,552,"CNPJ/CPF",oFont08N:oFont)
+			oDanfe:Say(nLine+210+nAjustaEnt,552,TransForm(SA1->A1_CGC,"@r 99.999.999/9999-99"),oFont08:oFont)
+			oDanfe:Box(nLine+212+nAjustaEnt,nBaseCol+30,nLine+237+nAjustaEnt,502)
+			oDanfe:Say(nLine+220+nAjustaEnt,nBaseTxt,"ENDEREÇO",oFont08N:oFont)
+			oDanfe:Say(nLine+230+nAjustaEnt,nBaseTxt,SA1->A1_END,oFont08:oFont)
+			oDanfe:Box(nLine+212+nAjustaEnt,402,nLine+237+nAjustaEnt,802)
+			oDanfe:Say(nLine+220+nAjustaEnt,412,"BAIRRO/DISTRITO",oFont08N:oFont)
+			oDanfe:Say(nLine+230+nAjustaEnt,412,SA1->A1_BAIRRO,oFont08:oFont)
+			oDanfe:Box(nLine+237+nAjustaEnt,nBaseCol+30,nLine+260+nAjustaEnt,730)
+			oDanfe:Say(nLine+245+nAjustaEnt,nBaseTxt,"MUNICIPIO",oFont08N:oFont)
+			oDanfe:Say(nLine+255+nAjustaEnt,nBaseTxt,SA1->A1_MUN,oFont08:oFont)
+			oDanfe:Box(nLine+237+nAjustaEnt,725,nLine+260+nAjustaEnt,MAXBOXH-40)
+			oDanfe:Say(nLine+245+nAjustaEnt,735,"UF",oFont08N:oFont)
+			oDanfe:Say(nLine+255+nAjustaEnt,735,SA1->A1_EST,oFont08:oFont)
+			oDanfe:Box(nLine+187+nAjustaEnt,MAXBOXH-40,nLine+212+nAjustaEnt,MAXBOXH+70)
+			oDanfe:Say(nLine+195+nAjustaEnt,MAXBOXH-30,"INSCRIÇÃO ESTADUAL",oFont08N:oFont)
+			oDanfe:Say(nLine+205+nAjustaEnt,MAXBOXH-30,SA1->A1_INSCR,oFont08:oFont)
+			oDanfe:Box(nLine+212+nAjustaEnt,MAXBOXH-40,nLine+237+nAjustaEnt,MAXBOXH+70)
+			oDanfe:Say(nLine+220+nAjustaEnt,MAXBOXH-30,"CEP",oFont08N:oFont)
+			oDanfe:Say(nLine+230+nAjustaEnt,MAXBOXH-30,SA1->A1_CEP,oFont08:oFont)
+			oDanfe:Box(nLine+237+nAjustaEnt,MAXBOXH-40,nLine+260+nAjustaEnt,MAXBOXH+70)
+			oDanfe:Say(nLine+245+nAjustaEnt,MAXBOXH-30,"FONE/FAX entrega",oFont08N:oFont)
+			oDanfe:Say(nLine+255+nAjustaEnt,MAXBOXH-30,ALLTRIM(SA1->A1_DDD) + " " + SA1->A1_TEL,oFont08:oFont)	
+		EndIf
+	Else
+		oDanfe:Box(nLine+187+nAjustaEnt,nBaseCol+30,nLine+222+nAjustaEnt,542)
+		oDanfe:Say(nLine+195+nAjustaEnt,nBaseTxt, "NOME/RAZÃO SOCIAL",oFont08N:oFont)
+		oDanfe:Say(nLine+205+nAjustaEnt,nBaseTxt,NoChar(aEntrega[1],lConverte),oFont08:oFont)
+		oDanfe:Box(nLine+187+nAjustaEnt,542,nLine+212+nAjustaEnt,MAXBOXH-40)
+		oDanfe:Say(nLine+195+nAjustaEnt,552,"CNPJ/CPF",oFont08N:oFont)
+		oDanfe:Say(nLine+210+nAjustaEnt,552,cAux,oFont08:oFont)
+		oDanfe:Box(nLine+212+nAjustaEnt,nBaseCol+30,nLine+237+nAjustaEnt,502)
+		oDanfe:Say(nLine+220+nAjustaEnt,nBaseTxt,"ENDEREÇO",oFont08N:oFont)
+		oDanfe:Say(nLine+230+nAjustaEnt,nBaseTxt,MontaEnd(oEntrega),oFont08:oFont)
+		oDanfe:Box(nLine+212+nAjustaEnt,402,nLine+237+nAjustaEnt,802)
+		oDanfe:Say(nLine+220+nAjustaEnt,412,"BAIRRO/DISTRITO",oFont08N:oFont)
+		oDanfe:Say(nLine+230+nAjustaEnt,412,aEntrega[7],oFont08:oFont)
+		oDanfe:Box(nLine+237+nAjustaEnt,nBaseCol+30,nLine+260+nAjustaEnt,730)
+		oDanfe:Say(nLine+245+nAjustaEnt,nBaseTxt,"MUNICIPIO",oFont08N:oFont)
+		oDanfe:Say(nLine+255+nAjustaEnt,nBaseTxt,aEntrega[8],oFont08:oFont)
+		oDanfe:Box(nLine+237+nAjustaEnt,725,nLine+260+nAjustaEnt,MAXBOXH-40)
+		oDanfe:Say(nLine+245+nAjustaEnt,735,"UF",oFont08N:oFont)
+		oDanfe:Say(nLine+255+nAjustaEnt,735,aEntrega[9],oFont08:oFont)
+		oDanfe:Box(nLine+187+nAjustaEnt,MAXBOXH-40,nLine+212+nAjustaEnt,MAXBOXH+70)
+		oDanfe:Say(nLine+195+nAjustaEnt,MAXBOXH-30,"INSCRIÇÃO ESTADUAL",oFont08N:oFont)
+		oDanfe:Say(nLine+205+nAjustaEnt,MAXBOXH-30,aEntrega[10],oFont08:oFont)
+		oDanfe:Box(nLine+212+nAjustaEnt,MAXBOXH-40,nLine+237+nAjustaEnt,MAXBOXH+70)
+		oDanfe:Say(nLine+220+nAjustaEnt,MAXBOXH-30,"CEP",oFont08N:oFont)
+		oDanfe:Say(nLine+230+nAjustaEnt,MAXBOXH-30,aEntrega[11],oFont08:oFont)
+		oDanfe:Box(nLine+237+nAjustaEnt,MAXBOXH-40,nLine+260+nAjustaEnt,MAXBOXH+70)
+		oDanfe:Say(nLine+245+nAjustaEnt,MAXBOXH-30,"FONE/FAX entrega",oFont08N:oFont)
+		oDanfe:Say(nLine+255+nAjustaEnt,MAXBOXH-30,aEntrega[12],oFont08:oFont)
+	EndIf
 EndIf
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -3356,7 +3391,11 @@ For nY := 1 To nLenItens
 	EndIf
 	
 	If aAux[1][1][nY] == "-"
-		oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		If nLenOdet == 1
+			oDanfe:Say(nLinha-25, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		Else
+			oDanfe:Say(nLinha-25 - 5, aColProd[1][1] + 2, Replicate("- ", 192), oFont07:oFont)
+		EndIf
 		lLenOdet := .T.
 	Else
 		 
@@ -3389,20 +3428,31 @@ For nY := 1 To nLenItens
 							EndIf
 						EndIf
 						If lLote
+							If nLenOdet == 1
+								nAjuste	:= 0
+							Else
+								nAjuste := 8
+							EndIf
 							Lotectl := SD2->D2_LOTECTL
 							cFCI := SD2->D2_FCICOD
 							cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
 							
 							If !Empty(cFCI)
-								oDanfe:Say(nLinha-nAjustaPro-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
-								oDanfe:Say(nLinha+nAjustaPro+1, aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
-								oDanfe:Say(nLinha+nAjustaPro+10, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								If nxlin == 0
+									oDanfe:Say(nLinha-nAjustaPro-12 - nAjuste , aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro - 3 -nAjuste , aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 6 -nAjuste , aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								Else							
+									oDanfe:Say(nLinha-nAjustaPro-7 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 2 - nAjuste , aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 11 - nAjuste, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								EndIf
 							Else
 								If !Empty(Lotectl)
 									If nxlin == 0
-										oDanfe:Say(nLinha-10, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+										oDanfe:Say(nLinha-10 - nAjuste, aColProd[2][1] + 2 , "Lote: "+Lotectl, oFont07:oFont)
 									Else
-										oDanfe:Say(nLinha-4, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+										oDanfe:Say(nLinha-4  - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
 									EndIf
 								EndIf
 							EndIf		
@@ -3456,9 +3506,10 @@ For nY := 1 To nLenItens
 		nAuxH2 := len(aAux[1][19][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][19][nY], oFont07:oFont, oDanfe))) //ALIQ IPI
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
+
 	if nxlin == 0
 		If !Empty(cFCI)
-			nLinha := nLinha + 10
+			nLinha := nLinha + 9
 		Else
 			nLinha := nLinha + 9
 		EndIf
@@ -3467,9 +3518,14 @@ For nY := 1 To nLenItens
 			nLinha := nLinha + 16
 		Else
 			nLinha := nLinha + 14
-		EndIf
-		
-	endif		
+		EndIf		
+	endif	
+
+	// Rodolfo - Tratamento para não imprimir a segunda folha em branco
+	If nL >= nLenItens - 6 .And. lPag1 .And. nFolhas > 1
+		nL := 99
+	EndIf
+
 Next nY 
 
 If nL <= MAXITEM .And. Len(aMensagem) > MAXMSG .And. nFolha == 2 .And. nLenItens <= MAXMSG
@@ -5134,12 +5190,21 @@ For nX := 1 To nLenDet
 	Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
 Next
 
-oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
-oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
-if len(aDesc[nLenOdet][1])>MAXITEMC
-	oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
-	nxlin := 7
-endif	
+If nLenOdet == 1
+	oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+	oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
+	if len(aDesc[nLenOdet][1])>MAXITEMC
+		oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
+		nxlin := 7
+	endif
+Else
+	oDanfe:Say(nLinha-27, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+	oDanfe:Say(nLinha-27, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
+	if len(aDesc[nLenOdet][1])>MAXITEMC
+		oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
+		nxlin := 7
+	endif
+EndIf
 cProd := aProd[nLenOdet][1]
 Return
 

@@ -5,12 +5,11 @@ Static __lArrefat := Nil
 
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "FATXFUN.CH"
-Static lViagemCPL := .T.
-Static nTotalItem := 0
 
 Static lMaAvCred	:= NIL
 Static lMaAvCrPr	:= NIL
 Static oTmpTrbFat	:= NIL
+Static aLogMsg      := NIL
 
 /*/
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -879,12 +878,6 @@ Local nX			:= 0
 Local cBlq		  := ""
 Local cItemBlq	  := ""
 Local lLibMan	  := .F.
-Local cOmsCplInt  := SuperGetMV("MV_CPLINT",.F.,"2")
-Local cPedido     := ""
-Local aAreaAnt    := ""
-Local cQrySC6     := ""
-Local cAlsSC6     := ""
-Local cItem       := ""
 Local lAGRUBS	  := SuperGetMV("MV_AGRUBS",.F.,.F.)
 
 Default cTipLib   := ""
@@ -958,14 +951,6 @@ If lVerCarg461
 	EndIf
 EndIf
 
-lContinua := lContinua .And. RecLock("SC9") .And. lViagemCPL
-
-If FindFunction('A410VIAG') .And. cOmsCplInt == "1" .And. lViagemCPL
-	If A410VIAG(SC9->C9_PEDIDO)
-	   lContinua := .F.
-	EndIf
-EndIf
-
 If ( lContinua )
 	lDeletaDCF := .T.
 	If lbloqDCF
@@ -1000,48 +985,6 @@ If ( lContinua )
 	dbSelectArea("SC9")
 	RecLock("SC9")
 	SC9->C9_BLCRED := If(SC9->C9_BLCRED=="05","",SC9->C9_BLCRED)
-	cPedido := SC9->C9_PEDIDO
-	cItem   := SC9->C9_ITEM
-
-	If FindFunction("MATA410CAN") .And. cOmsCplInt == "1"
-	    aAreaAnt := GetArea()
-
-	 	cQrySC6 := " SELECT COUNT(*) C6_TOTITEM FROM " + RetSqlName("SC6")
-	 	cQrySC6 += " WHERE D_E_L_E_T_ = ''  "
-	 	cQrySC6 += " AND C6_FILIAL = '" + xFilial("SC6") + "' "
-	 	cQrySC6 += " AND C6_NUM = '" + cPedido + "' "
-	 	cQrySC6 += " AND C6_INTROT = '2' "
-
-	 	cQrySC6 := ChangeQuery( cQrySC6 )
-
-	 	cAlsSC6 := GetNextAlias()
-
-	 	dbUseArea( .T., "TOPCONN", TCGENQRY(,,ChangeQuery(cQrySC6)), cAlsSC6, .F., .T.)
-
-	 	RESTAREA(aAreaAnt)
-
-	    If SC6->(MSseek(xFilial("SC6") + cPedido + cItem))
-		    If (SC6->C6_INTROT == "2")
-		    	If !MATA410CAN(4,"SC5",cItem)
-		    	   If FunName() = "MATA410"
-		    	       dbDelete()
-		    	   EndIf
-		       	   lViagemCPL := .T.
-		       	   lContinua  := .F.
-		       EndIf
-		       nTotalItem := nTotalItem + 1
-
-		       If FunName() = "MATA410"
-			       If nTotalItem == (cAlsSC6)->C6_TOTITEM
-			   		    Help(" ",1,"410CANPED")
-			   		    nTotalItem := 0
-			   	   EndIf
-		   	   Else
-		   	      Help(" ",1,"410CANPED")
-		   	   EndIf
-		    EndIf
-	    EndIf
-	EndIf
 
 	If lContinua
 	   dbDelete()
@@ -2796,6 +2739,10 @@ Return( .T. )
 ±±³          ³ExpLC: Indica se apenas esta trocando lotes do SC9          ³±±
 ±±³          ³ExpND: Valor a ser adicionado ao limite de credito          ³±±
 ±±³          ³ExpNE: Quantidade a Liberar - segunda UM                    ³±±
+±±³          ³ExpLF: Indica se a funcao deve armazenar as mensagens de    ³±±
+±±³          ³       inconsistencias e alertas no processo de liberacao   ³±±
+±±³          ³ExpLG: Indica se existe ordem de separacao em aberto para o ³±±
+±±³          ³       item que estah sendo avaliado pela funcao            ³±±
 ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
 ±±³Observacao³Deve estar numa transacao                                   ³±±
 ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
@@ -2807,19 +2754,24 @@ Return( .T. )
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
 
-Function MaLibDoFat(nRegSC6,nQtdaLib,lCredito,lEstoque,lAvCred,lAvEst,lLibPar,lTrfLocal,aEmpenho,bBlock,aEmpPronto,lTrocaLot,lGeraDCF,nVlrCred,nQtdalib2)
+Function MaLibDoFat( nRegSC6   , nQtdaLib  , lCredito  , lEstoque  , ;
+					 lAvCred   , lAvEst    , lLibPar   , lTrfLocal , ;
+					 aEmpenho  , bBlock    , aEmpPronto, lTrocaLot , ;
+					 lGeraDCF  , nVlrCred  , nQtdalib2 , lLogMsg   , ;
+					 lOrdSepLib)
 
-Local aArea    	:= GetArea("SC6")
-Local aAreaSA1 	:= SA1->(GetArea())
-Local aAreaSF4 	:= SF4->(GetArea())
-Local aAreaSC5 	:= {}
-Local aAreaSC6 	:= {}
-Local nQtdLib  	:= nQtdALib
-Local nQtdLib2 	:= nQtdALib2
-Local lContinua	:= .T.
-Local lIntACD  	:= SuperGetMV("MV_INTACD",.F.,"0") == "1"
-Local lPedLib  	:= .F.
-Local lLibItPrev	:= SuperGetMV( 'MV_FATLBPR', .F., .T. )	//Indica se permite a liberação de Itens previstos do Pedido de Venda
+Local aArea    	    := GetArea("SC6")
+Local aAreaSA1 	    := SA1->(GetArea())
+Local aAreaSF4 	    := SF4->(GetArea())
+Local aAreaSC5 	    := {}
+Local aAreaSC6 	    := {}
+Local nQtdLib  	    := nQtdALib
+Local nQtdLib2 	    := nQtdALib2
+Local lContinua	    := .T.
+Local lIntACD  	    := SuperGetMV("MV_INTACD",.F.,"0") == "1"
+Local cAliasOSep    := ""
+Local aLinLogMsg    := {}
+Local lLibItPrev    := SuperGetMV( 'MV_FATLBPR', .F., .T. )	//Indica se permite a liberação de Itens previstos do Pedido de Venda
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Integracao SIGAFAT e SIGADPR                                 ³
@@ -2830,24 +2782,74 @@ nQtdLib := nQtdALib
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Seta os parametros defaults                                             ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-DEFAULT nQtdALib  := SC6->C6_QTDLIB
-DEFAULT nQtdALib2 := SC6->C6_QTDLIB2
-DEFAULT lCredito  := .T.
-DEFAULT lEstoque  := .T.
-DEFAULT lAvCred   := .T.
-DEFAULT lAvEst    := .T.
-DEFAULT lGeraDCF  := .T.
+DEFAULT nQtdALib   := SC6->C6_QTDLIB
+DEFAULT nQtdALib2  := SC6->C6_QTDLIB2
+DEFAULT lCredito   := .T.
+DEFAULT lEstoque   := .T.
+DEFAULT lAvCred    := .T.
+DEFAULT lAvEst     := .T.
+DEFAULT lGeraDCF   := .T.
+DEFAULT lLogMsg    := .F.
+DEFAULT lOrdSepLib := .F.
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Verificar se o Pedido ja possui liberacao ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 If lIntACD .And. IsInCallStack("MATA455")
-	lPedLib :=SC9->(dbSeek(xFilial("SC9")+SC6->(SC6->C6_NUM+SC6->C6_ITEM)))
+	cAliasOSep := GetNextAlias()
+	
+	BeginSQL Alias cAliasOSep
+		SELECT 
+			C9_ORDSEP ORD_SEP_ABERTA	
+		FROM
+			%table:SC9%
+		WHERE
+			C9_FILIAL  =  %xFilial:SBF%                     AND
+			C9_PEDIDO  =  %Exp:SC9->C9_PEDIDO%              AND
+			C9_ITEM    =  %Exp:SC9->C9_ITEM%                AND
+			C9_ORDSEP  <> %Exp:Space(Len(SC9->C9_ORDSEP))%  AND
+			C9_NFISCAL =  %Exp:Space(Len(SC9->C9_NFISCAL))% AND
+			%notDel%
+	EndSQL
+	
+	If (!(cAliasOSep)->(EOF()))
+		// Encontrou ordem de separacao aberta e nao faturada para o item que esta bloqueado
+		lOrdSepLib := .T.
+	Else
+		lOrdSepLib := .F.
+	EndIf
+	
+	If (lOrdSepLib .And. lLogMsg)	
+		If (aScan(aLogMsg, {|x| x[1] == SC9->C9_ITEM    .And. ; 
+		                        x[2] == SC9->C9_PRODUTO .And. ;
+		                        x[3] == SC9->C9_SEQUEN        ;
+		                    }                                 ;
+		          ) == 0)
+		          
+		    While (!(cAliasOSep)->(EOF()))
+				aLinLogMsg := { SC9->C9_ITEM,                                         ; // 01 - Item do Pedido de Venda
+				                SC9->C9_PRODUTO,                                      ; // 02 - Codigo do Produto
+				                SC9->C9_SEQUEN,                                       ; // 03 - Sequencia de liberacao do item do pedido de venda 
+				                SC9->C9_QTDLIB,                                       ; // 04 - Quantidade a ser liberada
+				                STR0021 +                                             ; // #Este item nao poderá ser liberado pois existe a Ordem de Separação 
+				                "'" + AllTrim((cAliasOSep)->ORD_SEP_ABERTA) + "' " +  ;
+				                STR0022,                                	          ; // 05 - Mensagem de inconsitencia #aberta
+				                .F.                                                   ; // 06 - Indica se a linha foi deletada ou nao (.T.=Deletado, .F.=Nao Deletado)
+				               }
+				MaSetFaLog(aLinLogMsg)
+				
+				(cAliasOSep)->(DbSkip())
+			EndDo
+			
+		EndIf
+	EndIf
+	
+	(cAliasOSep)->(DbCloseArea())
 EndIf
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Posiciona Pedido                                                        ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-If Empty(SC6->C6_BLOQUEI) .And. AllTrim(SC6->C6_BLQ)<>"R" .And. If(lPedLib,If(Empty(SC9->C9_ORDSEP),.T.,If(!Empty(SC9->C9_ORDSEP) .And. !Empty(SC9->C9_NFISCAL),.T.,.F.)),.T.)
+If Empty(SC6->C6_BLOQUEI) .And. AllTrim(SC6->C6_BLQ)<>"R" .And. !(lOrdSepLib)
 
 	dbSelectArea("SC6")
 	If nRegSC6<>0
@@ -3146,16 +3148,6 @@ Local nVlrTitAbe	:= 0
 Local nVlrTitAtr	:= 0
 Local cQuery    := ""
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³Tratamento para e-Commerce      ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-Local lECommerce := SuperGetMV("MV_LJECOMM",,.F.)
-Local cOrcamto   := ""    //Obtem o orcamento original para poder posicionar na tabela MF5.
-Local lECCia := SuperGetMV("MV_LJECOMO",,.F.) .AND. Val(SC5->C5_PEDECOM) > 0   //Integração EC CiaShop
-Local lGeraSE1 := SuperGetMV("MV_LJECOMS", , .F.)  //Gera Contas a Receber
-Local lLj901AGAE := ExistFunc("Lj901AGAE")  //Função de Retorno da Administradora
-
-
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Ajusta a Entrada da Rotina                                              ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -3276,33 +3268,15 @@ If ( lTravas )
 		EndIf
 	EndIf
 EndIf
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³Para e-Commerce ira gravar com bloqueio de credito para Boleto(FI) e sem   ³
-//³bloqueio para os demais.                                                   ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-If lECommerce .And. !( Empty(SC5->C5_ORCRES) ) .And. ChkFile("MF5")
-	MF5->( DbSetOrder(1) ) //MF5_FILIAL+MF5_ECALIA+MF5_ECVCHV
 
-	cOrcamto := Posicione("SL1",1,xFilial("SL1")+SC5->C5_ORCRES,"L1_ORCRES")
-
-	If !( Empty(cOrcamto) ) .And. !( Empty(Posicione("MF5",1,xFilial("MF5")+"SL1"+xFilial("SL1")+cOrcamto,"MF5_ECPEDI")) )
-		If (AllTrim(SL1->L1_FORMPG) == "FI") .And. (MF5->MF5_ECPAGO != "1")
-			cBlCred  := "02"
-			lCredito := .F.
-		Else
-			cBlCred  := "  "
-			lCredito := .T.
-		EndIf
-	EndIf
-ElseIf lECommerce  .AND. lECCia .AND.  lGeraSE1  .AND. lLj901AGAE
-
-	If Alltrim(Lj901AGAE()) == "FI"
-			cBlCred  := "02"
-			lCredito := .F.
-	Else
-		cBlCred  := "  "
-		lCredito := .T.
-	EndIf
+//Para Orcamento com origem do SigaLoja verifica regra de bloqueio de crédito especifica
+If (! Empty(SC5->C5_ORCRES) .Or. ! Empty(SC5->C5_PEDECOM)) 
+	If ExistFunc("LjxjPedBlq")
+		LjxjPedBlq( SC5->C5_ORCRES , @cBlCred , @lCredito)
+	ElseIf SuperGetMV("MV_LJECOMM",,.F.) .And. SuperGetMV("MV_LJECOMO",,.F.) .And. Val(SC5->C5_PEDECOM) > 0
+		cBlCred  := "02"
+		lCredito := .F.
+	EndIf	
 EndIf
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -3414,7 +3388,7 @@ If ( lTravas .And. (SC5->C5_TIPO$"CIP" .Or. nQtdLib > 0 .Or. MaTesSel(SF4->F4_CO
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 		If !( (Rastro(SC6->C6_PRODUTO) .Or. Localiza(SC6->C6_PRODUTO,.T.)) .And.;
 				SuperGetMv("MV_GERABLQ")=="N" .And. !lEstoque )
-			MaGravaSc9(nQtdNPT,cBlCred,cBlEst,@aLocal,@aEmpenho,,bBlock,aEmpPronto,,@nVlrCred,"03")
+			MaGravaSc9(nQtdNPT,cBlCred,cBlEst,@aLocal,@aEmpenho,,bBlock,aEmpPronto,,@nVlrCred)
 			nQtdJaLib += nQtdNPT
 		EndIf
 	EndIf
@@ -5306,6 +5280,9 @@ Local lECCiaRes := lECCia .AND. !SuperGetMv("MV_RESAUT") .AND. SuperGetMv("MV_LJ
 Local lBlqReg  := .F.
 Local lProgEnt := .F.	//Indica se o Pedido de Venda foi gerado por uma Programação de Entrega
 
+Local lExtB2DMOV   := (SB2->(ColumnPos("B2_DMOV")) > 0)
+Local lExtB2HMOV   := (SB2->(ColumnPos("B2_HMOV")) > 0)
+
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Inicializa variaveis                                                    ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -5381,7 +5358,8 @@ Case nEvento == 1
 
 	If !__lPyme
 
-		If (cAliasSC5)->C5_TIPO == 'N' .And. (ACN->(dbSeek(xFilial("ACN"))) .Or. AllTrim(SuperGetMv("MV_ESTADO")) == "AL")
+		If !(FwIsInCallStack('A310Proc')) .And. (cAliasSC5)->C5_TIPO == 'N' .And. (ACN->(dbSeek(xFilial("ACN"))) .Or. AllTrim(SuperGetMv("MV_ESTADO")) == "AL")
+			
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³Verifica verba de venda caso nao houve bloqueio de regra de negocio     ³
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -5634,6 +5612,16 @@ Case nEvento == 1
 				RecLock("SB2")
 				SB2->B2_QPEDVEN += nSldPed
 				SB2->B2_QPEDVE2 += nSldPed2
+				
+				//atualização de campos usados na mensagem de atualização de estoque
+				If lExtB2DMOV
+					SB2->B2_DMOV := dDataBase
+				EndIf
+			
+				If lExtB2HMOV
+					SB2->B2_HMOV := Time() 
+				EndIf							
+				
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³ Tratamento para Reserva de material                  ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -5664,6 +5652,16 @@ Case nEvento == 1
 							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 							SB2->B2_QPEDVEN -= nQtdRese
 							SB2->B2_QPEDVE2 -= ConvUM(SB2->B2_COD,nQtdRese,0,2)
+							
+							//atualização de campos usados na mensagem de atualização de estoque
+							If lExtB2DMOV
+								SB2->B2_DMOV := dDataBase
+							EndIf
+						
+							If lExtB2HMOV
+								SB2->B2_HMOV := Time() 
+							EndIf							
+							
 						Else
 							(cAliasSC6)->C6_RESERVA := ""
 						EndIf
@@ -5673,6 +5671,16 @@ Case nEvento == 1
 				Else
 					SB2->B2_QPEDVEN -= (cAliasSC6)->C6_QTDRESE
 					SB2->B2_QPEDVE2 -= ConvUM(SB2->B2_COD,(cAliasSC6)->C6_QTDRESE,0,2)
+					
+					//atualização de campos usados na mensagem de atualização de estoque
+					If lExtB2DMOV
+						SB2->B2_DMOV := dDataBase
+					EndIf
+				
+					If lExtB2HMOV
+						SB2->B2_HMOV := Time() 
+					EndIf									
+					
 				EndIf
 			EndIf
 		EndIf
@@ -5842,6 +5850,15 @@ Case nEvento == 2
 					EndIf
 
 					SB2->B2_QPEDVEN += (cAliasSC6)->C6_QTDRESE
+
+					//atualização de campos usados na mensagem de atualização de estoque
+					If lExtB2DMOV
+						SB2->B2_DMOV := dDataBase
+					EndIf
+				
+					If lExtB2HMOV
+						SB2->B2_HMOV := Time() 
+					EndIf							
 
 					(cAliasSC6)->C6_QTDRESE := 0
 					If SuperGetMv("MV_DELRES")
@@ -6162,6 +6179,16 @@ Case nEvento == 6
 				RecLock("SB2")
 				SB2->B2_QPEDVEN += nSldPed
 				SB2->B2_QPEDVE2 += nSldPed2
+				
+				//atualização de campos usados na mensagem de atualização de estoque
+				If lExtB2DMOV
+					SB2->B2_DMOV := dDataBase
+				EndIf
+			
+				If lExtB2HMOV
+					SB2->B2_HMOV := Time() 
+				EndIf							
+	
 			EndIf
 
 		EndIf
@@ -10419,3 +10446,85 @@ If !lRet
 	Help("",1,"Help",,STR0020,1,0)
 EndIf
 Return lRet
+
+
+//-----------------------------------------------------------------------------------------------------
+/*/{Protheus.doc} MaSetFaLog
+Preenchimento do array com log de processamento  
+@author Servicos - CRM/Faturamento 
+@version P12.1.17  
+@since 26/12/2018
+@return .T.  
+/*/
+//-----------------------------------------------------------------------------------------------------
+Function MaSetFaLog(aLinha)
+	If (ValType(aLogMsg) == "U")
+		aLogMsg := {}
+	EndIf
+	AAdd(aLogMsg, aLinha)
+Return .T.
+
+//-----------------------------------------------------------------------------------------------------
+/*/{Protheus.doc} MaGetFaLog
+Retornar o array com log de processamento  
+@author Servicos - CRM/Faturamento 
+@version P12.1.17  
+@since 26/12/2018
+@return aLogMsg - Array - Log do processamento  
+/*/
+//-----------------------------------------------------------------------------------------------------
+Function MaGetFaLog()
+Return aLogMsg
+
+//-----------------------------------------------------------------------------------------------------
+/*/{Protheus.doc} MaCleFaLog
+Esvaziar o array com log de processamento  
+@author Servicos - CRM/Faturamento 
+@version P12.1.17  
+@since 26/12/2018
+@return .T.  
+/*/
+//-----------------------------------------------------------------------------------------------------
+Function MaCleFaLog()
+	FreeObj(aLogMsg)
+Return .T.
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ FatGetPicN ³ Autor ³ Crm/Faturamento    ³ Data ³ 30.01.19  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Retornar picture adicionando casas decimais                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ 					                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function FatGetPicN(cCampo,nTampict,lMilhar)
+	Local 	nDec 		:= TamSX3(cCampo)[2]
+	Local 	nX			:= 1
+	Local 	nY			:= 1
+	Local 	cMaskI		:= ""
+	Local 	cMaskF		:= ""
+	Local 	cRet 		:= ""
+	Default nTamPict	:= 16
+	Default lMilhar		:= .T.
+	
+	If !Empty(cCampo)
+		nTamPict := Iif(nTamPict > 16, 16, nTamPict)
+		cMaskI := Iif(nDec > 0, Replicate("9",nTamPict - nDec - 1),Replicate("9",nTamPict))
+		cMaskF := cMaskI
+		nTamPict := Len(cMaskF)
+		If lMilhar
+			For nY := 0 to nTamPict
+  				If nX >= 3 .And. (nTamPict - nY > 1)
+					cMaskF := Stuff(cMaskF, nTamPict - nY, 0, ",")
+					nX := 0
+				EndIf
+ 				nX ++
+			Next
+		EndIF
+		cRet := "@E " + cMaskF + Iif(nDec == 0, "", "." + Replicate("9",nDec))
+	EndIf
+Return(cRet)

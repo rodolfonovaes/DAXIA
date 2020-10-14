@@ -186,7 +186,7 @@ ELSEIF  cTipo == "E"
     ENDSQL
 ELSEIF  cTipo == "F"
     BEGINSQL ALIAS cAliasNF
-        SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
+        SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_ITEM AS ITEM , SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
                         SA1.A1_NOME    AS    NOME, SB1.B1_COD   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
                         SD2.D2_LOTECTL AS    LOTE, SD2.D2_QUANT AS QUANTIDADE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
                         SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMLOTE AS NUMLOTE
@@ -195,7 +195,8 @@ ELSEIF  cTipo == "F"
                 %table:SA1% SA1 (NOLOCK),
                 %table:SB8% SB8 (NOLOCK)
         WHERE       SD2.D2_FILIAL  = %xFilial:SD2%
-                AND SB1.B1_FILIAL  = %xFilial:SB1%            
+                AND SB1.B1_FILIAL  = %xFilial:SB1%   
+                AND SB8.B8_FILIAL  = %xFilial:SB8%           
                 AND SA1.A1_FILIAL  = %xFilial:SA1%
                 AND SD2.D2_DOC     BETWEEN %exp:mv_par01% AND %exp:mv_par02% 
                 AND SD2.D2_SERIE   = %exp:mv_par03%     
@@ -203,6 +204,7 @@ ELSEIF  cTipo == "F"
                 AND SD2.D2_CLIENTE = SA1.A1_COD
                 AND SD2.D2_LOJA    = SA1.A1_LOJA
                 AND SB8.B8_LOTECTL = SD2.D2_LOTECTL 
+                AND SD2.D2_LOCAL   = SB8.B8_LOCAL
                 AND SA1.%NotDel%
                 AND SB1.%NotDel%
                 AND SD2.%NotDel%
@@ -765,8 +767,13 @@ oPrinter:StartPage() // Inicio/salto de pagina
 oPrinter:SayBitmap( 010, 020, cBitmap1, 130, 73 )  // Impressao do logo Daxia
 oPrinter:SayBitmap( 010, 460, cBitmap2, 130, 73 )  // Impressao do logo Daxia
 oPrinter:Box( 105, 020, 160, 570, "-4" ) // Impressao do box do cabecalho - Dados do Cliente
-oPrinter:Say( 115, 025, "Cliente:", oFont12N )
-oPrinter:Say( 115, 065, aCab[5], oFont12 )
+If POSICIONE('SF2',1,xFilial('SF2') + aCab[1] + aCab[2] , 'F2_TIPO') == 'B' 
+    oPrinter:Say( 115, 025, "Cliente:", oFont12N )
+    oPrinter:Say( 115, 065, POSICIONE('SA2',1,xFilial('SA2') + aCab[3] + aCab[4] , 'A2_NOME'), oFont12 )
+Else
+    oPrinter:Say( 115, 025, "Cliente:", oFont12N )
+    oPrinter:Say( 115, 065, aCab[5], oFont12 )
+EndIf
 oPrinter:Say( 115, 450, "Código/Loja:", oFont12N )
 oPrinter:Say( 115, 510, aCab[3] + "/" + aCab[4], oFont12 )
 oPrinter:Say( 135, 025, "Quantidade do item:", oFont12N )

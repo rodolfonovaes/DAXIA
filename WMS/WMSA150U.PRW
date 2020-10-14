@@ -143,6 +143,7 @@ AADD(aCampos,{ "Obs Lote"      , {|| RetObslo(DCF->DCF_DOCTO) } , "C" ,  })
 			oBrowse:SetIniWindow({||oBrowse:oBrowse:oTimer:lActive := (mv_par17 < 3)})
 			oBrowse:SetParam({|| UpdSelecao()})
 			oBrowse:SetFields(aCampos)
+			//oBrowse:DisableReport()
 
 			SetKey (VK_F5 , {|| Processa({|lEnd| oBrowse:Refresh()},cCadastro,OemToAnsi(STR0006),.T.)}) // Selecionando Servicos...
 
@@ -174,13 +175,13 @@ Static Function MenuDef()
 Local aRotina := {}
 
 	Add OPTION aRotina TITLE STR0029 ACTION "AxPesqui"                         OPERATION 1 ACCESS 0 // Pesquisar
-	Add OPTION aRotina TITLE STR0030 ACTION "VIEWDEF.WMSA150"                  OPERATION 2 ACCESS 0 // Visualizar
+	Add OPTION aRotina TITLE STR0030 ACTION "VIEWDEF.WMSA150U"                  OPERATION 2 ACCESS 0 // Visualizar
 	Add OPTION aRotina TITLE STR0007 ACTION "StaticCall(WMSA150U,UpdateServ,1)" OPERATION 4 ACCESS 0 // Executar
 	Add OPTION aRotina TITLE STR0008 ACTION "StaticCall(WMSA150U,UpdateServ,2)" OPERATION 5 ACCESS 0 // Estornar
-	Add OPTION aRotina TITLE STR0009 ACTION "StaticCall(WMSA150,UpdSelecao)"   OPERATION 3 ACCESS 0 // Selecionar
+	Add OPTION aRotina TITLE STR0009 ACTION "StaticCall(WMSA150U,UpdSelecao)"   OPERATION 3 ACCESS 0 // Selecionar
 	Add OPTION aRotina TITLE STR0010 ACTION "StaticCall(WMSA150U,UpdServico)"   OPERATION 4 ACCESS 0 // Alterar Serviï¿½o
 	If WmsX312118('DCF','DCF_UNIDES')
-		Add OPTION aRotina TITLE STR0038 ACTION "StaticCall(WMSA150,UpdTpUnit)"   OPERATION 4 ACCESS 0 // Informar Tipo Unit.
+		Add OPTION aRotina TITLE STR0038 ACTION "StaticCall(WMSA150U,UpdTpUnit)"   OPERATION 4 ACCESS 0 // Informar Tipo Unit.
 	EndIf
 Return aRotina
 
@@ -188,7 +189,7 @@ Static Function ModelDef()
 Local oStruDCF := FWFormStruct(1,"DCF",/*bAvalCampo*/,/*lViewUsado*/)
 Local oStruD12 := FWFormStruct(1,"D12",/*bAvalCampo*/,/*lViewUsado*/)
 Local oStruDCR := FWFormStruct(1,"DCR",/*bAvalCampo*/,/*lViewUsado*/)
-Local oModel   := MPFormModel():New("WMSA150",/*bPreValidacao*/,/*bPosValidacao*/,/*bCommit*/,/*bCancel*/)
+Local oModel   := MPFormModel():New("WMSA150U",/*bPreValidacao*/,/*bPosValidacao*/,/*bCommit*/,/*bCancel*/)
 Local aColsSx3 := {}
 
 	oModel:AddFields("DCFMASTER",/*cOwner*/,oStruDCF )
@@ -201,7 +202,7 @@ Local aColsSx3 := {}
 	oModel:AddGrid("D12GRID","DCRREL",oStruD12)
 	oModel:GetModel("D12GRID"):SetDescription( STR0032 ) // "Movimentos WMS"
 	oModel:SetRelation("D12GRID", {{"D12_FILIAL","xFilial('D12')"},{"D12_IDDCF","DCR_IDORI"}})
-
+	
 	BuscarSX3("DCF_CARGA",,aColsSX3)
 	oStruDCR:AddField( aColsSX3[1],aColsSX3[1],"DCR_VCARGA","C",aColsSX3[3],aColsSX3[4],Nil,Nil,Nil,Nil,{|| Posicione("DCF",9,xFilial("DCF")+DCR->DCR_IDDCF,"DCF_CARGA") } ,Nil,.F.,.T. )
 	BuscarSX3("DCF_DOCTO",,aColsSX3)
@@ -582,6 +583,7 @@ Local  cDoc      := DCF->DCF_DOCTO
 Local  cSrv		 := SuperGetMV('ES_SERVDIS',.T.,'019',cFilAnt)
 Local  cSegSepara	 := SuperGetMV('ES_SERVSEP',.T.,'025',cFilAnt)
 
+
 lAglutinado := .F.
 lSegSepara	:= .F.
 	If nOpcx == 1 // Executa
@@ -671,6 +673,7 @@ Local aOrdSerExe := {}
 Local aEndereco	 := {}
 Local nI         := 0
 Local oEndereco   := WMSDTCEndereco():New()
+Local  cTransfere	 := SuperGetMV('ES_SERVTRA',.T.,'014',cFilAnt)
 Public	_arrDCF	:= {} // utilizado para mapear a D14 no PE WMSATD14
 
 	// Verificar data do ultimo fechamento em SX6.
@@ -732,6 +735,11 @@ Public	_arrDCF	:= {} // utilizado para mapear a D14 no PE WMSATD14
 		oOrdSerExe:GoToDCF(aOrdSerExe[nI])
 		If (oOrdSerExe:GetStServ() $ "1|2") .And. Empty(oOrdSerExe:cStRadi)
 			IncProc(oOrdSerExe:GetServico()+" - "+If(Empty(oOrdSerExe:GetCarga()),Trim(oOrdSerExe:GetDocto())+"/"+Trim(oOrdSerExe:GetSerie()),Trim(oOrdSerExe:GetCarga()))+"/"+Trim(oOrdSerExe:oProdLote:GetProduto()))
+			
+			If DCF->DCF_SERVIC == cTransfere
+				AtuSB8()
+			EndIf
+
 			If lAglutinado .And. Len(aEndereco) == len(aOrdSerExe)
 				oOrdSerExe:UpdEndDes(aEndereco[nI]) //AJUSTE RODOLFO - SETO O ENDEREÇO PRO PROGRAMA NAO PEDIR
 			EndIf
@@ -1260,6 +1268,7 @@ Return lRet
 	@see (links_or_references)
 	/*/
 Static Function RetObslo(cDocto)
+Local aArea	:= GetArea()
 Local cRet	:= ''
 Local cQuery := ''
 Local cAliasQry := GetNextAlias()
@@ -1280,7 +1289,7 @@ If !(cAliasQry)->(EOF())
 EndIf
 
 (cAliasQry)->(DbCloseArea())
-
+RestArea(aArea)
 Return cRet
 
 
@@ -1563,16 +1572,28 @@ Return aRetorno
 	@see (links_or_references)
 	/*/
 User Function RtTransp()
-Return POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_TRANSP")
+Local aArea := GetArea()
+Local cRet := POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_TRANSP")
+RestArea(aArea)
+Return cRet
 
 User Function RtNmTran()
-Return POSICIONE('SA4',1,xFilial('SA4') + POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_TRANSP") , 'A4_NOME')
+Local aArea := GetArea()
+Local cRet := POSICIONE('SA4',1,xFilial('SA4') + POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_TRANSP") , 'A4_NOME')
+RestArea(aArea)
+Return cRet
 
 User Function RtColet()
-Return POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_XOBCOL")
+Local aArea := GetArea()
+Local cRet := POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_XOBCOL")
+RestArea(aArea)
+Return cRet
 
 User Function RtDtCole()
-Return POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_XDTCOL")
+Local aArea := GetArea()
+Local cRet := POSICIONE("SC5",1,xFilial("SC5") + DCF->DCF_DOCTO,"C5_XDTCOL")
+RestArea(aArea)
+Return cRet
 
 User Function RtTpFret()
 Local aArea       := GetArea()
@@ -1755,3 +1776,52 @@ EndIf
 RestArea(aArea)
 
 Return Nil
+
+
+/*/{Protheus.doc} AtuSB8()
+	(long_description)
+	@type  Function
+	@author user
+	@since date
+	@version version
+	@param param, param_type, param_descr
+	@return return, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	/*/
+Static Function AtuSB8()
+Local dDVldSB8	 := dDataBase
+Local dDFabSB8	 := dDataBase
+Local cLotForn	 := ''
+Local cNomFabr	 := ''
+Local cPaisOri	 := ''
+Local cXCFABRI	 := ''
+Local cXLFABRI	 := ''
+Local cCliFor    := ''
+Local cLoja      := ''
+Local cXDProd    := ''
+
+SB8->(DbSetOrder(3))
+If SB8->(DbSeek(xFilial('SB8') + DCF->DCF_CODPRO + DCF->DCF_LOCAL  + DCF->DCF_LOTECT ))
+	cNomFabr := SB8->B8_NFABRIC
+	cPaisOri := SB8->B8_XPAISOR
+	cXCFABRI := SB8->B8_XCFABRI
+	cXLFABRI := SB8->B8_XLFABRI
+	cCliFor	 := SB8->B8_CLIFOR	
+	If SB8->(DbSeek(xFilial('SB8') + DCF->(DCF_CODPRO + DCF_LOCDES + DCF_LOTECT)))
+		Reclock('SB8',.F.)
+		Replace SB8->B8_NFABRIC With cNomFabr
+		Replace SB8->B8_LOTEFOR With cLotForn 
+		Replace SB8->B8_XPAISOR With cPaisOri
+		Replace SB8->B8_XCFABRI With cXCFABRI
+		Replace SB8->B8_XLFABRI With cXLFABRI
+		Replace SB8->B8_CLIFOR  With cCliFor
+		Msunlock()
+	Else
+		// Alert('B8 de destino não encontrada!')
+	EndIf
+Else
+	//Alert('B8 de origem não encontrada!')
+EndIf
+Return

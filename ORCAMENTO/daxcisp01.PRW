@@ -1,6 +1,6 @@
 #include "rwmake.ch"
 #include "PROTHEUS.ch"
-
+#INCLUDE "TOPCONN.CH"
 //--------------------------------------------------------------
 /*/{Protheus.doc} DaxCisp1()
 
@@ -84,7 +84,8 @@ Static Function EXECUTA(_oRegua)
 	Local nValorPV	:= 0
 	Local dDataUC	:= "  /  /    "
 	Local nValorUC	:= 0
-
+	Local cCliLoja	:= ''
+	Local cErrMsg	:= ''
 	aSimb	:= { "(", ")", "[", "]", ".", ",", "-", "Ç", "ç", ":", ";" , "/" }
 	aMovi   := {}
 
@@ -279,11 +280,11 @@ Static Function EXECUTA(_oRegua)
 
 	If !Empty( mv_par02 )
 
-		If mv_par03 <= GetMV( "MV_DTCISP" ) .and. mv_par05 == 1
+		/*If mv_par03 <= GetMV( "MV_DTCISP" ) .and. mv_par05 == 1
 			MsgStop( "Última remessa de arquivos para a CISP foi em " + DtoC( GetMV( "MV_DTCISP" ) ) +;
 			", portanto, uma nova remessa deverá ser superior a esta data !" )
 			Return 
-		EndIf 
+		EndIf */
 
 		If mv_par03 > mv_par04
 			MsgStop( "Período de datas inválidos !" )
@@ -355,7 +356,7 @@ Static Function EXECUTA(_oRegua)
 				Loop
 			EndIf
 
-			_oRegua:IncRegua1('Processando registros...')
+			_oRegua:IncRegua1('Processando registros do cliente ' + SA1->A1_CGC + ' ' + SA1->A1_NOME)
 			
 			DbSelectArea( "CLI" )
 			DbSelectArea( "EMI" )
@@ -397,7 +398,17 @@ Static Function EXECUTA(_oRegua)
 					CLI->CLIENTE	:= SA1->A1_COD
 					CLI->LOJA		:= SA1->A1_LOJA
 					CLI->( MsUnLock() )
-				EndIf
+				EndIf 
+				
+				nValorDA	:= IIF(SA1->A1_SALDUP < 0 , 0 , SA1->A1_SALDUP)
+				nValorMA	:= SA1->A1_MSALDO
+				dDataMA		:= SA1->A1_XDTMSAL
+				//dDataUC		:= SA1->A1_ULTCOM
+				//nValorUC	:= SA1->A1_XVLCOM
+				nValorD5F	:= RetAtr(SA1->A1_COD , SA1->A1_LOJA , 5)
+				nValorD15F	:= RetAtr(SA1->A1_COD , SA1->A1_LOJA , 15)
+				nValorD30F	:= RetAtr(SA1->A1_COD , SA1->A1_LOJA , 30)
+				nValoraVen	:= RetDeb(SA1->A1_COD , SA1->A1_LOJA )
 				SA1->( DbSkip() )
 			EndDo
 
@@ -405,18 +416,18 @@ Static Function EXECUTA(_oRegua)
 				Loop
 			EndIf
 
-			nValorDA	:= 0.00
+			//nValorDA	:= 0.00
 			nValorF		:= 0.00
 			nValorC		:= 0.00
-			nValorD5F	:= 0.00
+			//nValorD5F	:= 0.00
 			nValorD5C	:= 0.00
-			nValorD15F	:= 0.00
+			//nValorD15F	:= 0.00
 			nValorD15C	:= 0.00
-			nValorD30F	:= 0.00
+			//nValorD30F	:= 0.00
 			nValorD30C	:= 0.00
 			nQtdDias	:= 0.00
 			nQtdTit		:= 0.00
-			nValoraVen	:= 0.00
+			//nValoraVen	:= 0.00
 			nValoraF	:= 0.00
 			nValoraC	:= 0.00
 			nQtdDias1	:= 0.00
@@ -442,6 +453,8 @@ Static Function EXECUTA(_oRegua)
 				If cCGC $ '35402759|03252545'
 				//	Alert('OPA')
 				EndIf
+
+				cCliLoja := CLI->CLIENTE + CLI->LOJA 
 
 				While !SE1->( Eof() ) .and. SE1->E1_FILIAL == xFilial( "SE1" ) .and. ;
 				( SE1->E1_CLIENTE + SE1->E1_LOJA ) == ( CLI->CLIENTE + CLI->LOJA )
@@ -565,31 +578,31 @@ Static Function EXECUTA(_oRegua)
 						EndIf
 
 						nSaldoTIT	:= IIF( Round( nSaldoTIT , 2 ) <= 0.02 , 0.00 , Round( nSaldoTIT , 2 ) )
-						nValorDA	:= Round( nValorDA , 2 ) + Round( nSaldoTIT , 2 )
+						//nValorDA	:= Round( nValorDA , 2 ) + Round( nSaldoTIT , 2 )
 
 						If Round( nSaldoTIT , 2 ) > 0.00 .and. ( mv_par04 - SE1->E1_VENCTO ) >= 5
-							nValorD5F	:= Round( nValorD5F , 2 ) + Round( nSaldoTIT , 2 )
+						//	nValorD5F	:= Round( nValorD5F , 2 ) + Round( nSaldoTIT , 2 )
 							nValorD5C	:= Round( nValorD5C , 2 )  + Round( ( Round( nSaldoTIT , 2 ) * ( mv_par04 - SE1->E1_VENCTO ) ) , 2 )
 						EndIf
 
 						If Round( nSaldoTIT , 2 ) > 0.00 .and. ( mv_par04 - SE1->E1_VENCTO ) >= 15
-							nValorD15F	:= Round( nValorD15F , 2 ) + Round( nSaldoTIT , 2 )
+						//	nValorD15F	:= Round( nValorD15F , 2 ) + Round( nSaldoTIT , 2 )
 							nValorD15C	:= Round( nValorD15C , 2 )  + Round( ( Round( nSaldoTIT , 2 ) * ( mv_par04 - SE1->E1_VENCTO ) ) , 2 )
 						EndIf
 
 						If Round( nSaldoTIT , 2 ) > 0.00 .and. ( mv_par04 - SE1->E1_VENCTO ) >= 30
-							nValorD30F	:= Round( nValorD30F , 2 ) + Round( nSaldoTIT , 2 )
+						//	nValorD30F	:= Round( nValorD30F , 2 ) + Round( nSaldoTIT , 2 )
 							nValorD30C	:= Round( nValorD30C , 2 )  + Round( ( Round( nSaldoTIT , 2 ) * ( mv_par04 - SE1->E1_VENCTO ) ) , 2 )
 						EndIf
-
+						
 						If Round( nSaldoTIT , 2 ) > 0.00 .and. SE1->E1_VENCTO > mv_par04
-							nValoraVen	:= Round( Round( nValoraVen , 2 )	+ Round( nSaldoTIT , 2 ) , 2 )
+							//nValoraVen	:= Round( Round( nValoraVen , 2 )	+ Round( nSaldoTIT , 2 ) , 2 )
 							nValoraF	:= Round( nValoraF , 2 )	+ Round( nSaldoTIT , 2 )
 							nValoraC	:= Round( nValoraC , 2 )	+ Round( ( Round( nSaldoTIT , 2 ) * ( SE1->E1_VENCTO - SE1->E1_EMISSAO ) ) , 2 )
 							nQtdDias1	:= nQtdDias1	+ ( SE1->E1_VENCTO - SE1->E1_EMISSAO )
 							nQtdTit1	:= nQtdTit1		+ 1
 						EndIf
-
+						
 					EndIf
 
 					SE1->( DbSkip() )
@@ -608,32 +621,34 @@ Static Function EXECUTA(_oRegua)
 			dData		:= CtoD( "" )
 
 			nSaldoDia	:= 0.00
-			nValorMA	:= 0.00
-			dDataMA		:= CtoD( "" )
+			//nValorMA	:= 0.00 
+			//dDataMA		:= CtoD( "" )
 
 			EMI->( DbGoTop() )
 
 			While !EMI->( Eof() )
 
+
 				dDataCad		:= IIF( Empty( dDataCad ) , EMI->EMISSAO , dDataCad )
 				nSaldoDia		:= Round( nSaldoDia , 2 ) + Round( EMI->VALOR_FAT , 2 )
-				nSaldoDia		:= Round( nSaldoDia , 2 ) - Round( EMI->VALOR_REC , 2 )
+				//nSaldoDia		:= Round( nSaldoDia , 2 ) - Round( EMI->VALOR_REC , 2 )
 				//nValorDA		:= Round( nValorDA , 2 ) + Round( EMI->VALOR_FAT , 2 )
-				If Round( nSaldoDia , 2 ) >= Round( nValorMA , 2 )
-					nValorMA	:= Round( nSaldoDia , 2 )
-					dDataMA		:= EMI->EMISSAO
+				//If Round( nSaldoDia , 2 ) >= Round( nValorMA , 2 ) .And. Round( EMI->VALOR_FAT , 2 ) - Round( EMI->VALOR_REC , 2 ) > 0.00 COMENTEI POIS NAO ESTAVA CONSIDERANDO OS TITULOS BAIXADOS
+				If Round( EMI->VALOR_FAT , 2 ) >= Round( nValorMA , 2 ) 
+				//	nValorMA	:= Round( EMI->VALOR_FAT , 2 )
+				//	dDataMA		:= EMI->EMISSAO
 				EndIf
 
-				If Round( EMI->VALOR_FAT , 2 ) > 0.00
+				If Round( EMI->VALOR_FAT , 2 ) > 0.00 //- Round( EMI->VALOR_REC , 2 ) > 0.00
 					dDataPV		:= dDataUC
 					nValorPV	:= Round( nValorUC , 2 )
 					dDataUC		:= EMI->EMISSAO
-					nValorUC	:= Round( EMI->VALOR_FAT , 2 )
+					nValorUC	:= Round( EMI->VALOR_FAT , 2 ) - Round( EMI->VALOR_REC , 2 )
 				EndIf
 
 				EMI->( DbSkip() )
 			EndDo
-
+			
 			If dDataPV == dDataUC
 				dDataPV		:= CtoD( "" )
 				nValorPV    := 0.00
@@ -651,7 +666,7 @@ Static Function EXECUTA(_oRegua)
 				SZ7->Z7_VLULTCO		:= Round( nValorUC , 2 )
 
 				//Protecao a diversos problemas na rotina, B. Vinicius 21/05
-				If nValorMA >  SZ7->Z7_VLMAIAC
+				If nValorMA >=  SZ7->Z7_VLMAIAC
 					SZ7->Z7_VLMAIAC		:= Round( nValorMA , 2 )
 					SZ7->Z7_DTMAIAC		:= dDataMA
 				Endif
@@ -668,7 +683,7 @@ Static Function EXECUTA(_oRegua)
 				Loop
 			EndIf
 
-			cLinha	:= "1"
+			cLinha	:= IIF(Len(Alltrim(ccgc)) <= 11 , "2" , "1")		
 
 			// Código do associado
 			cLinha  := cLinha + "0176"
@@ -709,13 +724,18 @@ Static Function EXECUTA(_oRegua)
 			cLinha   := cLinha + StrZero( Int( Round( nValorUC * 100 , 0 ) ) , 15 )
 
 			// Data do maior acúmulo
-			If Empty( dDataMA )
-				dDataMA		:= dDataUC
-				nValorMA	:= Round( nValorUC , 2 )
+			If Empty( dDataMA ) .And. nValorMA > 0
+				//Caso o campo criado ainda não esteja preenchido
+				dDataMA		:= SZ7->Z7_DTMAIAC
+			Else
+				If Empty( dDataMA )
+					dDataMA		:= dDataUC
+					nValorMA	:= Round( nValorUC , 2 )
+				EndIf
 			EndIf
 
 			If SZ7->Z7_DTMAIAC >= (mv_par04 - 365) .and. SZ7->Z7_DTMAIAC <= mv_par04
-				If /*dDataMA < SZ7->Z7_DTMAIAC .or. ????? PRA Q ISSO ?  */Round( nValorMA , 2 ) < Round( SZ7->Z7_VLMAIAC , 2 )
+				If /*dDataMA < SZ7->Z7_DTMAIAC .or. RODOLFO - NAO ENTENDI O PQ DESSE IF AQUI*/ Round( nValorMA , 2 ) < Round( SZ7->Z7_VLMAIAC , 2 ) .And. dDataUC >= SZ7->Z7_DTMAIAC
 					dDataMA		:= SZ7->Z7_DTMAIAC
 					nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
 				EndIf
@@ -793,7 +813,7 @@ Static Function EXECUTA(_oRegua)
 				nValorPV    := Round( SZ7->Z7_VLULTCO , 2 )
 			EndIf
 
-			If dDataPV < SZ7->Z7_DTPENCO
+			If dDataPV < SZ7->Z7_DTPENCO .And. SZ7->Z7_DTPENCO < dDataUC
 				dDataPV	:= SZ7->Z7_DTPENCO
 				nValorPV	:= Round( SZ7->Z7_VLPENCO , 2 )
 			EndIf
@@ -868,6 +888,28 @@ Static Function EXECUTA(_oRegua)
 			//*-------------------------------------------------------------------------------------------------------
 			// Atualiza dados do cisp na tabela SZ7
 
+			//tratamento para não dar errorlog de "lock required"
+			SZ7->(MsUnLock())
+			If !SZ7->( DbSeek( xFilial( "SZ7" ) + cCGC ) )
+				SZ7->(RecLock('SZ7',.T.))
+				SZ7->Z7_FILIAl		:= xFilial( "SZ7" )
+				SZ7->Z7_CGC       	:= cCGC
+				SZ7->Z7_DATCAD    	:= dDataCad
+				SZ7->Z7_DTULTCO		:= dDataUC
+				SZ7->Z7_VLULTCO		:= Round( nValorUC , 2 )
+
+				//Protecao a diversos problemas na rotina, B. Vinicius 21/05
+				If nValorMA >=  SZ7->Z7_VLMAIAC
+					SZ7->Z7_VLMAIAC		:= Round( nValorMA , 2 )
+					SZ7->Z7_DTMAIAC		:= dDataMA
+				Endif
+
+				SZ7->Z7_DTPENCO		:= dDataPV
+				SZ7->Z7_VLPENCO		:= Round( nValorPV , 2 )				
+			Else
+				SZ7->(RecLock('SZ7',.F.))
+			EndIf
+
 			// Data/valor da última compra
 			SZ7->Z7_DTULTCO   := dDataUC
 			SZ7->Z7_VLULTCO   := Round( nValorUC , 2 )
@@ -919,6 +961,14 @@ Static Function EXECUTA(_oRegua)
 		RetIndex( "SE1" )
 		FErase(cIndice+OrdBagExt())
 
+		U_CRZMail(						                                'rodolfo.novaes@totvs.com.br', ;
+																			"", ;
+												"faturamento.daxia@daxia.com.br", ;
+																		'envio do cisp ' + DTOC(dDataBase), ;
+																		, ;
+																			iif(Empty(cErro),'Sem Erros', cErro), ;
+																			.T., ;
+																		@cErrMsg  )
 		If Len(cErro) > 0
 			HS_MSGINF("Ocorreram os seguintes erros na geração do arquivo :" + CRLF + cErro ,"Geração arquivo CISP")
 		EndIf
@@ -939,7 +989,7 @@ Static Function Limpa()
 		cCampo	:= StrTran( cCampo , cSimb , " " )
 	Next nC
 
-	cCampo	:= AllTrim( cCampo )
+	cCampo	:= AllTrim( cCampo )	
 	Return
 
 	//*----------------------------------------------------------------------------
@@ -979,3 +1029,54 @@ Static Function AjustaSX1()
 Return
 
 
+Static Function RetAtr(cCliente,cLoja,nDias)
+Local cQuery	:= ''
+Local cAliasQry := GetNextAlias()
+Local nRet		:= 0
+
+cQuery := "SELECT SUM(E1_SALDO) -  "
+cQuery += "(SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE = '" + cCliente + "' AND SE1A.E1_LOJA = '" + cLoja + "' AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) AS SALDO" 
+cQuery += "  FROM " + RetSQLTab('SE1') 
+cQuery += "  WHERE  "
+cQuery += "  SE1.E1_FILIAL = '" + xFilial('SE1') + "' AND SE1.E1_CLIENTE = '" + cCliente + "'  "
+cQuery += " AND SE1.E1_LOJA = '" + cLoja + "'  "
+cQuery += " AND " + DTOS(mv_par04) + " - SE1.E1_VENCREA  >= '" + Str(nDias) + "'  "
+cQuery += " AND SE1.E1_TIPO = 'NF' "
+cQuery += " AND SE1.E1_STATUS = 'A' "
+cQuery += "  AND SE1.D_E_L_E_T_ = ' '"
+
+TcQuery cQuery new Alias ( cAliasQry )
+(cAliasQry)->(dbGoTop())
+
+If !(cAliasQry)->(EOF()) .And. (cAliasQry)->SALDO > 0
+	nRet := (cAliasQry)->SALDO
+EndIf
+
+(cAliasQry)->(DbCloseArea())
+Return nRet
+
+Static Function RetDeb(cCliente,cLoja)
+Local cQuery	:= ''
+Local cAliasQry := GetNextAlias()
+Local nRet		:= 0
+
+cQuery := "SELECT SUM(E1_SALDO) -  "
+cQuery += "(SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE = '" + cCliente + "' AND SE1A.E1_LOJA = '" + cLoja + "' AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) AS SALDO" 
+cQuery += "  FROM " + RetSQLTab('SE1') 
+cQuery += "  WHERE  "
+cQuery += "  SE1.E1_FILIAL = '" + xFilial('SE1') + "' AND SE1.E1_CLIENTE = '" + cCliente + "'  "
+cQuery += " AND SE1.E1_LOJA = '" + cLoja + "'  "
+cQuery += " AND " + DTOS(mv_par04) + " - SE1.E1_VENCREA  < 0  "
+cQuery += " AND SE1.E1_TIPO = 'NF' "
+cQuery += " AND SE1.E1_STATUS = 'A' "
+cQuery += "  AND SE1.D_E_L_E_T_ = ' '"
+
+TcQuery cQuery new Alias ( cAliasQry )
+(cAliasQry)->(dbGoTop())
+
+If !(cAliasQry)->(EOF()) .And. (cAliasQry)->SALDO > 0
+	nRet := (cAliasQry)->SALDO
+EndIf
+
+(cAliasQry)->(DbCloseArea())
+Return nRet

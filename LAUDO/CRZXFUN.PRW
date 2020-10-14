@@ -165,7 +165,8 @@ IF lProc // Especificação de Processos
 
         ENDIF
         (cAliasEsp)->(DBSKIP())
-    ENDDO     
+    ENDDO    
+    (cAliasEsp)->(DBCloseArea()) 
 ELSE
 
     BEGINSQL ALIAS cAliasPro
@@ -282,6 +283,7 @@ ELSE
         ENDIF
         (cAliasEsp)->(DBSKIP())
     ENDDO
+    (cAliasEsp)->(DBCloseArea())
 ENDIF
 
 RestArea( aArea )
@@ -583,6 +585,8 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
     CONOUT("CRZXFUN - ORIGEM LOTE ("+cLote+") do Produto ("+cProduto+") IDENTIFICADA")
 ENDIF
 
+(cALIAS)->(DBCloseArea())
+
 RestArea(aArea)
 
 Return cOrigem
@@ -781,23 +785,34 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 //CONOUT( "ARQUIVO " + UPPER(cDirLeg+ALLTRIM( cLote )+".pdf - NAO ENCONTRADO"))
                 FwLogMsg("INFO", /*cTransactionId*/, "CRZXFUN", FunName(), "", "01", "RtItmNFS (009) Arquivo do Lote Analisys não encontrado.", 0, (nStart - Seconds()), {}) 
             ENDIF
-            
-            RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
-                Z01_FILIAL  := (cALIAS)->FILIAL
-                Z01_NTFISC  := (cALIAS)->NOTA
-                Z01_SERIE   := (cALIAS)->SERIE
-                Z01_ITEM    := cItem 
-                Z01_DTNOTA  := (cALIAS)->EMISSAO 
-                Z01_DTENVI  := dDatabase
-                Z01_HORA    := TIME()
-                Z01_LOG     := cMsgLog
-            MSUNLOCK()
-
+           
+            If SD2->(DbSeek((cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA))
+                While (SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) == (cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA)
+                    Conout('RtItmNFS - cAlias Lote ' + (cAlias)->LOTE + ' SD2->D2_LOTECTL ' + SD2->D2_LOTECTL)
+                    If Alltrim(SD2->D2_LOTECTL) == Alltrim((cAlias)->LOTE)
+                        conout('RtItmNFS - Gravando Z01 ' + (cALIAS)->NOTA + ' - ' + SD2->D2_ITEM )
+                        // REGISTRO O STATUS DO ENVIO  
+                        RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
+                            Z01_FILIAL  := (cALIAS)->FILIAL
+                            Z01_NTFISC  := (cALIAS)->NOTA
+                            Z01_SERIE   := (cALIAS)->SERIE
+                            Z01_ITEM    := SD2->D2_ITEM 
+                            Z01_DTNOTA  := (cALIAS)->EMISSAO 
+                            Z01_DTENVI  := dDatabase
+                            Z01_HORA    := TIME()
+                            Z01_LOG     := cMsgLog
+                        MSUNLOCK() 
+                    EndIf
+                    SD2->(DbSkip())
+                EndDo
+            EndIf            
+           
         ENDIF
         (cALIAS)->(DBSKIP())
     ENDDO
 ENDIF
 
+(cALIAS)->(DBCloseArea())
 
 RestArea(aArea)
 

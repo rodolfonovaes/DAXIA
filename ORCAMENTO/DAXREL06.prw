@@ -21,6 +21,8 @@ Local aRet          := {}
 Local cAliasP       := GetNextAlias()
 Local cAliasP2      := GetNextAlias()
 Local cPerg         :=   PadR( 'DAXREL05',Len(SX1->X1_GRUPO) )
+Local xPar1         := MV_PAR01
+Local xPar2         := MV_PAR02
 
 aAdd(aParam, {1, "De"   , SG1->G1_COD ,  ,, 'SB1',, 60, .F.} )
 aAdd(aParam, {1, "Até"   , SG1->G1_COD ,  ,, 'SB1',, 60, .F.} )
@@ -29,6 +31,10 @@ If ParamBox(aParam,'Racional',aRet)
     oReport := ReportDef(SG1->G1_COD,aRet)
     oReport:PrintDialog()      
 EndIf
+
+MV_PAR01 := xPar1
+MV_PAR02 := xPar2
+
 Return
 
 /*/{Protheus.doc} ReportDef

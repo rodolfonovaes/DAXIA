@@ -89,10 +89,23 @@
             "rpoType": "TOP"
         },
         {
+            "name": "TESTE",
+            "serverVersion": "170117A",
+            "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
+            "environment": "DSV",
+            "includeList": "C:\\include\\",
+            "server": "172.16.1.133",
+            "port": "3248",
+            "user": "admin",
+            "passwordCipher": "vrVPINq81tqrtdWNwga5Y88U7Z81ahrU6OY0bjNDpCrZKnSZkMXzt2MYVG5xAFSOAAvaTnn3wu6bSCbVq6WTPxfF=",
+            "language": "PORTUGUESE",
+            "rpoType": "TOP"
+        },        
+        {
             "name": "DAXIA__EXTERNO",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "rodolfo",
+            "environment": "producao",
             "includeList": "C:\\include\\",
             "server": "177.8.172.34",
             "port": "2325",
@@ -118,7 +131,7 @@
             "name": "DAXIA__TESTE",
             "serverVersion": "170117A",
             "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "rodolfo",
+            "environment": "te",
             "includeList": "C:\\include\\",
             "server": "177.8.172.34",
             "port": "2324",
@@ -129,27 +142,29 @@
         },
         {
             "name": "DAXIA__TESTE_INTERNO",
-            "serverVersion": "170117A",
-            "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
-            "environment": "RODOLFO",
+            "serverVersion": "191205P",
+            "smartClientPath": "C:\\SMARTCLIENT_TESTE\\",
+            "environment": "producao",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "18011",
+            "ssl" : true,
             "user": "totvs.rnovaes",
-            "passwordCipher": "jR+aOqkqMj82f5smHx5cRVqAXYeIB9gDPb26efj5SfdcpGSVH9NH5lDnlefEc3nGAAaDPSnQUZbqzd7Zof+dM0Pj=",
+            "passwordCipher": "flaky+4c1EQ+0MFaQ9NyL5tgSzHirmMmHFTzQAXpUBVk2l6Y7tshKm6wrLOdLTiNAAz13FNaW9te+KUBdeDyB2Ng=",
             "language": "PORTUGUESE",
             "rpoType": "TOP"
         },
         {
             "name": "DAXIA__PROD_INTERNO",
-            "serverVersion": "170117A",
-            "smartClientPath": "C:\\Protheus\\Protheus\\bin\\smartclient\\",
+            "serverVersion": "191205P",
+            "smartClientPath": "C:\\SMARTCLIENT_TESTE\\",
             "environment": "rodolfo",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8002",
+            "ssl" : true,
             "user": "totvs.rnovaes",
-            "passwordCipher": "jR+aOqkqMj82f5smHx5cRVqAXYeIB9gDPb26efj5SfdcpGSVH9NH5lDnlefEc3nGAAaDPSnQUZbqzd7Zof+dM0Pj=",
+            "passwordCipher": "flaky+4c1EQ+0MFaQ9NyL5tgSzHirmMmHFTzQAXpUBVk2l6Y7tshKm6wrLOdLTiNAAz13FNaW9te+KUBdeDyB2Ng=",
             "language": "PORTUGUESE",
             "rpoType": "TOP"
         },
@@ -190,5 +205,5 @@
     "advpl.debug_showPrivates": true,
     "advpl.debug_showPublic": true,
     "totvsLanguageServer.welcomePage": false,
-    "advpl.selectedEnvironment": "DAXIA__EXTERNO"
+    "advpl.selectedEnvironment": "DAXIA__PROD_INTERNO"
 }

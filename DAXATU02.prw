@@ -109,6 +109,7 @@ Static Function UpdC5(aPergRet)
 If MsgYesNo("Confirma a alteração dos campos?", "Observação - Daxia" )
 	Reclock("SC5", .F.)	
 		SC5->C5_TRANSP  	:= aPergRet[2]
+        SC5->C5_XNMTRAN     := POSICIONE('SA4',1,xFilial('SA4') + aPergRet[2] ,'A4_NOME')
 		SC5->C5_XPEDVIN		:= aPergRet[3]
 		SC5->C5_FECENT 		:= aPergRet[1]
 		SC5->C5_MENNOTA 	:= aPergRet[4]

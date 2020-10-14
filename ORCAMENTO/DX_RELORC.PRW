@@ -102,8 +102,10 @@ cNomRel := "orcam_" + Str( Year( dDataBase ), 4, 0 ) + /* Prefixo "orcam_" + Ano
 | Configuracao do objeto de impressao   |
 +--------------------------------------*/
 oPrn := FWMSPrinter():New( cNomRel, IMP_PDF, lAdjustToLegacy, cLocal, lDisableSetup, , , , , , .F., .T. )
+oPrn:SetResolution(78)
 oPrn:SetLandScape()
 oPrn:SetPaperSize( DMPAPER_A4 )
+oPrn:SetMargin(60,60,60,60)
 oPrn:Setup()
 
 /*--------------------------------------+
@@ -357,7 +359,7 @@ oPrn:Say( 0660, 1820, Upper( cRespTipcli ), oFont12 )
 oPrn:Say( 0623, 2400, "Vendedor", oFont14N )
 oPrn:Say( 0660, 2400, AllTrim( SCJ->CJ_XNOMEV ), oFont12 )
 oPrn:Say( 0716, 1820, "Validade da Proposta:", oFont14N )
-oPrn:Say( 0716, 2170, DtoC( SCJ->CJ_VALIDA ), oFont12 )
+oPrn:Say( 0716, 2200, DtoC( SCJ->CJ_VALIDA ), oFont12 )
 
 /*------------------------------------+
 | Cabeçalho dos Itens                 |
