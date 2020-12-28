@@ -15,20 +15,37 @@
     /*/
 User Function DaxJob01()
 Local aParam      := {}
+Local aParMoeda 	:= {}
+Local aRetMoeda   := {}
 Local aRet        := {}
+PRIVATE lEnd
 
 aAdd(aParam, {1, "De"   , CriaVar('B1_COD',.F.) ,  ,, 'SB1',, 60, .F.} )
 aAdd(aParam, {1, "Até"   , CriaVar('B1_COD',.F.) ,  ,, 'SB1',, 60, .F.} )
 
 If POSICIONE('SM2',1,dDatabase,'M2_MOEDA2') > 0 
-    SBZ->(DbSetOrder(1))
-    If ParamBox(aParam,'Tabela de Preço',aRet) 
-        Processa({|| U_DAXTAB(aRet)},"Processando Registros","Atualizando tabela de preço, Aguarde...")
-    Else    
-        Alert('Cancelado pelo usuario')
-    EndIf
+	SBZ->(DbSetOrder(1))
+	If IsInCallStack('U_AVCADGE')
+		Processa({|| U_DAXTAB({'     ','ZZZZZZ'})},"Processando Registros","Atualizando tabela de preço da " + ALLTRIM(FWFilialName())+", Aguarde...")
+	ELse
+		If ParamBox(aParam,'Tabela de Preço',aRet) 
+			Processa({|| U_DAXTAB(aRet)},"Processando Registros","Atualizando tabela de preço, Aguarde...")
+		Else    
+			Alert('Cancelado pelo usuario')
+		EndIf
+	EndIF
 Else    
+	aAdd(aParMoeda, {1, "Dolar"   , 0.123456 ,  ,, ,, 60, .T.} )
     Alert('Favor cadastrar a cotação do dolar para o dia.')
+	If ParamBox(aParMoeda,'Tabela de Preço',aRetMoeda) 
+		SM2->(DbSetOrder(1))
+		If SM2->(DbSeek(dDataBase))
+			RecLock('SM2',.F.)
+			SM2->M2_MOEDA2 := aRetMoeda[1]
+			MsUnlock()
+		EndIF
+		Processa({|| U_DAXTAB({'     ','ZZZZZZ'})},"Processando Registros","Atualizando tabela de preço, Aguarde...")
+	EndIf
 EndIf
 Return(.T.)
 
@@ -67,7 +84,12 @@ Local cCondPag  := '001'
 Local n         := 0
 Local dDataDe   := Posicione('DA0',1,xFilial('DA0') + cCodTab,'DA0_DATDE')
 PRIVATE lMsErroAuto := .F.
-
+/*
+GETMV('ES_DTDA0')
+RecLock( "SX6" , .F. )
+SX6->X6_CONTEUD	:= DTOS(dDataBase)
+SX6->( MsUnLock() )
+*/
 Conout('DAXTAB - Inicio do processo - ' + time())
 //Atualizo MP e PI
 UpdPA(aRet)
@@ -101,6 +123,9 @@ If !(cAliasQry)->(Eof())
 		Conout('DAXTAB - Incluindo produto no array - ' +Alltrim((cAliasQry)->BZ_COD) + " - " + time())
         DA1->(DbSetOrder(1))
         IncProc()
+		IF lEnd
+        	MsgStop("Cancelado pelo usuário", "Atenção")
+    	ENDIF
         If aScan(aItens,{|x| AllTrim(x[1][2])==Alltrim((cAliasQry)->BZ_COD)}) == 0
             If DA1->(DbSeek(xFilial('DA1') + cCodTab + (cAliasQry)->BZ_COD))          
                 cItem := DA1->DA1_ITEM
@@ -183,18 +208,22 @@ If !(cAliasQry)->(Eof())
             DisarmTransaction()
             Mostraerro()
         Else
-            MsgInfo('Tabela Atualizada!')
+			If !IsInCallStack('U_MAVCADGE')
+            	MsgInfo('Tabela Atualizada!')
+			EndIf
         EndIf
         End transaction 
 		Conout('DAXTAB - Registros atualizados na tabela  - ' + time())
         (cAliasQry)->(DbCloseArea())
 
-        If MsgYesNo('Deseja atualizar os orçamentos?')
+        If IsInCallStack('U_AVCADGE') .Or. MsgYesNo('Deseja atualizar os orçamentos?') 
             UpdOrca(aItens,aRet)
         EndIf
     EndIf
 Else
-    MsgInfo('Não foram encontrados dados para a pesquisa!')
+	If !IsInCallStack('U_AVCADGE')
+    	MsgInfo('Não foram encontrados dados para a pesquisa!')
+	EndIf
 EndIf
 Return 
 
@@ -400,9 +429,11 @@ If !(cAliasQry)->(EOF())
         EndIf
         (cAliasQry)->(DbSkip())
     EndDo
-    MsgInfo(Alltrim(STR(nAtu)) + ' itens de orçamentos atualizados!')
 EndIf
 End transaction
+If !IsInCallStack('U_AVCADGE')
+	MsgInfo(Alltrim(STR(nAtu)) + ' itens de orçamentos atualizados!')
+EndIf
 Return  
 
 
@@ -453,6 +484,9 @@ If !(cAliasQry)->(Eof())
     While !(cAliasQry)->(Eof())	
 		Conout('DAXTAB - Atualizando PA do  - '+  Alltrim((cAliasQry)->BZ_COD) +" - "  + time())
         IncProc()
+		IF lEnd
+        	MsgStop("Cancelado pelo usuário", "Atenção")
+    	ENDIF
         nValor := 0
         cProduto := (cAliasQry)->BZ_COD
         
@@ -814,7 +848,11 @@ While SCK->(CK_FILIAL + CK_NUM) == SCJ->(CJ_FILIAL + CJ_NUM)
 
         nItem := nSeleciona
         nPos := aScan(aItens,{|x| x[1]==nRecCK})
-        SCK->(DbGoTo(aItens[nPos][1]))
+		If nPos == 0
+			loop
+		Else
+        	SCK->(DbGoTo(aItens[nPos][1]))
+		EndIf
         nPrcVen		:= aItens[nPos][2]
         nNegociado	:= aItens[nPos][3]
 

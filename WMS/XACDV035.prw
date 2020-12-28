@@ -3253,8 +3253,8 @@ If Rastro( cProduto, "S" )
 	EndIf
 Else
 	dbSelectArea( "SB8" )
-	dbSetOrder( 3 )
-	If !dbSeek( xFilial( "SB8" ) + cProdAux + cLocal + PADR(cLote,TamSX3('B8_LOTECTL')[1]) ) .And. lVldLotErr
+	dbSetOrder( 5 )
+	If !dbSeek( xFilial( "SB8" ) + cProdAux + PADR(cLote,TamSX3('B8_LOTECTL')[1]) ) .And. lVldLotErr
 		VTAlert(STR0110,STR0095,.T.,4000) //"Lote"###"Invalido"
 		lRet := .F.
 	EndIf
@@ -3690,7 +3690,7 @@ Local aAreaNNR := NNR->(GetArea())
 NNR->(dbSetOrder(1))
 If NNR->(dbSeek( FWxFilial("NNR") + cArmazem))  .And. NNR->NNR_XINVEN = "2"
 	SB1->(dbSetOrder(1))
-	If SB1->(dbSeek( FWxFilial("SB1") + Alltrim(cProduto))) .And. SB1->B1_CONV > 0
+	If SB1->(dbSeek( FWxFilial("SB1") + SUBSTR(cProduto,1,10))) .And. SB1->B1_CONV > 0
 		If SB1->B1_TIPCONV == 'D'
 			nQtdEtiq :=SB1->B1_CONV * nQuant 
 		Else

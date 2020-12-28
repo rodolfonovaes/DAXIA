@@ -390,7 +390,7 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
         IF FILE(UPPER(cLocal+""+cArquivo+".pdf"),,.T.)
             RETURN UPPER(cLocal+""+cArquivo+".pdf")
         ELSE
-            RETURN "ERRO: PDF NÃO FOI GERADO"
+            RETURN "ERRO: PDF ("+ cLocal+""+cArquivo+".pdf" + ")NÃO FOI GERADO"
         ENDIF
     ENDIF
 

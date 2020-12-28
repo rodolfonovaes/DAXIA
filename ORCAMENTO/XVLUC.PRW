@@ -31,5 +31,5 @@ cQuery += "GROUP BY F2_CLIENTE )"
 cQuery  := ChangeQuery(cQuery)
 dbUseArea( .T., "TOPCONN", TCGenQry( Nil, Nil, cQuery ), cAlias, .T., .F. )  
 nRet  := (cAlias)->VLUC
-
+(cAlias)->(DBCloseArea())
 Return nRet   

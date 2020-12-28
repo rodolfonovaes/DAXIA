@@ -35,7 +35,8 @@ LOCAL cRoteiro  := '01'
 
 aEspec := {} // Inicializacao da array aLaudo
 
-/*IF dDatabase >= CTOD("15/04/2020")
+/*
+IF dDatabase >= CTOD("15/04/2020")
 	IF !lJob 
 		cMsgP := "Periodo de validação expirado."
 		cMsgS := "Solicite um novo período de validação."
@@ -46,6 +47,7 @@ aEspec := {} // Inicializacao da array aLaudo
 	RETURN .F.
 ENDIF
 */
+
 IF lProc // Especificação de Processos
     /*
     BEGINSQL ALIAS cAliasPro
@@ -54,7 +56,7 @@ IF lProc // Especificação de Processos
         WHERE	QPK.QPK_FILIAL = %xFilial:QPK% 
             AND QPK.QPK_LOTE = %exp:cNroLote%
             AND QPK.%NotDel%
-    ENDSQL
+    ENDS QL
     */
 
     BEGINSQL ALIAS cAliasPro
@@ -138,16 +140,24 @@ IF lProc // Especificação de Processos
                 cEnsaio +=" ("+ALLTRIM(SAH->AH_UMRES)+")"
             ENDIF
 
-            cEspec := "NÃO LOCALIZADA"
+            cEspec := "NÃO LOCALIZADA" 
             IF EMPTY(ALLTRIM((cAliasEsp)->MINMAX))
                 cEspec := (cAliasEsp)->TEXTO 
             ELSE
+                /*
                 IF ALLTRIM((cAliasEsp)->MINMAX) == "1"
                     cEspec := (cAliasEsp)->LIE+" <<< - >>> "+(cAliasEsp)->LSE
                 ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "2"
-                    cEspec := (cAliasEsp)->LIE+" <<< " 
+                    cEspec := (cAliasEsp)->LIE+" >>> " 
                 ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "3" 
-                    cEspec := " >>> "+(cAliasEsp)->LSE
+                    cEspec := " <<< "+(cAliasEsp)->LSE
+                ENDIF*/
+                IF ALLTRIM((cAliasEsp)->MINMAX) == "1"
+                    cEspec := (cAliasEsp)->LIE+" á "+(cAliasEsp)->LSE
+                ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "2"
+                    cEspec := " Acima/Igual á  "+(cAliasEsp)->LIE 
+                ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "3" 
+                    cEspec := " Abaixo/Igual á "+(cAliasEsp)->LSE
                 ENDIF		  
             ENDIF
 
@@ -165,8 +175,7 @@ IF lProc // Especificação de Processos
 
         ENDIF
         (cAliasEsp)->(DBSKIP())
-    ENDDO    
-    (cAliasEsp)->(DBCloseArea()) 
+    ENDDO     
 ELSE
 
     BEGINSQL ALIAS cAliasPro
@@ -257,13 +266,23 @@ ELSE
                 IF EMPTY(ALLTRIM((cAliasEsp)->MINMAX))
                     cEspec := (cAliasEsp)->TEXTO 
                 ELSE
+                    /*
                     IF ALLTRIM((cAliasEsp)->MINMAX) == "1"
                         cEspec := (cAliasEsp)->LIE+" <<< - >>> "+(cAliasEsp)->LSE
                     ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "2" // CONTRIOLA  MINIMO
                         cEspec := (cAliasEsp)->LIE+" >>> " 
                     ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "3" // CONTRIOLA  MAXIMO 
                         cEspec := " <<< "+(cAliasEsp)->LSE
-                    ENDIF		  
+                    ENDIF
+                    */
+                    IF ALLTRIM((cAliasEsp)->MINMAX) == "1"
+                        cEspec := (cAliasEsp)->LIE+" á "+(cAliasEsp)->LSE
+                    ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "2" // CONTRIOLA  MINIMO
+                        cEspec := " Acima/Igual á  "+(cAliasEsp)->LIE 
+                    ELSEIF  ALLTRIM((cAliasEsp)->MINMAX) ==  "3" // CONTRIOLA  MAXIMO 
+                        cEspec := " Abaixo/Igual á "+(cAliasEsp)->LSE
+                    ENDIF
+                    
                 ENDIF
 
                 aMedicao := {}  
@@ -283,7 +302,6 @@ ELSE
         ENDIF
         (cAliasEsp)->(DBSKIP())
     ENDDO
-    (cAliasEsp)->(DBCloseArea())
 ENDIF
 
 RestArea( aArea )
@@ -526,6 +544,7 @@ USER FUNCTION RtOriPrd(cProduto, cLote, lJob)
 LOCAL aArea     := GetArea()
 LOCAL cOrigem   := "E"              
 LOCAL cALIAS    := GetNextAlias()
+
 /*
 IF dDatabase >= CTOD("15/04/2020")
 	IF !lJob 
@@ -538,6 +557,7 @@ IF dDatabase >= CTOD("15/04/2020")
 	RETURN .F.
 ENDIF
 */
+
 BEGINSQL ALIAS cALIAS
     SELECT PRODUTO, LOTE, ORIGEM, SEQUENCIAL 
     FROM (  SELECT SD51.D5_LOTECTL AS LOTE,SD51.D5_PRODUTO AS PRODUTO,         ' ' AS DOCUMENTO, ' ' AS SERIE,   SD51.D5_OP AS OP, 
@@ -585,8 +605,6 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
     CONOUT("CRZXFUN - ORIGEM LOTE ("+cLote+") do Produto ("+cProduto+") IDENTIFICADA")
 ENDIF
 
-(cALIAS)->(DBCloseArea())
-
 RestArea(aArea)
 
 Return cOrigem
@@ -618,6 +636,7 @@ LOCAL nStart 	:= Seconds()
 Local cItem     := '00'
 DEFAULT __xFilial := "    "
 DEFAULT lJob      := .F.
+
 /*
 IF dDatabase >= CTOD("15/04/2020")
 	IF !lJob 
@@ -630,6 +649,7 @@ IF dDatabase >= CTOD("15/04/2020")
 	RETURN .F.
 ENDIF
 */
+
 //tRATAMENTO PARA FILTRO DO JOB
 cFFilial :='% '
 IF !EMPTY(ALLTRIM(__xFilial))
@@ -637,7 +657,7 @@ IF !EMPTY(ALLTRIM(__xFilial))
 ENDIF	
 cFFilial +=' %'
 
-BEGINSQL ALIAS cALIAS
+/*BEGINSQL ALIAS cALIAS
     COLUMN EMISSAO AS DATE
     SELECT		SD2.D2_FILIAL FILIAL, SD2.D2_DOC    NOTA, SD2.D2_SERIE SERIE, SD2.D2_EMISSAO EMISSAO, 
                 SD2.D2_LOTECTL  LOTE, SA1.A1_COD CLIENTE, SA1.A1_LOJA   LOJA, SA1.A1_XMAILLD MAIL
@@ -653,6 +673,29 @@ BEGINSQL ALIAS cALIAS
                         WHERE       Z01.%NotDel% )
     GROUP BY	SD2.D2_FILIAL , SD2.D2_DOC    , SD2.D2_SERIE , SD2.D2_EMISSAO , 
                 SD2.D2_LOTECTL  , SA1.A1_COD , SA1.A1_LOJA   , SA1.A1_XMAILLD                         
+    ORDER BY  SD2.D2_FILIAL, SD2.D2_DOC, SD2.D2_SERIE, SD2.D2_EMISSAO, SD2.D2_LOTECTL 
+ENDSQL
+*/
+
+BEGINSQL ALIAS cALIAS
+    %noparser%
+    COLUMN EMISSAO AS DATE
+	SELECT		SD2.D2_FILIAL FILIAL, SD2.D2_DOC    NOTA, SD2.D2_SERIE SERIE, SD2.D2_EMISSAO EMISSAO, 
+                SD2.D2_LOTECTL  LOTE, SA1.A1_COD CLIENTE, SA1.A1_LOJA   LOJA, SA1.A1_XMAILLD MAIL, Z01.Z01_DTENVI
+    FROM		SD2010 SD2 (NOLOCK) 
+    JOIN  SA1010 SA1 (NOLOCK) ON SA1.A1_COD = SD2.D2_CLIENTE AND SA1.A1_LOJA = SD2.D2_LOJA AND SA1.%NotDel%
+	LEFT JOIN  Z01010 Z01 ON	Z01.Z01_FILIAL = SD2.D2_FILIAL AND
+								Z01.Z01_NTFISC = SD2.D2_DOC AND 
+								Z01.Z01_SERIE  = SD2.D2_SERIE AND 
+								Z01.Z01_ITEM   = SD2.D2_ITEM AND 
+								Z01.Z01_DTNOTA = SD2.D2_EMISSAO AND
+								Z01.%NotDel%
+    WHERE               SD2.%NotDel%                    
+                    %exp:cFFilial% 	AND SD2.%NotDel%  
+					AND SD2.D2_LOTECTL <> ''                 
+					AND Z01.Z01_ITEM IS NULL
+    GROUP BY	SD2.D2_FILIAL , SD2.D2_DOC    , SD2.D2_SERIE , SD2.D2_EMISSAO , 
+                SD2.D2_LOTECTL  , SA1.A1_COD , SA1.A1_LOJA   , SA1.A1_XMAILLD , Z01.Z01_DTENVI                        
     ORDER BY  SD2.D2_FILIAL, SD2.D2_DOC, SD2.D2_SERIE, SD2.D2_EMISSAO, SD2.D2_LOTECTL 
 ENDSQL
 
@@ -785,34 +828,23 @@ IF !(cALIAS)->(EOF()) // CONSIDERAR O PRIMEIRO REGISTRO DO LOTE
                 //CONOUT( "ARQUIVO " + UPPER(cDirLeg+ALLTRIM( cLote )+".pdf - NAO ENCONTRADO"))
                 FwLogMsg("INFO", /*cTransactionId*/, "CRZXFUN", FunName(), "", "01", "RtItmNFS (009) Arquivo do Lote Analisys não encontrado.", 0, (nStart - Seconds()), {}) 
             ENDIF
-           
-            If SD2->(DbSeek((cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA))
-                While (SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) == (cALIAS)->FILIAL + (cALIAS)->NOTA + (cALIAS)->SERIE + (cALIAS)->CLIENTE + (cALIAS)->LOJA)
-                    Conout('RtItmNFS - cAlias Lote ' + (cAlias)->LOTE + ' SD2->D2_LOTECTL ' + SD2->D2_LOTECTL)
-                    If Alltrim(SD2->D2_LOTECTL) == Alltrim((cAlias)->LOTE)
-                        conout('RtItmNFS - Gravando Z01 ' + (cALIAS)->NOTA + ' - ' + SD2->D2_ITEM )
-                        // REGISTRO O STATUS DO ENVIO  
-                        RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
-                            Z01_FILIAL  := (cALIAS)->FILIAL
-                            Z01_NTFISC  := (cALIAS)->NOTA
-                            Z01_SERIE   := (cALIAS)->SERIE
-                            Z01_ITEM    := SD2->D2_ITEM 
-                            Z01_DTNOTA  := (cALIAS)->EMISSAO 
-                            Z01_DTENVI  := dDatabase
-                            Z01_HORA    := TIME()
-                            Z01_LOG     := cMsgLog
-                        MSUNLOCK() 
-                    EndIf
-                    SD2->(DbSkip())
-                EndDo
-            EndIf            
-           
+            
+            RECLOCK("Z01", .T.) // INCLUO OS DADOS NO REGISTRO DE ENVIO		
+                Z01_FILIAL  := (cALIAS)->FILIAL
+                Z01_NTFISC  := (cALIAS)->NOTA
+                Z01_SERIE   := (cALIAS)->SERIE
+                Z01_ITEM    := cItem 
+                Z01_DTNOTA  := (cALIAS)->EMISSAO 
+                Z01_DTENVI  := dDatabase
+                Z01_HORA    := TIME()
+                Z01_LOG     := cMsgLog
+            MSUNLOCK()
+
         ENDIF
         (cALIAS)->(DBSKIP())
     ENDDO
 ENDIF
 
-(cALIAS)->(DBCloseArea())
 
 RestArea(aArea)
 

@@ -14,8 +14,22 @@
     /*/
 User Function MA090ATU()
 Local aArea     := GetArea()
-
-U_UpdDA1()
+Local cCodTab   := SUPERGETMV('ES_DAXTAB',.T.,'001')
+Local dDataDA0  := SUPERGETMV('ES_DTDA0',.T.,dDataBase,cFilAnt)
+Local cFilBkp   := cFilAnt
+Local aSM0  	:= FWLoadSM0()
+Local nX		:= 0
+If MsgYesNo('Confirma a atualização das tabelas de preço com a cotação do dolar :' + Alltrim(Transform( SM2->M2_MOEDA2, "@E 999,999,999,999.99" )) + '?')		
+    For nX	:= 1 to Len(aSM0)
+        cFilAnt := aSM0[nX][2]
+            
+        //If dDataDA0 <> dDataBase
+            U_DaxJob01()
+        //EndIf
+        //U_UpdDA1()
+    Next
+EndIf
+cFilAnt := cFilBkp
 
 RestArea(aArea)
 Return

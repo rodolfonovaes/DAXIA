@@ -17,7 +17,7 @@
 #DEFINE MAXITEMP2 038        
 #DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC  058                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXITEMC  059                                                // Máxima de caracteres por linha de produtos/serviços
 
 /*******************************************************************************************************************************
 DAXIA INICIO - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
@@ -28,7 +28,7 @@ DAXIA FIM - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO
 ************************************************************* *******************************************************************/	
 
 
-#DEFINE MAXMSG    006                                                // Máximo de dados adicionais na primeira página
+#DEFINE MAXMSG    008                                                // Máximo de dados adicionais na primeira página
 #DEFINE MAXMSG2   018                                                // Máximo de dados adicionais na segunda página
 #DEFINE MAXBOXH   800                                                // Tamanho maximo do box Horizontal
 #DEFINE MAXBOXV   600
@@ -3515,7 +3515,7 @@ For nY := 1 To nLenItens
 		EndIf
 	else 
 		If !Empty(cFCI)
-			nLinha := nLinha + 16
+			nLinha := nLinha + 10
 		Else
 			nLinha := nLinha + 14
 		EndIf		
@@ -3523,7 +3523,7 @@ For nY := 1 To nLenItens
 
 	// Rodolfo - Tratamento para não imprimir a segunda folha em branco
 	If nL >= nLenItens - 6 .And. lPag1 .And. nFolhas > 1
-		nL := 99
+		nL := 13
 	EndIf
 
 Next nY 
@@ -4354,7 +4354,7 @@ If nFolha == 1
 	nLin:= nLine+618+nAjustaDad
 	
 	For nX := 1 To Min(nLenMensagens, MAXMSG)
-		oDanfe:Say(nLin,nBaseTxt,aMensagem[nX],oFont07:oFont)
+		//oDanfe:Say(nLin,nBaseTxt,aMensagem[nX],oFont07:oFont) rodolfo - retirei pois estava imprimindo "por tras" das mensagens 
 		nLin:= nLin+10
 	Next nX
 	

@@ -1,3 +1,7 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"
+#include "FWMVCDEF.CH"
+#INCLUDE "MATXDEF.CH"
  /*/{Protheus.doc} MT415EFT
     (long_description)
     @type  Function

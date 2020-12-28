@@ -765,7 +765,7 @@ ElseIf cAlias == 'SIM'
 		Alert('Produto ' + Alltrim(Posicione('SB1',1,xFilial('SB1')  + cCodProd , 'B1_DESC'))+ ' sem valor cadastrado na tabela de preço!')	
 	EndIf
 ElseIf cAlias == 'SBZ'
-	If !ISINCALLSTACK('U_DAXJOB01')
+	If !ISINCALLSTACK('U_DAXJOB01') 
 		cCodProd 	:= M->BZ_COD
 		If M->BZ_MCUSTD == '2'
 			cMCustd	:= 'U$ '
@@ -3145,12 +3145,14 @@ If SC6->(dbseek(SC5->C5_FILIAL + SC5->C5_NUM))
 	While SC5->C5_FILIAL + SC5->C5_NUM == SC6->(C6_FILIAL + C6_NUM)
 			DbSelectArea('SZL')	
 			SZL->(DbSetOrder(1))
-
+			
 			nPResult	:= noRound(SC6->C6_XMGBRUT - (SC6->C6_COMIS1 * nPerDsr) - SC6->C6_COMIS1,2) 
 			nVlResult   := xMoeda((SC6->C6_PRCVEN * SC6->C6_QTDVEN),Val(SC6->C6_XMOEDA),1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
 
 			If SZL->(DbSeek(xFilial('SZL') + SC5->C5_XNUMCJ + SC6->C6_ITEM + SC6->C6_PRODUTO))
 				lSZL := .T.
+				nPResult	:= noRound((SZL->ZL_RESULT / SZL->ZL_RECSIPI ) * 100)
+				nVlResult   := SZL->ZL_RESULT
 			EndIf
 
 			aadd(aItens,{SC6->C6_ITEM,;
@@ -3158,7 +3160,7 @@ If SC6->(dbseek(SC5->C5_FILIAL + SC5->C5_NUM))
 								STR(SC6->C6_QTDVEN),;
 								Alltrim(Posicione('SB1',1,xFilial('SB1') + SC6->C6_PRODUTO ,'B1_DESC')),;
 								Iif( SC5->C5_XTPOPER $ SUPERGETMV('ES_OPZERPE',.T.,''),'0%', Transform( nPResult, "@E 999,999,999.99" ) + ' %'),;
-								Transform( NOROUND((nVlResult * (nPResult / 100)  ) ,2), "@E 999,999,999.99" ),;
+								Transform( nVlResult , "@E 999,999,999.99" ),;
 								SC6->(Recno());
 						})
 		SC6->(dbSkip())

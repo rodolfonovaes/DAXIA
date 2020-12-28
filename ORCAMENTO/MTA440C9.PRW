@@ -51,7 +51,7 @@ User Function MTA440C9()
 
     //IF FieldPos("C9_XLOGCRE") > 0  .AND. ; // CASO O CAMPO EXISTA
  //    IF   ( EMPTY(ALLTRIM(cAntesCRD)) .OR. ; // CASO O STATUS ANTERIOR SEJA  VAZIO EU ATUALIZO
-    If  ALLTRIM(cAntesCRD) <> ALLTRIM(cStatusCred) .And. Empty(cStatusCred) // CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
+    If  ALLTRIM(cAntesCRD) <> ALLTRIM(cStatusCred) .And. Empty(cStatusCred) .And. IsInCallStack('MATA450')// CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
 
         // REGISTRO QUEM LIBEROU
         Reclock("SC9",.F.)

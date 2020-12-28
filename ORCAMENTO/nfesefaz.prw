@@ -1869,7 +1869,28 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2Q.%NotDel% AND
 										SD2Q.D2_COD = SD2.D2_COD AND
 										SD2Q.D2_LOTECTL = SD2.D2_LOTECTL
-									ORDER BY SD2Q.D2_ITEM) AS D2_IDENTB6																																																																																																																																																																																									
+									ORDER BY SD2Q.D2_ITEM) AS D2_IDENTB6,
+									(SELECT SUM(SFT.FT_DESCZFR) FROM SFT010 SFT
+										WHERE
+										SFT.FT_FILIAL  = %xFilial:SFT% AND
+										SFT.FT_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SFT.FT_NFISCAL     = %Exp:SF2->F2_DOC% AND
+										SFT.FT_CLIEFOR = %Exp:SF2->F2_CLIENTE% AND
+										SFT.FT_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SFT.%NotDel% AND
+										SFT.FT_PRODUTO 	= SD2.D2_COD AND
+										SFT.FT_ITEM IN ( 
+											SELECT SD2R.D2_ITEM FROM SD2010 SD2R 
+											WHERE SD2R.D2_FILIAL 	= %xFilial:SD2% AND
+												SD2R.D2_SERIE 	= %Exp:SF2->F2_SERIE% AND
+												SD2R.D2_DOC 	= %Exp:SF2->F2_DOC% AND
+												SD2R.D2_CLIENTE	= %Exp:SF2->F2_CLIENTE% AND
+												SD2R.D2_LOJA 	= %Exp:SF2->F2_LOJA% AND
+												SD2R.%NotDel% AND
+												SD2R.D2_COD = SD2.D2_COD AND
+												SD2R.D2_LOTECTL = SD2.D2_LOTECTL											
+										)
+									)AS FT_DESCZFR																																																																																																																																																																																						
 									%Exp:cField% 																				
 								FROM %Table:SD2% SD2
 								WHERE
@@ -2190,7 +2211,28 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 										SD2Q.%NotDel% AND
 										SD2Q.D2_COD = SD2.D2_COD AND
 										SD2Q.D2_LOTECTL = SD2.D2_LOTECTL
-									ORDER BY SD2Q.D2_ITEM) AS D2_IDENTB6																					 																																																																																															
+									ORDER BY SD2Q.D2_ITEM) AS D2_IDENTB6,
+									(SELECT SUM(SFT.FT_DESCZFR) FROM SFT010 SFT
+										WHERE
+										SFT.FT_FILIAL  = %xFilial:SFT% AND
+										SFT.FT_SERIE   = %Exp:SF2->F2_SERIE% AND
+										SFT.FT_NFISCAL     = %Exp:SF2->F2_DOC% AND
+										SFT.FT_CLIEFOR = %Exp:SF2->F2_CLIENTE% AND
+										SFT.FT_LOJA    = %Exp:SF2->F2_LOJA% AND
+										SFT.%NotDel% AND
+										SFT.FT_PRODUTO 	= SD2.D2_COD AND
+										SFT.FT_ITEM IN ( 
+											SELECT SD2R.D2_ITEM FROM SD2010 SD2R 
+											WHERE SD2R.D2_FILIAL 	= %xFilial:SD2% AND
+												SD2R.D2_SERIE 	= %Exp:SF2->F2_SERIE% AND
+												SD2R.D2_DOC 	= %Exp:SF2->F2_DOC% AND
+												SD2R.D2_CLIENTE	= %Exp:SF2->F2_CLIENTE% AND
+												SD2R.D2_LOJA 	= %Exp:SF2->F2_LOJA% AND
+												SD2R.%NotDel% AND
+												SD2R.D2_COD = SD2.D2_COD AND
+												SD2R.D2_LOTECTL = SD2.D2_LOTECTL											
+										)
+									)AS FT_DESCZFR																																	 																																																																																															
 									%Exp:cField% 							
 							FROM %Table:SD2% SD2
 							WHERE
@@ -3613,7 +3655,7 @@ DAXIA FINAL - MENSAGEM PARA O CLIENTE CUSTOMIZADA - CICERO CRUZ
 							EndIf
 						EndIf 
 						If SFT->FT_DESCZFR>0 
-								aadd(aICMSZFM,{If(SFT->(FieldPos("FT_DESCZFR")) > 0,FT_DESCZFR,""),;
+								aadd(aICMSZFM,{If(SFT->(FieldPos("FT_DESCZFR")) > 0,(cAliasSD2)->FT_DESCZFR,""),; //Rodolfo
 											   If(SFT->(FieldPos("FT_MOTICMS")) > 0,SFT->FT_MOTICMS,"")})
 						Else
 								aadd(aICMSZFM,{})

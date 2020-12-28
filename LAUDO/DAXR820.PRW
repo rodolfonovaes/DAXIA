@@ -261,7 +261,7 @@ oSection6:SetHeaderBreak()
 oSection6:SetReadOnly()                          
 
 TRCell():New(oSection6,'D4_COD'	 	 , 'SD4' , STR0058   , PesqPict('SD4','D4_COD')    ,TamSX3('D4_COD')[1]+3    ,/*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign*/,/*lCellBreak*/,/*nColSpace*/,.F./*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
-TRCell():New(oSection6,'B1_DESC' 	 , 'SB1' , STR0059   , PesqPict('SB1','B1_DESC')   ,30 ,/*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,.T./*lLineBreak*/,/*cHeaderAlign*/,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
+TRCell():New(oSection6,'B1_DESC' 	 , 'SB1' , STR0059   , PesqPict('SB1','B1_DESC')   ,28 ,/*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,.T./*lLineBreak*/,/*cHeaderAlign*/,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 oSection6:Cell("B1_DESC"):SetLineBreak() 
 // Consumo Unitário
 TRCell():New(oSection6, 'ConsUnit' 	 , 'SD4' , "Consumo Unitário", PesqPict('SD4','D4_QUANT')  ,TamSX3('D4_QUANT')[1]  ,/*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign*/,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
@@ -271,7 +271,7 @@ TRCell():New(oSection6, 'ConsUnit' 	 , 'SD4' , "Consumo Unitário", PesqPict('SD4
 TRCell():New(oSection6, 'D4_DTVALID' , 'SD4' , "Data Validade"  , /*Picture*/                 , /*Tamanho*/           , /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 TRCell():New(oSection6, 'D4_QUANT' 	 , 'SD4' , STR0043    		, PesqPict('SD4','D4_QUANT')  ,TamSX3('D4_QUANT')[1]  , /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 TRCell():New(oSection6, 'B1_UM'   	 , 'SB1' , STR0061    		, PesqPict('SB1','B1_UM')     ,TamSX3('B1_UM')[1]     , /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
-TRCell():New(oSection6, 'D4_LOTECTL' , 'SD4' , /*Titulo*/ 		, PesqPict('SD4','D4_LOTECTL'),7/*TamSX3('D4_LOTECTL')[1]*/, /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
+TRCell():New(oSection6, 'D4_LOTECTL' , 'SD4' , /*Titulo*/ 		, PesqPict('SD4','D4_LOTECTL'),7+3/*TamSX3('D4_LOTECTL')[1]*/, /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 TRCell():New(oSection6, 'D4_NUMLOTE' , 'SD4' , /*Titulo*/ 		, PesqPict('SD4','D4_NUMLOTE'),TamSX3('D4_NUMLOTE')[1], /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 TRCell():New(oSection6, 'B2_LOCALIZ' , 'SB2' , /*Titulo*/ 		, PesqPict('SB2','B2_LOCALIZ'),TamSX3('B2_LOCALIZ')[1], /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
 TRCell():New(oSection6, 'D4_OP'  	 , 'SD4' , /*Titulo*/ 		, PesqPict('SD4','D4_OP')     ,TamSX3('D4_OP')[1]     , /*lPixel*/,                                /*{|| code-block de impressao }*/ , /*cAlign*/, /*lLineBreak*/, /*cHeaderAlign*/, /*lCellBreak*/, /*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/)
@@ -813,12 +813,12 @@ While !oReport:Cancel() .And. !(cAliasTop)->(Eof())
 	dbSkip()
 
 	// Para impressoras com Frente e Verso
-	IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
+	/*IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
 		lSwHead := .F.
 		oReport:HideHeader()
 		oReport:StartPage() 
 		oReport:EndPage() 
-	ENDIF
+	ENDIF*/
 EndDo
 
 If lPlanilha
@@ -1650,7 +1650,7 @@ Static Function CabecPak(oReport)
 				
 			DBSELECTAREA("SC2")
 			DBSETORDER(1)
-			DBSEEK(xFilial("SC2")+SubStr(cOP,1,8))
+			DBSEEK(xFilial("SC2")+SubStr(cOP,1,11))
 			IF !EOF()
 				IF EMPTY(ALLTRIM(SC2->C2_PEDIDO))
 					//_linha5 	  := "CLIENTE......: DAXIA DOCE AROMA INDÚSTRIA E COMÉRCIO LTDA."

@@ -29,8 +29,10 @@ Local cXLFABRI	 := ''
 Local cCliFor    := ''
 Local cLoja      := ''
 Local cXDProd    := ''
+Local aArea     := GetArea()
 
 If aParam[2] == 'FORMLINEPOS' 
+
     SB8->(DbSetOrder(3))
     If SB8->(DbSeek(xFilial('SB8') + PADR(oMdl:GetModel("D12MASTER"):GetValue("D12_PRODUT"),TAMSX3('B8_PRODUTO')[1]) + oMdl:GetModel("D12MASTER"):GetValue("D12_LOCORI")  + PADR(oMdl:GetModel("D12MASTER"):GetValue("D12_LOTECT"),TAMSX3('B8_LOTECTL')[1]) ))
         dDVldSB8 := SB8->B8_DTVALID
@@ -63,6 +65,21 @@ If aParam[2] == 'FORMLINEPOS'
     Else
         //Alert('B8 de origem não encontrada!')
     EndIf
+ElseIf aParam[2] == 'MODELPOS' 
+    If WmsOpc332() == '4' //FINALIZAR
+        SC9->(dbSetOrder(1))
+        If SC9->(DbSeek(xFilial('SC9') + Alltrim(oMdl:GetModel("D12MASTER"):GetValue("D12_DOC"))))
+            SC5->(DBSetOrder(1))
+            If SC5->(DbSeek(xFilial('SC5') + SC9->C9_PEDIDO))
+                Reclock('SC5',.F.)
+                SC5->C5_BLEST   := SC9->C9_BLEST
+                SC5->C5_BLCRED  := SC9->C9_BLCRED
+                SC5->C5_XBLWMS  := '05' //CHUMBEI PQ NAO ACHEI NENHUM PE QUE SEJA APOS A ATUALIZACAO DA SC9
+                MsUnlock()
+            EndIf
+        EndIf
+    EndIf
 EndIf
 
+RestArea(aArea)
 Return xRet

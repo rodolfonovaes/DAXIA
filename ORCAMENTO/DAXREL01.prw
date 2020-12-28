@@ -62,8 +62,10 @@ If ParamBox(aParam,'Parâmetros',aRet)
 	    oFWMsExcel:AddTable("CUSTO HOMOLOGADO","ITENS")
 	    oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Filial",1)
 	    oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Data da alteração",1)
+		oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Hora",1)
 		oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Codigo",1)
 	    oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Descrição",1)
+		oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Moeda",1)
 	    oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Custo Anterior",1)
 		oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Custo Medio",1)
 	    oFWMsExcel:AddColumn("CUSTO HOMOLOGADO","ITENS","Novo Custo Homologado",1)
@@ -78,11 +80,13 @@ If ParamBox(aParam,'Parâmetros',aRet)
 	    	oFWMsExcel:AddRow("CUSTO HOMOLOGADO","ITENS",{;
 								FWFilialName(cEmpAnt,(cAliasQry)->Z4_FILIAL),;
 								DTOC(STOD((cAliasQry)->Z4_DATA)),;
+								(cAliasQry)->Z4_HORA,;
 								(cAliasQry)->Z4_COD,;
 								(cAliasQry)->Z4_DESC,;
-								'R$ ' +  Alltrim(Transform( (cAliasQry)->Z4_CANTER, "@E 999,999,999,999.99" )),;
-								'R$ ' +  Alltrim(Transform( (cAliasQry)->Z4_CMEDIO, "@E 999,999,999,999.99" )),;
-                                'R$ ' +  Alltrim(Transform( (cAliasQry)->Z4_CHOMOLO, "@E 999,999,999,999.99" )),;
+								IIF(Alltrim((cAliasQry)->Z4_MOEDA) == '1', 'Real','Dolar'),;
+								Alltrim(Transform( (cAliasQry)->Z4_CANTER, "@E 999,999,999,999.99" )),;
+								Alltrim(Transform( (cAliasQry)->Z4_CMEDIO, "@E 999,999,999,999.99" )),;
+                                Alltrim(Transform( (cAliasQry)->Z4_CHOMOLO, "@E 999,999,999,999.99" )),;
 								Iif(nPos > 0 ,aX3cBox[nPos,3], ''),;
 								(cAliasQry)->Z4_FORNECE,;
 								(cAliasQry)->Z4_LOJA,;

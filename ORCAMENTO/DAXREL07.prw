@@ -109,6 +109,7 @@ AADD(aCampos,{"W7_PESO"		    ,"N", TAMSX3('W7_PESO')[1], 0})
 AADD(aCampos,{"QTCONT"  		,"C", TAMSX3('W6_CONTA20')[1], 0})
 AADD(aCampos,{"TIPO"		    ,"C", 15, 0})
 AADD(aCampos,{"PORTODEST"		,"C", 15, 0})
+AADD(aCampos,{"TERMINAL"		,"C", 40, 0})
 AADD(aCampos,{"W7_PRECO_R"		,"N", TAMSX3('W7_PRECO_R')[1], 0})
 AADD(aCampos,{"W2_PO_DT"		,"D", TAMSX3('W2_PO_DT')[1], 0})
 AADD(aCampos,{"W2_DT_PRO"		,"D", TAMSX3('W2_DT_PRO')[1], 0})
@@ -195,7 +196,7 @@ cArq := CriaTrab(aCampos,.F.)
 dbCreate(cArq,aCampos,"DBFCDX")
 
 
-cQuery := "SELECT DISTINCT W2_PO_NUM AS PO , W2_FRETNEG AS FRETNEG, W6_FREETIM AS FREETIM ,W2_NR_PRO AS DOC ,F1_RECBMTO, W2_FORLOJ AS LOJA, W6_DT_ENTR,W7_II AS II ,W2_FORN AS FORNECEDOR ,A2_PAIS AS PAIS,  W6_HOUSE AS HDL , W2_AGENTE AS AGENTE , Y4_NOME ,W6_VLFRECC  AS VLFRETE , B1_DESC AS DESCRICAO , W8_COD_I AS DESCVM , W7_PESO * W7_QTDE AS PESO  "
+cQuery := "SELECT DISTINCT W2_PO_NUM AS PO , W2_FRETNEG AS FRETNEG, W6_XTERMIN AS TERMINAL ,W6_FREETIM AS FREETIM ,W2_NR_PRO AS DOC ,F1_RECBMTO, W2_FORLOJ AS LOJA, W6_DT_ENTR,W7_II AS II ,W2_FORN AS FORNECEDOR ,A2_PAIS AS PAIS,  W6_HOUSE AS HDL , W2_AGENTE AS AGENTE , Y4_NOME ,W6_VLFRECC  AS VLFRETE , B1_DESC AS DESCRICAO , W8_COD_I AS DESCVM , W7_PESO * W7_QTDE AS PESO  "
 cQuery += "  ,W6_CONTA20 ,W2_ORIGEM AS PORTOORIG , W2_INCOTER, W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  'TIPO ' AS TPCONT , W6_DEST AS PORTDEST , W7_QTDE * W7_PRECO AS VLRPROC , W2_PO_DT AS EMISPO, W2_DT_PRO AS DTPRO , B1_ANUENTE AS ANUENTE , W6_DT_ETD AS PREVEMB , W6_DT_EMB AS DTEMB , W6_DT_ETA AS DTPORTO , W6_DTREG_D AS DTDESEMB , F1_RECBMTO AS ESTOQUE , 'BOOK*' AS BOOK , 'TRANSIT TIME*' AS TRANSIT,"
 cQuery += "'DIAS DESEMB*' AS DIASDESEMB ,W2_DESP, 'TRANSITO TOTAL*' AS TRANSTOT ,  W6_DTRECDO AS RECDOCTO ,W6_DEST , W7_QTDE ,W7_PRECO , "
 cQuery += " ( SELECT TOP 1((SUM(EI2_CIF+EI2_DESPES) / SM2.M2_MOEDA2) / SUM(EI2_QUANT)) FROM EI2010 EI2 INNER JOIN SM2010 SM2 ON M2_DATA = SW6.W6_DTRECDO WHERE W2_PO_NUM = EI2_PO_NUM AND EI2_POSICA = SW7.W7_POSICAO AND EI2.D_E_L_E_T_ = '' AND EI2_FILIAL = '" + xFilial('EI2') + "'  	 GROUP BY M2_MOEDA2)AS CUSTOEFT,
@@ -249,7 +250,7 @@ EndIf
 cQuery += " AND W8_COD_I BETWEEN '" + cProdDe + "' AND '" + cProdAte + "' "
 cQuery += " AND W6_DEST BETWEEN '" + cPortDe + "' AND '" + cPortAte + "' "
 cQuery += " AND A2_PAIS BETWEEN '" + cPaisDe + "' AND '" + cPaisAte + "' "
-cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTRECDO ,W6_DEST , W7_QTDE ,W7_PRECO   ,EI2_HAWB, EI2_POSICA"
+cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTRECDO ,W6_DEST , W7_QTDE ,W7_PRECO   ,EI2_HAWB, EI2_POSICA,W6_XTERMIN"
 cQuery += " ORDER BY PO ,EMISPO DESC " 
 
 
@@ -288,6 +289,7 @@ While TMPREL->(!EOF())
     EndIf    
     TRBREL->PORTOORIG   := POSICIONE('SYR',3,xFilial('SYR') + TMPREL->PORTOORIG ,'YR_CID_ORI')
     TRBREL->PORTODEST   := TMPREL->PORTDEST
+    TRBREL->TERMINAL   := TMPREL->TERMINAL
     TRBREL->Y5_NOME   := Posicione('SY5',1,xFilial('SY5')+ TMPREL->W2_DESP , 'Y5_NOME')
     TRBREL->W7_PRECO_R  := TMPREL->VLRPROC
     TRBREL->W2_PO_DT    := STOD(TMPREL->EMISPO)
@@ -382,27 +384,28 @@ oBrowse:SetColumns(MontaColunas("W7_PESO"	    ,"Volume"			,10,"@!",2,005,0))//16
 oBrowse:SetColumns(MontaColunas("QTCONT"	    ,"Qtd Container"	,11,"@!",1,010,0))//17
 oBrowse:SetColumns(MontaColunas("TIPO"	        ,"Tipo Container"	,15,"@!",1,020,0))//18		
 oBrowse:SetColumns(MontaColunas("PORTODEST"	    ,"Porto Dest"		,16,"@!",1,020,0))//19		
-oBrowse:SetColumns(MontaColunas("W2_INCOTER"	,"Incoterm"     		,27,"@!",1,TAMSX3('W2_INCOTER')[1],0)) //20
-oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.99",2,020,0))	//21
-oBrowse:SetColumns(MontaColunas("W7_PRECO_R"	,"Valor Processo U$",17,"@E 9,999,999.99",2,020,0))	//22
-oBrowse:SetColumns(MontaColunas("W2_PO_DT"      ,"Emissao PO"		,18,"@!",1,020,0))//23	
-oBrowse:SetColumns(MontaColunas("B1_ANUENTE"	,"Anuente"  		,20,"@!",1,020,0))//24		
-oBrowse:SetColumns(MontaColunas("W6_DT_ETD"	    ,"ETD"      		,21,"@!",1,020,0))//25		
-oBrowse:SetColumns(MontaColunas("W6_DT_ETA"	    ,"ETA"      		,23,"@!",1,020,0))//26				
-oBrowse:SetColumns(MontaColunas("ESTOQUE"	    ,"Estoque"  		,25,"@!",1,020,0))//27		
-oBrowse:SetColumns(MontaColunas("BOOK"	        ,"Book"     		,26,"@!",1,020,0))//28		
-oBrowse:SetColumns(MontaColunas("DIASDESEMB"	,"Dias Desembaraço"	,28,"@!",1,020,0))//29				
-oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020,0))//30	
-oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))//31
-oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))//32
-oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))//33		
-oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,999.99",2,020,0))//34		
-oBrowse:SetColumns(MontaColunas("VLRPAGO"       ,"Valor Pago R$"	,34,"@E 9,999,999.99",2,020,0))//35		
-oBrowse:SetColumns(MontaColunas("VLRDI"         ,"Valor DI"	        ,34,"@E 9,999,999.99",2,020,0))//36		
-oBrowse:SetColumns(MontaColunas("VARCAMB"       ,"Var. Cambial"	    ,34,"@E 9,999,999.99",2,020,0))//37		
-oBrowse:SetColumns(MontaColunas("VARUNIT"       ,"Var  Unitaria"	,34,"@E 9,999,999.99",2,020,0))//38		
-oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//39		
-oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//40	
+oBrowse:SetColumns(MontaColunas("TERMINAL"	    ,"Terminal"		    ,16,"@!",1,040,0))//20		
+oBrowse:SetColumns(MontaColunas("W2_INCOTER"	,"Incoterm"     		,27,"@!",1,TAMSX3('W2_INCOTER')[1],0)) //21
+oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.99",2,020,0))	//22
+oBrowse:SetColumns(MontaColunas("W7_PRECO_R"	,"Valor Processo U$",17,"@E 9,999,999.99",2,020,0))	//23
+oBrowse:SetColumns(MontaColunas("W2_PO_DT"      ,"Emissao PO"		,18,"@!",1,020,0))//24	
+oBrowse:SetColumns(MontaColunas("B1_ANUENTE"	,"Anuente"  		,20,"@!",1,020,0))//25		
+oBrowse:SetColumns(MontaColunas("W6_DT_ETD"	    ,"ETD"      		,21,"@!",1,020,0))//26		
+oBrowse:SetColumns(MontaColunas("W6_DT_ETA"	    ,"ETA"      		,23,"@!",1,020,0))//27				
+oBrowse:SetColumns(MontaColunas("ESTOQUE"	    ,"Estoque"  		,25,"@!",1,020,0))//28		
+oBrowse:SetColumns(MontaColunas("BOOK"	        ,"Book"     		,26,"@!",1,020,0))//29		
+oBrowse:SetColumns(MontaColunas("DIASDESEMB"	,"Dias Desembaraço"	,28,"@!",1,020,0))//30				
+oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020,0))//31	
+oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))//32
+oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))//33
+oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))//34		
+oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,999.99",2,020,0))//35		
+oBrowse:SetColumns(MontaColunas("VLRPAGO"       ,"Valor Pago R$"	,34,"@E 9,999,999.99",2,020,0))//36		
+oBrowse:SetColumns(MontaColunas("VLRDI"         ,"Valor DI"	        ,34,"@E 9,999,999.99",2,020,0))//37		
+oBrowse:SetColumns(MontaColunas("VARCAMB"       ,"Var. Cambial"	    ,34,"@E 9,999,999.99",2,020,0))//38		
+oBrowse:SetColumns(MontaColunas("VARUNIT"       ,"Var  Unitaria"	,34,"@E 9,999,999.99",2,020,0))//39		
+oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//40		
+oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//41
 oBrowse:Activate()
 
 If !Empty(cArqTrb)
@@ -533,27 +536,28 @@ While TRBREL->(!Eof())
     TRBREL->QTCONT          ,;//17
     TRBREL->TIPO            ,;//18
     TRBREL->PORTODEST       ,;//19
-    TRBREL->W2_INCOTER      ,;//20
-    TRBREL->VUNIT           ,;//21
-    TRBREL->W7_PRECO_R      ,;//22
-    TRBREL->W2_PO_DT        ,;//23
-    TRBREL->B1_ANUENTE      ,;//24
-    TRBREL->W6_DT_ETD       ,;//25
-    TRBREL->W6_DT_ETA       ,;//26
-    TRBREL->ESTOQUE         ,;//27
-    TRBREL->BOOK            ,;//28
-    TRBREL->DIASDESEMB      ,;//29
-    TRBREL->TRANSTOT        ,;//30
-    TRBREL->VTOTAL          ,;//31
-    TRBREL->CUSTOEST        ,;//32
-    TRBREL->CUSTOEFT        ,;//33
-    TRBREL->CUSTOFIN        ,;//34
-    TRBREL->VLRPAGO         ,;//35
-    TRBREL->VLRDI           ,;//36
-    TRBREL->VARCAMB         ,;//37
-    TRBREL->VARUNIT         ,;//38
-    TRBREL->VARIACAO        ,;//39
-    TRBREL->W6_DTRECDO      ; //40
+    TRBREL->TERMINAL        ,;//20
+    TRBREL->W2_INCOTER      ,;//21
+    TRBREL->VUNIT           ,;//22
+    TRBREL->W7_PRECO_R      ,;//23
+    TRBREL->W2_PO_DT        ,;//24
+    TRBREL->B1_ANUENTE      ,;//25
+    TRBREL->W6_DT_ETD       ,;//26
+    TRBREL->W6_DT_ETA       ,;//27
+    TRBREL->ESTOQUE         ,;//28
+    TRBREL->BOOK            ,;//29
+    TRBREL->DIASDESEMB      ,;//30
+    TRBREL->TRANSTOT        ,;//31
+    TRBREL->VTOTAL          ,;//32
+    TRBREL->CUSTOEST        ,;//33
+    TRBREL->CUSTOEFT        ,;//34
+    TRBREL->CUSTOFIN        ,;//35
+    TRBREL->VLRPAGO         ,;//36
+    TRBREL->VLRDI           ,;//37
+    TRBREL->VARCAMB         ,;//38
+    TRBREL->VARUNIT         ,;//39
+    TRBREL->VARIACAO        ,;//40
+    TRBREL->W6_DTRECDO      ; //41
     })
     TRBREL->(dbSkip())
 EndDo

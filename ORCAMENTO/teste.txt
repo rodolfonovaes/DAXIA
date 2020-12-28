@@ -1,2 +1,0 @@
-AJUSTAB8.prw
-AJUSTAD14.prw

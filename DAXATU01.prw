@@ -331,12 +331,14 @@ Static Function UpdHist(cTipo,nCusto,nCMedio)
 Reclock('SZ4',.T.)
 SZ4->Z4_FILIAL  := SD1->D1_FILIAL
 SZ4->Z4_DATA    := dDataBase
+SZ4->Z4_HORA    := Time()
 SZ4->Z4_COD     := oMSNewGe1:aCOLS[nI,3]
 SZ4->Z4_TIPO    := cTipo
 SZ4->Z4_DESC    := oMSNewGe1:aCOLS[nI,4]//Posicione('SB1',1,xFilial('SB1') + SD1->D1_COD,'B1_DESC')
 SZ4->Z4_CANTER  := SBZ->BZ_CUSTD
 SZ4->Z4_CHOMOLO := nCusto
 SZ4->Z4_CMEDIO  := nCMedio
+SZ4->Z4_MOEDA   := Alltrim(Str(POSICIONE('SF1',1,SD1->D1_FILIAL + SD1->D1_DOC + SD1->D1_SERIE,'F1_MOEDA')))
 
 If cTipo == 'D'
     SZ4->Z4_DESCART := 'S'

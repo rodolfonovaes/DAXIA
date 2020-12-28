@@ -25,12 +25,12 @@ PRIVATE lProcess			:= .T.
 PRIVATE nProcessos			:= 3
 PRIVATE cLogJob				:= ""
 
-//CONOUT( "DAXJLAU01: Iniciando... " + Time() )
+CONOUT( "DAXJLAU01: Iniciando... " + Time() )
 FwLogMsg("INFO", /*cTransactionId*/, "DAXJLAU01", FunName(), "", "01", "Iniciando..." , 0, (nStart - Seconds()), {}) 
 
 If  lExecJob
 
-	//CONOUT( "DAXJLAU02: Iniciando JOB... " + Time() )
+	CONOUT( "DAXJLAU02: Iniciando JOB... " + Time() )
 	FwLogMsg("INFO", /*cTransactionId*/, "DAXJLAU02", FunName(), "", "01", "Executando Chamada do Job..." , 0, (nStart - Seconds()), {}) 
 
 	//Abre Empresa inicial

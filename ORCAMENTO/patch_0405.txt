@@ -1,3 +1,0 @@
-DAXXFUN.prw
-MT415EFT.prw
-MTA416PV.prw

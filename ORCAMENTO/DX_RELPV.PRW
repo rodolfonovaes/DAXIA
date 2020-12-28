@@ -266,19 +266,19 @@ Local cIE   := ""
 | Verifica qual filial esta' posicionada/logada para buscar o endereco |
 +---------------------------------------------------------------------*/
 Do Case
-   Case Right( cNumEmp, 2 ) == "01" // Tatuape
+   Case Right( SC5->C5_FILIAL, 2 ) == "01" // Tatuape
         cEnd  := "RUA CANTAGALO, 74" + " - "  + "03319-000" + " - " + "SAO PAULO" + " - " + "SP"
         cCNPJ := "74581091000132"
         cIE   := "114224468110"  
-   Case Right( cNumEmp, 2 ) == "02" // Itajai
+   Case Right( SC5->C5_FILIAL, 2 ) == "02" // Itajai
         cEnd  := "RUA CESAR AUGUSTO DALCOQUIO, 4255" + " - " + "88311-500" + " - " + "ITAJAI" + " - " + "SC"   
         cCNPJ := "74581091000213"
         cIE   := "255789025     "
-   Case Right( cNumEmp, 2 ) == "03" // Guarulhos
+   Case Right( SC5->C5_FILIAL, 2 ) == "03" // Guarulhos
         cEnd  := "RUA JONAS FERREIRA GUIMARAES, 100" + " - " + "07250-025" + " - " + "GUARULHOS" + " - " + "SP"
         cCNPJ := "74581091000647"
         cIE   := "796061457115"  
-   Case Right( cNumEmp, 2 ) == "04" // Jaboatao
+   Case Right( SC5->C5_FILIAL, 2 ) == "04" // Jaboatao
         cEnd  := "RUA DONA MARIA DE SOUZA, 681" + " - " + "54400-260" + " - " + "JABOATAO DOS GUARARAPES" + " - "  + "PE"
         cCNPJ := "74581091000728"
         cIE   := "062696726"     
