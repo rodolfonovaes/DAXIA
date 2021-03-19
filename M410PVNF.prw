@@ -13,6 +13,7 @@ Local aItens        := {}
 Local lAtualiza     := .F.
 Local lRet          := .T.
 Local nQtdAux       := 0
+Local nRecSC6       := 0
 
 SC6->(DbSetOrder(1))
 If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
@@ -92,6 +93,13 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
 
             EndIf 
         EndIf
+
+        nRecSC6 := SC6->(Recno())
+        If lRet
+            lRet := U_DAXVNOTA(SC6->C6_NUM, SC6->C6_PRODUTO)
+        EndIf
+        SC6->(DbGoTo(nRecSC6))
+
         SC6->(DbSkip())
     EndDo
 EndIf

@@ -580,7 +580,8 @@ BEGINSQL ALIAS cALIAS
             FROM   %table:SD5% SD52 (NOLOCK)
             WHERE      SD52.D5_FILIAL  =  %xFilial:SD5%
                    AND SD52.D5_OP      = ' ' 
-                   AND SD52.D5_DOC     = 'INVENT'  
+                   AND SD52.D5_DOC     <> 'INVENT'  //nucci
+                   AND SD52.D5_ORIGLAN < '499' //nucci
                    AND SD52.%NotDel%
             UNION  // ENTRADA NORMAL - QUALQUER ORIGLAN MENOR QUE 499 E DIFERENTE DE 010
             SELECT SD52.D5_LOTECTL AS LOTE,SD52.D5_PRODUTO AS PRODUTO,         ' ' AS DOCUMENTO, ' ' AS SERIE,          ' ' AS OP, 
@@ -588,6 +589,7 @@ BEGINSQL ALIAS cALIAS
             FROM   %table:SD5% SD52 (NOLOCK)
             WHERE      SD52.D5_FILIAL  =  %xFilial:SD5%
                    AND SD52.D5_ORIGLAN <> '010'
+                   AND SD52.D5_DOC <> 'INVENT' //nucci
                    AND SD52.D5_ORIGLAN <  '499'  
                    AND SD52.%NotDel%
 		)  SD5 

@@ -208,7 +208,7 @@ If !(cAliasQry)->(Eof())
             DisarmTransaction()
             Mostraerro()
         Else
-			If !IsInCallStack('U_MAVCADGE')
+			If !IsInCallStack('U_AVCADGE')
             	MsgInfo('Tabela Atualizada!')
 			EndIf
         EndIf

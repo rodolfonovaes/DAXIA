@@ -73,7 +73,7 @@ USER FUNCTION Q215FIM()
 				cQry			:= " SELECT R_E_C_N_O_ AS REC FROM " + RetSqlName("SB8") + " SB8 "
 				cQry			+= " WHERE "
 				cQry			+= "       SB8.B8_FILIAL   = '" + xFilial("SB8") + "' "
-				cQry			+= "   AND SB8.B8_LOCAL    = '" + cLocPad + "' "
+				cQry			+= "    SB8.B8_LOCAL    = '" + cLocPad + "' "
 				cQry			+= "   AND SB8.B8_PRODUTO  = '" + cProd + "' "
 				cQry			+= "   AND SB8.B8_LOTECTL  = '" + cLote + "' "
 				cQry			+= "   AND SB8.D_E_L_E_T_ = ' ' "

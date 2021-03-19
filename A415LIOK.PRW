@@ -18,7 +18,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 	
 	SB5->(DBSETORDER(1))
 	IF SB5->(DBSEEK(XFILIAL("SB5")+_cProduto))
-		_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO ù PERIGOSO!
+		_lPerigo := ( SB5->B5_PRODPF == "S" /*.OR. SB5->B5_PRODCON == "S" */ .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO ù PERIGOSO!
 		
 		IF _lPerigo
 			DBSELECTAREA("Z00")

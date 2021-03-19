@@ -112,12 +112,14 @@ Static Function EXECUTA(_oRegua,lJob)
 	Local cCliLoja	:= ''
 	Local cErrMsg	:= ''
 	Local cTipo		:= ''
+	Local lPulaCli	:= .F.
 	Default	lJob	:= .F.
 	Private cArqCli	:= ''
 	Private cArqCom	:= ''
 	Private dDataDe	:= dDataBase
 	Private dDataAte	:= dDataBase
 	Private nGeraCli	:= 1
+	Private nTime	:= Val(Time())
 	
 
 	If lJob
@@ -137,7 +139,7 @@ Static Function EXECUTA(_oRegua,lJob)
 	aSimb	:= { "(", ")", "[", "]", ".", ",", "-", "Ç", "ç", ":", ";" , "/" }
 	aMovi   := {}
 
-	If nGeraCli == 2 // Só clientes com movimento
+	If nGeraCli == 2 .And. !lPulaCli // Só clientes com movimento
 		SD2->( ProcRegua( LastRec()/10 ) )	
 		dbSelectArea("SD2")
 		dbSetOrder(5)
@@ -436,6 +438,7 @@ Static Function EXECUTA(_oRegua,lJob)
 				CLI->(DbSkip())
 			Enddo
 
+			CONOUT('CISP - Inicio do processo cliente - ' + cCGC + ' - ' + Time()) 
 			While !SA1->( Eof() ) .and. SA1->A1_FILIAL == xFilial( "SA1" ) .and. ;
 			Left( SA1->A1_CGC , 8 ) == cCGC 
 
@@ -618,11 +621,13 @@ Static Function EXECUTA(_oRegua,lJob)
 
 							For nXX := 1 to Len( aDatas )
 								dDataAnt	:= aDatas[ nXX ]
-
+								nTime := Val(time())
 								nSaldo	:=	Round( SaldoTIT( SE1->E1_PREFIXO , SE1->E1_NUM ,;
 								SE1->E1_PARCELA , SE1->E1_TIPO , SE1->E1_NATUREZ ,;
 								"R" , SE1->E1_CLIENTE , SE1->E1_MOEDA , , dDataAnt ,;
 								SE1->E1_LOJA , SE1->E1_FILIAL ) , 2 )
+								CONOUT('-----Rodou SaldoTIT - Tempo decorrido :' + STR(Val(Time()) - nTime))
+
 								nSaldo	:= IIF( Round( nSaldo , 2 ) <= 0.02 , 0.00 , Round( nSaldo , 2 ) )
 
 							//	If Str( nSaldo , 15 , 2 ) # Str( nSaldoAnt , 15 , 2 ) RODOLFO = Não entendi isso aqui
@@ -659,10 +664,12 @@ Static Function EXECUTA(_oRegua,lJob)
 
 						nSaldoTIT	:= 0.00
 						If SE1->E1_BAIXA > dDataAte .or. ( !Empty( SE1->E1_BAIXA ) .and. Round( SE1->E1_SALDO , 2 ) > 0.00 )
+							nTime := Val(time())
 							nSaldoTIT	:=	Round( SaldoTIT( SE1->E1_PREFIXO , SE1->E1_NUM ,;
 							SE1->E1_PARCELA , SE1->E1_TIPO , SE1->E1_NATUREZ ,;
 							"R" , SE1->E1_CLIENTE , SE1->E1_MOEDA , , dDataAte ,;
 							SE1->E1_LOJA , SE1->E1_FILIAL ) , 2 )
+							CONOUT('-----Rodou SaldoTIT - Tempo decorrido :' + STR(Val(Time()) - nTime))
 						Else
 							nSaldoTIT	:= Round( SE1->E1_SALDO , 2 )
 						EndIf
@@ -697,7 +704,7 @@ Static Function EXECUTA(_oRegua,lJob)
 
 					SE1->( DbSkip() )
 				EndDo
-
+				CONOUT('CISP - Fim do processo cliente - ' + cCGC + ' - ' + Time()) 
 				CLI->( DbSkip() )
 			EndDo
 
@@ -843,6 +850,16 @@ Static Function EXECUTA(_oRegua,lJob)
 					nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
 				Endif 
 
+			If SZ7->Z7_VLMAIAC > nValorMA .Or. dDataMA < SZ7->Z7_DTMAIAC
+				dDataMA		:= SZ7->Z7_DTMAIAC
+				nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
+			Endif 			
+
+			If SZ7->Z7_VLMAIAC <> nValorMA .And. dDataMA == SZ7->Z7_DTMAIAC
+				dDataMA		:= SZ7->Z7_DTMAIAC
+				nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
+			Endif 					
+
 			dDataMA_Old		:= dDataMA
 			nValorMA_Old	:= Round( nValorMA , 2 )
 
@@ -871,7 +888,18 @@ Static Function EXECUTA(_oRegua,lJob)
 			if dDataPV == Stod(' ') .And. dDataUC <> dDataMA
 				dDataMA := dDataUC
 			EndIf
+
+			If nValorMA < nValorDA
+				nValorMA := nValorDA
+				dDataMA	 := dDataUC
+			EndIf
 						
+
+
+			If dDataUC < SZ7->Z7_DTULTCO
+				dDataUC := SZ7->Z7_DTULTCO
+				nValorUC := SZ7->Z7_VLULTCO
+			EndIf						
 			cLinha  := cLinha + StrZero( Year( dDataMA ) , 4 ) +;
 			StrZero( Month( dDataMA ) , 2 ) +;
 			StrZero( Day( dDataMA ) , 2 )
@@ -908,18 +936,27 @@ Static Function EXECUTA(_oRegua,lJob)
 			cLinha  	:= cLinha + StrZero( Int( Round( nValorD5F * 100 , 0 ) ) , 15 )
 
 			// Média ponderada - vencido a mais de 5 dias
+			If nValorD5F == 0
+				nValorD5C := 0
+			EndIf
 			cLinha  := cLinha + StrZero( Round( nValorD5C / nValorD5F , 0 )  , 4 )
 
 			// Valor do débito atual - vencido a mais de 15 dias
 			cLinha  	:= cLinha + StrZero( Int( Round( nValorD15F * 100 , 0 ) ) , 15 )
 
 			// Média ponderada - vencido a mais de 15 dias
+			If nValorD15F == 0
+				nValorD15C := 0
+			EndIf			
 			cLinha  := cLinha + StrZero( Round( nValorD15C / nValorD15F , 0 )  , 4 )
 
 			// Valor do débito atual - vencido a mais de 30 dias
 			cLinha  	:= cLinha + StrZero( Int( Round( nValorD30F * 100 , 0 ) ) , 15 )
 
 			// Média ponderada - vencido a mais de 30 dias
+			If nValorD30F == 0
+				nValorD30C := 0
+			EndIf			
 			cLinha  := cLinha + StrZero( Round( nValorD30C / nValorD30F , 0 )  , 4 )
 
 			// Data da penúltima compra
@@ -981,6 +1018,12 @@ Static Function EXECUTA(_oRegua,lJob)
 
 
 			//Valido possiveis erros
+
+
+			If nValoraVen == 0 .And. (( nValoraC / nValoraF ) > 0  .Or.  ( nQtdDias1 / nQtdTit1 ))
+				cErro += 'Cliente - ' + cCGC + ' - - Média Ponderada Título a Vencer OU Prazo Médio Vendas SEM Débito Atual a Vencer ' + CRLF
+			EndIf
+
 			If nValorMA < nValorDA
 				cErro += 'Cliente - ' + cCGC + ' - Valor do Maior Acúmulo MENOR QUE Débito Atual ' + CRLF
 			EndIf

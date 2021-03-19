@@ -38,7 +38,7 @@ USER FUNCTION M460MARK()
 					SC9->C9_BLEST := 'XX'
 					MsUnlock()
 				EndIf
-				lRet := DAXVNOTA(SC9->C9_PEDIDO, SC9->C9_PRODUTO)
+				lRet := U_DAXVNOTA(SC9->C9_PEDIDO, SC9->C9_PRODUTO)
 				//cPedido := SC5->C5_NUM
 				//cMsgP := "Pedido (" + cPedido + ") posicionado!"
 				//Help( , , 'M460MARK (001)', , cMsgP, 1, 0 )
@@ -69,7 +69,7 @@ Validação Policia Civil, Policia Federal e Exército
 @param  NULL
 @return NULL
 */ 
-STATIC FUNCTION DAXVNOTA(cPedido, cProduto)
+User FUNCTION DAXVNOTA(cPedido, cProduto)
 LOCAL _lRet 	:= .T.
 LOCAL cFilSC6 	:= xFilial("SC6")
 
@@ -85,7 +85,7 @@ IF DBSEEK(xFilial("SC6")+cPedido)
 			_nQuant  := SC6->C6_QTDVEN
 			SB5->(DBSETORDER(1))
 			IF SB5->(DBSEEK(XFILIAL("SB5")+cProduto))
-				_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
+				_lPerigo := ( SB5->B5_PRODPF == "S" /*.OR. SB5->B5_PRODCON == "S"*/ .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
 				
 				IF _lPerigo
 					DBSELECTAREA("Z00")
@@ -224,65 +224,100 @@ IF DBSEEK(xFilial("SC6")+cPedido)
 					ENDIF
 					// VALIDAÇÃO DA TRANSPORTADORA
 					IF _lRet
+						//If Alltrim(SC5->C5_TRANSP) <> '000950' //RETIRA
+							dbSelectArea("SA4")
+							dbSetOrder(1)
+							IF dbSeek(xFilial("SA4")+ SC5->C5_TRANSP)
+								//_lRet := .T.
 
-						dbSelectArea("SA4")
-						dbSetOrder(1)
-						IF dbSeek(xFilial("SA4")+ SC5->C5_TRANSP)
-							//_lRet := .T.
-
-							// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA FEDERAL
-							IF SB5->B5_PRODPF  == "S" 
-								IF SA4->A4_YPRODPF <> "S"
-									cMsgP := "A transportadora não possui licença."
-									cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
-									Help( ,, 'M460MARK (017)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ELSE
-									IF SA4->A4_YVLLPF < _dEntreg
-										cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
-										cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
-										Help( ,, 'M460MARK (018)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA FEDERAL
+								IF SB5->B5_PRODPF  == "S" 
+									IF SA4->A4_YPRODPF <> "S"
+										cMsgP := "A transportadora não possui licença."
+										cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+										Help( ,, 'M460MARK (017)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 										_lRet := .F.
+									ELSE
+										IF SA4->A4_YVLLPF < _dEntreg
+											cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+											cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+											Help( ,, 'M460MARK (018)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+											_lRet := .F.
+										ENDIF
 									ENDIF
 								ENDIF
-							ENDIF
-							// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA CIVIL
-							/*
-							IF  _lRet .AND. SB5->B5_PRODCON == "S"
-								IF SA4->A4_PRODCON <> "S"
-									cMsgP := "A transportadora não possui licença."
-									cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
-									Help( ,, 'M460MARK (019)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ELSE
-									IF SA4->A4_YVLLPC < _dEntreg
-										cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
-										cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
-										Help( ,, 'M460MARK (020)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA CIVIL
+								/*
+								IF  _lRet .AND. SB5->B5_PRODCON == "S"
+									IF SA4->A4_PRODCON <> "S"
+										cMsgP := "A transportadora não possui licença."
+										cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+										Help( ,, 'M460MARK (019)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 										_lRet := .F.
+									ELSE
+										IF SA4->A4_YVLLPC < _dEntreg
+											cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+											cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+											Help( ,, 'M460MARK (020)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+											_lRet := .F.
+										ENDIF
 									ENDIF
 								ENDIF
-							ENDIF
-							*/
-							// TRATAMENTO PRODUTO PERIGOSO - CONTROLE EXERCITO
-							IF _lRet .AND. SB5->B5_PRODEX  == "S"
-								IF SA4->A4_PRODEX <> "S"
-									cMsgP := "A transportadora não possui licença."
-									cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
-									Help( ,, 'M460MARK (021)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ELSE
-									IF SA4->A4_YVLLEX < _dEntreg
-										cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
-										cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
-										Help( ,, 'M460MARK (022)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								*/
+								// TRATAMENTO PRODUTO PERIGOSO - CONTROLE EXERCITO
+								IF _lRet .AND. SB5->B5_PRODEX  == "S"
+									IF SA4->A4_PRODEX <> "S"
+										cMsgP := "A transportadora não possui licença."
+										cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+										Help( ,, 'M460MARK (021)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 										_lRet := .F.
+									ELSE
+										IF SA4->A4_YVLLEX < _dEntreg
+											cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+											cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+											Help( ,, 'M460MARK (022)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+											_lRet := .F.
+										ENDIF
 									ENDIF
 								ENDIF
+							ELSE
+								// NÃO TEM PREVISÃO DO QUE FAZER QUANDO NÃO HÁ TRANSPORTADORA
 							ENDIF
-						ELSE
-							// NÃO TEM PREVISÃO DO QUE FAZER QUANDO NÃO HÁ TRANSPORTADORA
-						ENDIF
+						//Else
+							//Se for retira , faz as validações para o cliente - 
+						/*	DBSELECTAREA("SA1")
+							DBSETORDER(1)
+							IF  DBSEEK( XFILIAL("SA1")+ SC5->C5_CLIENTE+SC5->C5_LOJACLI ) 
+								
+								IF SA1->A1_PESSOA == 'F' .AND. _nQuant > 2
+									cMsgP := "Não á permitido vender o produto " + ALLTRIM(cProduto) + " em uma quantidade superior a 2 kilos ou 2 litros para clientes pessoa física."
+									cMsgS := ""
+									Help( ,, 'M460MARK (013)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+									_lRet := .F.
+								ENDIF
+							ENDIF
+							DBSELECTAREA("AI0")
+							DbSetOrder(1) //AI0_FILIAL + AI0_CODCLI + AI0_LOJA
+							IF AI0->( DbSeek( xFilial("AI0")+ SC5->C5_CLIENTE + SC5->C5_LOJACLI ))
+								IF _lRet .AND. !( AI0->AI0_YPROEX == "S" )
+									cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(cProduto) + "), pois o cliente não possui licença."
+									cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
+									Help( ,, 'M460MARK (014)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+									_lRet := .F.
+								ENDIF
+								IF _lRet .AND. AI0->AI0_YVLLEX < _dEntreg
+									cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Licença do Cliente está Vencida na Data da Entrega."
+									cMsgS := "Solicite a data de validade da licença renovada do Produto: ("+ ALLTRIM(cProduto) +")."
+									Help( ,, 'M460MARK (016)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+									_lRet := .F.
+								ENDIF
+							ELSE
+								cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(cProduto) + "), pois o cliente não possui licença."
+								cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
+								Help( ,, 'M460MARK (015)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								_lRet := .F.
+							ENDIF	*/						
+						//EndIf
 					ENDIF
 				ENDIF
 			ENDIF

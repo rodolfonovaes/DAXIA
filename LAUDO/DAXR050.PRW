@@ -180,6 +180,7 @@ ELSEIF  cTipo == "E"
             AND SB1.B1_COD     = QEK.QEK_PRODUT
             AND SB8.B8_PRODUTO = QEK.QEK_PRODUT
             AND SB8.B8_LOTECTL = QEK.QEK_LOTE
+            AND SB8.B8_LOCAL = QEK.QEK_LOCORI
             AND QEK.%NotDel%
             AND SB8.%NotDel%
             AND SB1.%NotDel%
@@ -790,7 +791,7 @@ oPrinter:Say( 155, 530, "Página: " + Str( nP, 4, 0 ), oFont06 )
 oPrinter:SayAlign( 170, 000, "CERTIFICADO DE ANÁLISE", oFont16N, 600, 50, CLR_BLUE, 2, 0 )
 oPrinter:Line( 200, 015, 200, 570, 0 )
 oPrinter:Say( 215, 025, "Produto:", oFont10N )
-oPrinter:Say( 215, 060, aCab[7], oFont10 )
+oPrinter:Say( 215, 060, SUBSTR(aCab[7],1,62), oFont10 )
 oPrinter:Say( 215, 370, "Cód. Produto: ", oFont10N )
 oPrinter:Say( 215, 425, aCab[6], oFont10 )
 oPrinter:Say( 230, 025, "Lote:", oFont10N )

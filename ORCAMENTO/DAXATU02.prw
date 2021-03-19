@@ -65,6 +65,7 @@ If MsgYesNo("Confirma a alteração dos campos?", "Observação - Daxia" )
 		SC5->C5_XDTCOL		:= MV_PAR01
 		SC5->C5_XOBCOL		:= MV_PAR02	
 		SC5->C5_TRANSP  	:= MV_PAR03
+        SC5->C5_XNMTRAN     := Posicione("SA4",1,xFilial("SA4")+ALLTRIM(MV_PAR03),"A4_NOME")
 		SC5->C5_XTREDES		:= MV_PAR04	
 		SC5->C5_VEICULO		:= MV_PAR05
 		SC5->C5_ZZOUTXT		:= MV_PAR06	
@@ -109,6 +110,7 @@ Static Function UpdC5(aPergRet)
 If MsgYesNo("Confirma a alteração dos campos?", "Observação - Daxia" )
 	Reclock("SC5", .F.)	
 		SC5->C5_TRANSP  	:= aPergRet[2]
+        SC5->C5_XNMTRAN     := Posicione("SA4",1,xFilial("SA4")+ALLTRIM(aPergRet[2]),"A4_NOME")
 		SC5->C5_XPEDVIN		:= aPergRet[3]
 		SC5->C5_FECENT 		:= aPergRet[1]
 		SC5->C5_MENNOTA 	:= aPergRet[4]

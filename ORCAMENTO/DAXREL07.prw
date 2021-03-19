@@ -198,9 +198,9 @@ dbCreate(cArq,aCampos,"DBFCDX")
 
 cQuery := "SELECT DISTINCT W2_PO_NUM AS PO , W2_FRETNEG AS FRETNEG, W6_XTERMIN AS TERMINAL ,W6_FREETIM AS FREETIM ,W2_NR_PRO AS DOC ,F1_RECBMTO, W2_FORLOJ AS LOJA, W6_DT_ENTR,W7_II AS II ,W2_FORN AS FORNECEDOR ,A2_PAIS AS PAIS,  W6_HOUSE AS HDL , W2_AGENTE AS AGENTE , Y4_NOME ,W6_VLFRECC  AS VLFRETE , B1_DESC AS DESCRICAO , W8_COD_I AS DESCVM , W7_PESO * W7_QTDE AS PESO  "
 cQuery += "  ,W6_CONTA20 ,W2_ORIGEM AS PORTOORIG , W2_INCOTER, W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  'TIPO ' AS TPCONT , W6_DEST AS PORTDEST , W7_QTDE * W7_PRECO AS VLRPROC , W2_PO_DT AS EMISPO, W2_DT_PRO AS DTPRO , B1_ANUENTE AS ANUENTE , W6_DT_ETD AS PREVEMB , W6_DT_EMB AS DTEMB , W6_DT_ETA AS DTPORTO , W6_DTREG_D AS DTDESEMB , F1_RECBMTO AS ESTOQUE , 'BOOK*' AS BOOK , 'TRANSIT TIME*' AS TRANSIT,"
-cQuery += "'DIAS DESEMB*' AS DIASDESEMB ,W2_DESP, 'TRANSITO TOTAL*' AS TRANSTOT ,  W6_DTRECDO AS RECDOCTO ,W6_DEST , W7_QTDE ,W7_PRECO , "
-cQuery += " ( SELECT TOP 1((SUM(EI2_CIF+EI2_DESPES) / SM2.M2_MOEDA2) / SUM(EI2_QUANT)) FROM EI2010 EI2 INNER JOIN SM2010 SM2 ON M2_DATA = SW6.W6_DTRECDO WHERE W2_PO_NUM = EI2_PO_NUM AND EI2_POSICA = SW7.W7_POSICAO AND EI2.D_E_L_E_T_ = '' AND EI2_FILIAL = '" + xFilial('EI2') + "'  	 GROUP BY M2_MOEDA2)AS CUSTOEFT,
-cQuery += " (SUM(EI2_CIF+EI2_DESPES) / SUM(EI2_QUANT)) AS CUSTEFTR ,"
+cQuery += "'DIAS DESEMB*' AS DIASDESEMB ,W2_DESP, 'TRANSITO TOTAL*' AS TRANSTOT ,  W6_DTRECDO  AS RECDOCTO ,W6_DEST , W7_QTDE ,W7_PRECO , "
+cQuery += " ( SELECT TOP 1((SUM(EI2_FOB_R+EI2_DESPES+EI2_VLDEII) / SM2.M2_MOEDA2) / SUM(EI2_QUANT)) FROM EI2010 EI2 INNER JOIN SM2010 SM2 ON M2_DATA = SW6.W6_DTREG_D  WHERE W2_PO_NUM = EI2_PO_NUM AND EI2_POSICA = SW7.W7_POSICAO AND EI2.D_E_L_E_T_ = '' AND EI2_FILIAL = '" + xFilial('EI2') + "'  	 GROUP BY M2_MOEDA2)AS CUSTOEFT,
+cQuery += " (SUM(EI2_FOB_R+EI2_DESPES+EI2_VLDEII) / SUM(EI2_QUANT)) AS CUSTEFTR ,"
 cQuery += " ( SELECT TOP 1 SUM(W7_QTDE) FROM SW7010 SW7A WHERE SW7A.D_E_L_E_T_ = '' AND  W2_PO_NUM = SW7A.W7_PO_NUM AND SW7A.W7_FILIAL = '" + xFilial('SW7') + "'  	 )AS QUANT,
 cQuery += " W7_PRECO AS VUNIT,
 cQuery += " W2_FOB_TOT AS VTOTAL,
@@ -223,7 +223,7 @@ cQuery += "  INNER JOIN "  + RetSqlName("SB1") + " SB1 ON W7_COD_I = B1_COD "
 cQuery += "  INNER JOIN "  + RetSqlName("SA2") + " SA2 ON A2_COD = W2_FORN  AND A2_LOJA = W2_FORLOJ "
 cQuery += "  INNER JOIN "  + RetSqlName("SY4") + " SY4 ON Y4_FILIAL = '" + xFilial('SY4') +"' AND Y4_COD = W2_AGENTE AND SY4.D_E_L_E_T_ = ' ' "
 cQuery += "  LEFT JOIN "  + RetSqlName("EI2") + " EI2 ON EI2_FILIAL = '" + xFilial('EI2') +"' AND W2_PO_NUM = EI2_PO_NUM AND EI2_PRODUT = W8_COD_I AND EI2.D_E_L_E_T_ = ' ' "
-cQuery += "  LEFT JOIN "  + RetSqlName("SE2") + " SE2 ON E2_FILIAL = '" + xFilial('SE2') +"' AND SUBSTRING(E2_HIST,4,7) = EI2_HAWB AND SE2.E2_TIPO = 'INV' AND SE2.D_E_L_E_T_ = ' ' "
+cQuery += "  LEFT JOIN "  + RetSqlName("SE2") + " SE2 ON E2_FILIAL = '" + xFilial('SE2') +"' AND SUBSTRING(E2_HIST, 4, CHARINDEX ( ':' , E2_HIST ,3 ) - 4 - 2 ) = SUBSTRING(EI2_HAWB, 1,LEN(TRIM(EI2_HAWB))) AND SE2.E2_TIPO = 'INV' AND SE2.D_E_L_E_T_ = ' ' "
 cQuery += "  LEFT JOIN "  + RetSqlName("EI1") + " EI1 ON EI1_FILIAL = '" + xFilial('EI1') +"' AND EI1_HAWB = EI2_HAWB AND EI1_DOC = EI2_DOC AND EI1.D_E_L_E_T_='' "
 cQuery += " WHERE "
 cQuery += "   SW2.D_E_L_E_T_ = ''" 
@@ -250,12 +250,12 @@ EndIf
 cQuery += " AND W8_COD_I BETWEEN '" + cProdDe + "' AND '" + cProdAte + "' "
 cQuery += " AND W6_DEST BETWEEN '" + cPortDe + "' AND '" + cPortAte + "' "
 cQuery += " AND A2_PAIS BETWEEN '" + cPaisDe + "' AND '" + cPaisAte + "' "
-cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTRECDO ,W6_DEST , W7_QTDE ,W7_PRECO   ,EI2_HAWB, EI2_POSICA,W6_XTERMIN"
+cQuery += " GROUP BY W2_PO_NUM ,W6_FREETIM,W2_ORIGEM ,A2_PAIS, W2_DESP,W2_NR_PRO ,W2_FRETNEG ,W6_XFT,W2_FOB_TOT,F1_RECBMTO, B1_DESC ,W7_II,W2_INCOTER ,W8_COD_I,W6_VLFRECC, W6_DT_HAWB,W7_POSICAO,W2_FORLOJ ,W6_DT_ENTR, W2_FORN  , W6_HOUSE  , W2_AGENTE , W9_FRETEIN  , Y4_NOME ,W8_DESC_DI,  W7_PESO,  W6_CONTA20 , W6_CONTA40 , W6_CON40HC , W6_OUTROS ,  W6_DEST  , W7_PRECO_R  , W2_PO_DT , W2_DT_PRO  , B1_ANUENTE , W6_DT_ETD , W6_DT_EMB , W6_DT_ETA , W6_DTREG_D  , W6_DTREG_D  ,W6_DEST , W7_QTDE ,W7_PRECO   ,EI2_HAWB, EI2_POSICA,W6_XTERMIN,W6_DTRECDO"
 cQuery += " ORDER BY PO ,EMISPO DESC " 
 
 
 TCQUERY cQuery New Alias "TMPREL"
-	
+MemoWrite('C:\TOTVS\DAXREL07.txt', cQuery)	
 Dbselectarea("TMPREL")
 dbGoTop()
 While TMPREL->(!EOF())
@@ -386,7 +386,7 @@ oBrowse:SetColumns(MontaColunas("TIPO"	        ,"Tipo Container"	,15,"@!",1,020,
 oBrowse:SetColumns(MontaColunas("PORTODEST"	    ,"Porto Dest"		,16,"@!",1,020,0))//19		
 oBrowse:SetColumns(MontaColunas("TERMINAL"	    ,"Terminal"		    ,16,"@!",1,040,0))//20		
 oBrowse:SetColumns(MontaColunas("W2_INCOTER"	,"Incoterm"     		,27,"@!",1,TAMSX3('W2_INCOTER')[1],0)) //21
-oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.99",2,020,0))	//22
+oBrowse:SetColumns(MontaColunas("VUNIT"         ,"Valor Unitario"	    ,31,"@E 9,999,999.9999",2,020,0))	//22
 oBrowse:SetColumns(MontaColunas("W7_PRECO_R"	,"Valor Processo U$",17,"@E 9,999,999.99",2,020,0))	//23
 oBrowse:SetColumns(MontaColunas("W2_PO_DT"      ,"Emissao PO"		,18,"@!",1,020,0))//24	
 oBrowse:SetColumns(MontaColunas("B1_ANUENTE"	,"Anuente"  		,20,"@!",1,020,0))//25		
@@ -397,14 +397,14 @@ oBrowse:SetColumns(MontaColunas("BOOK"	        ,"Book"     		,26,"@!",1,020,0))/
 oBrowse:SetColumns(MontaColunas("DIASDESEMB"	,"Dias Desembaraço"	,28,"@!",1,020,0))//30				
 oBrowse:SetColumns(MontaColunas("TRANSTOT"      ,"Transito Total"	,29,"@!",1,020,0))//31	
 oBrowse:SetColumns(MontaColunas("VTOTAL"         ,"Valor Total"	    ,32,"@!",2,030,0))//32
-oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.99",2,020,0))//33
-oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.99",2,020,0))//34		
-oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,999.99",2,020,0))//35		
+oBrowse:SetColumns(MontaColunas("CUSTOEST"      ,"Custo Estimado"	,33,"@E 9,999,999.9999",2,020,0))//33
+oBrowse:SetColumns(MontaColunas("CUSTOEFT"      ,"Custo Efetivo"	,34,"@E 9,999,999.9999",2,020,0))//34		
+oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,999.9999",2,020,0))//35		
 oBrowse:SetColumns(MontaColunas("VLRPAGO"       ,"Valor Pago R$"	,34,"@E 9,999,999.99",2,020,0))//36		
 oBrowse:SetColumns(MontaColunas("VLRDI"         ,"Valor DI"	        ,34,"@E 9,999,999.99",2,020,0))//37		
 oBrowse:SetColumns(MontaColunas("VARCAMB"       ,"Var. Cambial"	    ,34,"@E 9,999,999.99",2,020,0))//38		
-oBrowse:SetColumns(MontaColunas("VARUNIT"       ,"Var  Unitaria"	,34,"@E 9,999,999.99",2,020,0))//39		
-oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.99",2,020,0))//40		
+oBrowse:SetColumns(MontaColunas("VARUNIT"       ,"Var  Unitaria"	,34,"@E 9,999,999.9999",2,020,0))//39		
+oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.9999",2,020,0))//40		
 oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//41
 oBrowse:Activate()
 
@@ -492,27 +492,28 @@ oFWMsExcel:AddColumn("RESUMO","ITENS","Volume",2)               //16
 oFWMsExcel:AddColumn("RESUMO","ITENS","Qtd Container"	,1)     //17
 oFWMsExcel:AddColumn("RESUMO","ITENS","Tipo Container",1)       //18
 oFWMsExcel:AddColumn("RESUMO","ITENS","Porto Dest",1)           //19
-oFWMsExcel:AddColumn("RESUMO","ITENS","Incoterm"    ,1)         //20
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Unitario",2)       //21
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Processo U$",2)    //22
-oFWMsExcel:AddColumn("RESUMO","ITENS","Emissao PO",1)           //23
-oFWMsExcel:AddColumn("RESUMO","ITENS","Anuente" ,1)             //24
-oFWMsExcel:AddColumn("RESUMO","ITENS","ETD"     ,1)             //25
-oFWMsExcel:AddColumn("RESUMO","ITENS","ETA"    ,1)              //26
-oFWMsExcel:AddColumn("RESUMO","ITENS","Estoque"  ,1)            //27
-oFWMsExcel:AddColumn("RESUMO","ITENS","Book"  ,1)               //28
-oFWMsExcel:AddColumn("RESUMO","ITENS","Dias Desembaraço"	,1) //29
-oFWMsExcel:AddColumn("RESUMO","ITENS","Transito Total",1)       //30
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Total",2)          //31
-oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Estimado",2)       //32
-oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Efetivo"	,2)     //33
-oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Real"	,2)         //34
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Pago R$"	,2)     //35
-oFWMsExcel:AddColumn("RESUMO","ITENS","Valor DI R$"	,2)         //36
-oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Cambial"	,2)     //37
-oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Unitaria"	,2)     //38
-oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //39
-oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //40
+oFWMsExcel:AddColumn("RESUMO","ITENS","Terminal",1)             //20
+oFWMsExcel:AddColumn("RESUMO","ITENS","Incoterm"    ,1)         //21
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Unitario",2)       //22
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Processo U$",2)    //23
+oFWMsExcel:AddColumn("RESUMO","ITENS","Emissao PO",1)           //24
+oFWMsExcel:AddColumn("RESUMO","ITENS","Anuente" ,1)             //25
+oFWMsExcel:AddColumn("RESUMO","ITENS","ETD"     ,1)             //26
+oFWMsExcel:AddColumn("RESUMO","ITENS","ETA"    ,1)              //27
+oFWMsExcel:AddColumn("RESUMO","ITENS","Estoque"  ,1)            //28
+oFWMsExcel:AddColumn("RESUMO","ITENS","Book"  ,1)               //29
+oFWMsExcel:AddColumn("RESUMO","ITENS","Dias Desembaraço"	,1) //30
+oFWMsExcel:AddColumn("RESUMO","ITENS","Transito Total",1)       //31
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Total",2)          //32
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Estimado",2)       //33
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Efetivo"	,2)     //34
+oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Real"	,2)         //35
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor Pago R$"	,2)     //36
+oFWMsExcel:AddColumn("RESUMO","ITENS","Valor DI R$"	,2)         //37
+oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Cambial"	,2)     //38
+oFWMsExcel:AddColumn("RESUMO","ITENS","Var. Unitaria"	,2)     //39
+oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //40
+oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //41
 
 TRBREL->(DbGoTop()) 		
 While TRBREL->(!Eof())
@@ -604,7 +605,7 @@ Dbselectarea("TMPSZH")
 dbGoTop()
 SZH->(DbSetOrder(1))
 While TMPSZH->(!EOF())
-    If SZH->(DbSeek(xFilial('SZH') + TMPSZH->WH_PO_NUM + STR(TMPSZH->WH_NR_CONT,4,0)+TMPSZH->WH_DESPESA ))
+    If SZH->(DbSeek(xFilial('SZH') + PADR(TMPSZH->WH_PO_NUM,TAMSX3('ZH_PO_NUM')[1]) + PADR(STR(TMPSZH->WH_NR_CONT,4,0),TAMSX3('ZH_NR_CONT')[1])  + PADR(TMPSZH->WH_DESPESA,TAMSX3('ZH_DESPESA')[1])  ))
         lReclock := .F.
     Else
         lReclock := .T.

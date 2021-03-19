@@ -14,10 +14,10 @@
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
 #DEFINE MAXITEM   013 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 038        
-#DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
+#DEFINE MAXITEMP2 048        
+#DEFINE MAXITEMP2F 048                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC  059                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXITEMC  056                                                // Máxima de caracteres por linha de produtos/serviços
 
 /*******************************************************************************************************************************
 DAXIA INICIO - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
@@ -1188,7 +1188,7 @@ ElseIF ( valType(oEntrega)=="O" ) .and. ( valType(oRetirada)=="U")
     nAjustaImp   := 67
     nAjustaVt    := 67
     nAjustaISSQN := 13
-	nAjustaPro   := 67
+	nAjustaPro   := 0
 	nAjustaDad   := 13
 	nAjustaDest  := 10 
 	nMAXITEM     := 4
@@ -2657,7 +2657,7 @@ If !Empty(cMsgRet)
 endif
         
 //Rodolfo - retiro a ultima linha pontilhada
-aItens := TiraLinha(aItens)
+//aItens := TiraLinha(aItens)
 
 
 
@@ -2833,7 +2833,7 @@ oDanfe:Say(nLine+253,MAXBOXH-30,aHrEnt[01],oFont08:oFont)
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Quadro Informações do local de entrega                                    ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-If valType(oEntrega)=="O"
+/*If valType(oEntrega)=="O" .And. 1 == 2 //RODOLFO - ARRANQUEI PQ tava imprimindo tudo torto
 	Do Case
 		Case Type("oEntrega:_CNPJ")=="O"
 			cAux := TransForm(oEntrega:_CNPJ:TEXT,"@r 99.999.999/9999-99")
@@ -2912,7 +2912,7 @@ If valType(oEntrega)=="O"
 		oDanfe:Say(nLine+255+nAjustaEnt,MAXBOXH-30,aEntrega[12],oFont08:oFont)
 	EndIf
 EndIf
-
+*/
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Quadro Informações do local de retirada                                      ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -3353,7 +3353,7 @@ For nY := 1 To nLenItens
 			nL :=0
 			lPag1 := .F.
 			lPag2 := .T.
-			nLinha := 169
+			nLinha := 179
 		Endif           
 	Endif
 
@@ -3515,7 +3515,7 @@ For nY := 1 To nLenItens
 		EndIf
 	else 
 		If !Empty(cFCI)
-			nLinha := nLinha + 10
+			nLinha := nLinha + 14
 		Else
 			nLinha := nLinha + 14
 		EndIf		

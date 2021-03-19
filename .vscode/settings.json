@@ -147,7 +147,7 @@
             "environment": "teste",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
-            "port": "18012",
+            "port": "18011",
             "ssl" : true,
             "user": "totvs.rnovaes",
             "passwordCipher": "lCtWsaMiuywUzunqs5Rw0mAo4HSQ2E9NzFtO+GUykENAcqdtHPmBuE4VvlSMh9jGAAs+Z6SK7iZgnykhQlgzjk8O=",
@@ -158,7 +158,7 @@
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "191205P",
             "smartClientPath": "C:\\SMARTCLIENT_TESTE\\",
-            "environment": "producao",
+            "environment": "dev",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8002",
@@ -205,5 +205,6 @@
     "advpl.debug_showPrivates": true,
     "advpl.debug_showPublic": true,
     "totvsLanguageServer.welcomePage": false,
-    "advpl.selectedEnvironment": "DAXIA__PROD_INTERNO"
+    "advpl.selectedEnvironment": "DAXIA__TESTE_INTERNO",
+    "totvsLanguageServer.askCompileResult": true
 }

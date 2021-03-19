@@ -16,7 +16,7 @@ Local _nStatus := 0
 
 	  _cQUpd := "UPDATE "+RetSqlName("SB8")+" SET B8_NFABRIC=SB8.B8_NFABRIC, B8_XPAISOR=SB8.B8_XPAISOR"
 	  _cQUpd += "  FROM "+RetSqlName("SB8")+" A "
-	  _cQUpd += " INNER JOIN JOIN "+RetSqlName("SB8")+" SB8 ON SB8.B8_FILIAL=A.B8_FILIAL "
+	  _cQUpd += " INNER JOIN "+RetSqlName("SB8")+" SB8 ON SB8.B8_FILIAL=A.B8_FILIAL "
 	  _cQUpd += "   AND SB8.B8_PRODUTO=A.B8_PRODUTO AND SB8.B8_LOCAL=A.B8_LOCAL "
 	  _cQUpd += "   AND SB8.D_E_L_E_T_<> '*' AND SB8.B8_NFABRIC <> '' AND SB8.B8_XPAISOR <> ''"
 	  _cQUpd += " WHERE SB8.B8_FILIAL  = '" + SB8->B8_FILIAL  +"'"
