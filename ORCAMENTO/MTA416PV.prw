@@ -56,6 +56,7 @@ Local cMsg		:= GetMV("ES_MSGMOV")
 
 M->C5_TRANSP    := SCJ->CJ_XTRANSP
 M->C5_XTREDES   := SCJ->CJ_XTREDES
+M->C5_REDESP    := SCJ->CJ_XTREDES
 M->C5_XNMREDE   := SCJ->CJ_XNMTRED
 M->C5_CONDPAG   := SCJ->CJ_CONDPAG
 M->C5_TABELA    := SCJ->CJ_TABELA
@@ -148,7 +149,7 @@ If ( cAliasQry )->( !Eof() )
 
         If POSICIONE('SBZ',1,xFilial('SBZ') + SCK->CK_PRODUTO , 'BZ_CTRWMS') == '1' .And. ;
         POSICIONE('SF4',1,xFilial('SF4') + SCK->CK_TES , 'F4_ESTOQUE') == 'S'
-            _aCols[nAux][nPServic] := '019'
+            _aCols[nAux][nPServic] := '026'
         EndIf
         
         If nPMarg > 0

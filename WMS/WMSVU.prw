@@ -1121,16 +1121,24 @@ Validações referentes ao código do produto
 /*/
 //-----------------------------------------------
 Static Function ValidPrdLot(cProduto,cLoteCtl,cNumLote,nQuant,cCodBar)
- Local lRet    := .T.
+Local lRet    := .T.
+Local cCodBarBkp	:= ''
 
 	If Empty(cCodBar)
   	   Return .F.
 	EndIf
 	// separa a variável cCodbar e atribui o código do produto na variável cProduto
-	cProduto := QbrString(1,cCodBar,TamSX3('D14_PRDORI')[1])
-	cCodBar  := cProduto
+	cProduto 	:= QbrString(1,cCodBar,TamSX3('D14_PRDORI')[1])
+	cCodBarBkp 	:= cCodBar
+	cCodBar	 	:= cProduto
+
 	// Realiza as validações genéricas referentes ao código do produto
 	lRet := WMSValProd(Nil,@cProduto,@cLoteCtl,@cNumLote,@nQuant,@cCodBar)
+
+	If lRet 
+		cLoteCtl := Padr(Alltrim(QbrString(2,cCodBarBkp)),TamSx3("D12_LOTECT")[1])
+		//nQuant := Val(QbrString(3,cCodBarBkp))
+	EndIf	
 Return lRet
 
 /*--------------------------------------------------------------------------------

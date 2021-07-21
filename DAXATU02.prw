@@ -13,28 +13,33 @@ Return
 Static Function GPShowMemo(cMemo)
 Local aParamBox := {}
 Local aPergRet	:= {}
-/*
+Local aMvPar := {}
+Local nX      := 0
 
-/*
+For nX := 1 To 40
+ aAdd( aMvPar, &( "MV_PAR" + StrZero( nX, 2, 0 ) ) )
+Next nX
+
 aAdd(aParamBox, {1, "Data Coleta"			, SC5->C5_XDTCOL  ,  ,, ,, 50, .F.} )			//1
 aAdd(aParamBox, {1, "Obs. Coleta"			, SC5->C5_XOBCOL , "@!" ,, ,, 200, .F.} )		//2
 aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,,'SA4' ,, 50, .F.} )	//3
 aAdd(aParamBox, {1, "Redespacho"			, SC5->C5_XTREDES , "@!" ,,'SA4' ,, 50, .F.} )	//4
 aAdd(aParamBox, {1, "Veiculo"				, SC5->C5_VEICULO , "@!" ,, ,, 50, .F.} )		//5
-aAdd(aParamBox, {1, "ObsFaturamento"		, SC5->C5_ZZOUTXT , "@!" ,, ,, 200, .F.} )		//6
+aAdd(aParamBox, {1, "Obs Faturamento"		, SC5->C5_ZZOUTXT , "@!" ,, ,, 200, .F.} )		//6
 aAdd(aParamBox, {1, "Laudo"					, SC5->C5_ZZLAUDO , "@!" ,, ,, 50, .F.} )		//7
-aAdd(aParamBox, {1, "ObsLaudo"				, SC5->C5_ZZOBSLA , "@!" ,, ,, 200, .F.} )		//8
+aAdd(aParamBox, {1, "Obs Laudo"				, SC5->C5_ZZOBSLA , "@!" ,, ,, 200, .F.} )		//8
 aAdd(aParamBox, {1, "Volume "				, SC5->C5_VOLUME1 , "99999" ,, ,, 50, .F.} )	//9
 aAdd(aParamBox, {1, "Especie "				, SC5->C5_ESPECI1 , "@X" ,, ,, 50, .F.} )		//10
 aAdd(aParamBox, {1, "Peso Liquido"			, SC5->C5_PESOL , "@E 99,999,999.9999" ,, ,, 50, .F.} )	//11
 aAdd(aParamBox, {1, "Peso Bruto"			, SC5->C5_PBRUTO , "@E 99,999,999.9999" ,, ,, 50, .F.} )	//12
-aAdd(aParamBox, {11	, "Obs DANFE"					, cMemo, ,,.F.} )								//13
+aAdd(aParamBox, {11	, "Obs DANFE"			, cMemo, ,,.F.} )								//13
 aAdd(aParamBox, {1, "Mensagem Padrão"		, SC5->C5_MENPAD , "@!" ,,'SM4' ,, 50, .F.} )	//14
-aAdd(aParamBox, {1, "Pedido Vinculado"		, SC5->C5_XPEDVIN , "@!" ,,'SC5VIN' ,, 50, .F.} )//15*/
+aAdd(aParamBox, {1, "Pedido Vinculado"		, SC5->C5_XPEDVIN , "@!" ,,'SC5VIN' ,, 50, .F.} )//15
 
-
-
-//If ParamBox(aParamBox, 'Ajuste', aPergRet)
+If ParamBox(aParamBox, 'Ajuste', aPergRet,,,,,,,,.F.,.F.)
+	UpdObs(aPergRet)
+EndIf
+/*
 Pergunte('DXOBSPD',.F.)
 u_zAtuPerg("DXOBSPD", "MV_PAR01", SC5->C5_XDTCOL)
 u_zAtuPerg("DXOBSPD", "MV_PAR02", SC5->C5_XOBCOL)
@@ -55,6 +60,11 @@ u_zAtuPerg("DXOBSPD", "MV_PAR15", SC5->C5_XPEDVIN)
 If Pergunte('DXOBSPD',.T.)
 	UpdObs(aPergRet)
 EndIf
+*/
+
+For nX := 1 To Len( aMvPar )
+ &( "MV_PAR" + StrZero( nX, 2, 0 ) ) := aMvPar[ nX ]
+Next nX
 
 Return
 
@@ -62,21 +72,21 @@ Return
 Static Function UpdObs(aPergRet)
 If MsgYesNo("Confirma a alteração dos campos?", "Observação - Daxia" )
 	Reclock("SC5", .F.)
-		SC5->C5_XDTCOL		:= MV_PAR01
-		SC5->C5_XOBCOL		:= MV_PAR02	
-		SC5->C5_TRANSP  	:= MV_PAR03
-		SC5->C5_XTREDES		:= MV_PAR04	
-		SC5->C5_VEICULO		:= MV_PAR05
-		SC5->C5_ZZOUTXT		:= MV_PAR06	
-		SC5->C5_ZZLAUDO		:= MV_PAR07	
-		SC5->C5_ZZOBSLA		:= MV_PAR08
-		SC5->C5_VOLUME1 	:= MV_PAR09
-		SC5->C5_ESPECI1 	:= MV_PAR10
-		SC5->C5_PESOL   	:= MV_PAR11
-		SC5->C5_PBRUTO		:= MV_PAR12
-		SC5->C5_MENNOTA 	:= MV_PAR13
-        SC5->C5_MENPAD 	    := MV_PAR14
-		SC5->C5_XPEDVIN		:= MV_PAR15
+		SC5->C5_XDTCOL		:= aPergRet[1]
+		SC5->C5_XOBCOL		:= aPergRet[2]
+		SC5->C5_TRANSP  	:= aPergRet[3]
+		SC5->C5_XTREDES		:= aPergRet[4]
+		SC5->C5_VEICULO		:= aPergRet[5]
+		SC5->C5_ZZOUTXT		:= aPergRet[6]
+		SC5->C5_ZZLAUDO		:= aPergRet[7]
+		SC5->C5_ZZOBSLA		:= aPergRet[8]
+		SC5->C5_VOLUME1 	:= aPergRet[9]
+		SC5->C5_ESPECI1 	:= aPergRet[10]
+		SC5->C5_PESOL   	:= aPergRet[11]
+		SC5->C5_PBRUTO		:= aPergRet[12]
+		SC5->C5_MENNOTA 	:= aPergRet[13]
+        SC5->C5_MENPAD 	    := aPergRet[14]
+		SC5->C5_XPEDVIN		:= aPergRet[15]
 	MsUnLock()
 EndIf
 Return

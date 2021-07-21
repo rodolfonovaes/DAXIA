@@ -241,6 +241,8 @@ cQuery += " GROUP BY W2_PO_NUM ,A2_PAIS, W2_NR_PRO ,W2_FRETNEG ,W6_FREETIM,W2_FO
 cQuery += " ORDER BY PO ,EMISPO DESC " 
 
 
+MemoWrite( "C:\TEMP\QRY-DAXREL07.TXT", cQuery )
+
 TCQUERY cQuery New Alias "TMPREL"
 	
 Dbselectarea("TMPREL")

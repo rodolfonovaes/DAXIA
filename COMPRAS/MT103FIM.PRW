@@ -25,6 +25,7 @@ Local nConfirma := Paramixb[2] // Se o usuario confirmou a operaï¿½ï¿½o de grava
 Local cChave 	:= SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA
 Local cChaveK   := QEK->( QEK_FILIAL + QEK_FORNEC + QEK_LOJFOR + QEK_NTFISC + QEK_SERINF + QEK_ITEMNF )
 Local lOk		:= .F.
+Local cMenNota	:= ''
 
 If SF1->F1_TIPO == 'D'
 	dbSelectArea("SA1")
@@ -57,7 +58,7 @@ if nConfirma == 1
 			dbSetOrder(05) 
 			
 			Do While SD1->(!EOF()) .AND. cChave == SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA
-				
+			
 				If !SB8->(dbSeek(xFilial("SB8")+SD1->D1_COD+SD1->D1_LOTECTL))
 					Alert("Lote nao encontrado na Tabela SB8")
 					GravaLog('Lote nao encontrado na Tabela SB8')
@@ -97,11 +98,14 @@ if nConfirma == 1
 				SD1->(DBSKIP())
 			
 			ENDDO
+
+
 		Else
 			GravaLog('Tes Não atualiza estoque')
 		Endif
-	
+		
 	Endif
+
 	If lOk
 		MsgInfo('Dados atualizados com sucesso!')
 	Else

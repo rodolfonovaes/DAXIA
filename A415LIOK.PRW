@@ -18,7 +18,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 	
 	SB5->(DBSETORDER(1))
 	IF SB5->(DBSEEK(XFILIAL("SB5")+_cProduto))
-		_lPerigo := ( SB5->B5_PRODPF == "S" /*.OR. SB5->B5_PRODCON == "S" */ .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
+		_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
 		
 		IF _lPerigo
 			DBSELECTAREA("Z00")
@@ -26,7 +26,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 			IF SB5->B5_PRODPF  == "S" 
 				
 				IF SB5->B5_YVLLPF < _dEntreg
-					cMsgP := "Não á permitido vender o produto " + ALLTRIM(_cProduto) + " pois a DAXIA está com a Liceça Vencida."
+					cMsgP := "Não á permitido vender o produto " + ALLTRIM(_cProduto) + " pois a DAXIA está com a Licença Vencida."
 					cMsgS := "Inicie o processo de Licenciamento do Produto: ("+ ALLTRIM(_cProduto) +")."
 					Help( ,, 'A415LIOK (001)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 					_lRet := .F.
@@ -38,7 +38,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 					DbSetOrder(1) //AI0_FILIAL + AI0_CODCLI + AI0_LOJA
 					IF AI0->( DbSeek( xFilial("AI0")+ M->CJ_CLIENTE+M->CJ_LOJA ))
 						IF !( AI0->AI0_YPROPF == "S" )
-							cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(_cProduto) + "), pois o cliente não possui licença."
+							cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(_cProduto) + "), pois o cliente não possui licença da policia federal."
 							cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
 							Help( ,, 'A415LIOK (004)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 							_lRet := .F.
@@ -57,7 +57,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 								_lRet := .F.					
 						ENDIF						
 					ELSE
-						cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(_cProduto) + "), pois o cliente não possui licença."
+						cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(_cProduto) + "), pois o cliente não possui licença da policia federal."
 						cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
 						Help( ,, 'A415LIOK (005)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 						_lRet := .F.
@@ -65,6 +65,9 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 				ENDIF
 			ENDIF
 			// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA CIVIL
+			IF _lRet
+				_lRet := U_VlCivil()
+			EndIf	
 			/*
 			IF  _lRet .AND. SB5->B5_PRODCON == "S"
 				IF SB5->B5_YVLLPC < _dEntreg
@@ -115,7 +118,7 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 			// TRATAMENTO PRODUTO PERIGOSO - CONTROLE EXERCITO 
 			IF _lRet .AND. SB5->B5_PRODEX  == "S"
 				IF SB5->B5_YVLLEX < _dEntreg
-					cMsgP := "Não á permitido vender o produto " + ALLTRIM(_cProduto) + " pois a Daxia está com a Liceça Vencida."
+					cMsgP := "Não á permitido vender o produto " + ALLTRIM(_cProduto) + " pois a Daxia está com a Licença do Exercito Vencida."
 					cMsgS := "Regitre o processo de Licenciamento do Produto: ("+ ALLTRIM(_cProduto) +")."
 					Help( ,, 'A415LIOK (012)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
 					_lRet := .F.

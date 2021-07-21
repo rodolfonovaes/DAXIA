@@ -14,6 +14,6 @@
 User Function F050ROT()
 Local aRet := ParamIXB
 
-Aadd( aRet, { '*Conhecimento',"U_DXCONHEC('FINA050')" , 0, 3} )
+Aadd( aRet, { 'Banco Conhec GCT',"U_DXCONHEC('FINA050')" , 0, 2} )
 
 Return(aRet)

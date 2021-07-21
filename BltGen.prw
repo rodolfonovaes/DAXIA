@@ -17,7 +17,7 @@
 */
 
 User Function BltGen()
-
+Local 	aArea := GetArea()
 Private cXEmpresa   := ""
 Private cXCodBco   := ""
 Private cXNomeBco  := ""
@@ -117,9 +117,8 @@ If MntPerg()
 	
 	
 EndIf
-
 SM0->(DbGoTo(nRecSM0)) // Tratamento para voltar a filial original
-
+RestArea(aArea)
 Return Nil
 
 

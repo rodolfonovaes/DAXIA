@@ -57,7 +57,7 @@ METHOD New() CLASS DAXWMSMovimentoServico
 Return
 
 METHOD Destroy() CLASS DAXWMSMovimentoServico
-	FreeObj(Self)
+	//FreeObj(Self)
 Return Nil
 
 METHOD GetArrCol() CLASS DAXWMSMovimentoServico
@@ -1294,11 +1294,11 @@ Private lEstWmsCq   := Nil
 		While lRet .And. (cAliasDCF)->(!Eof())
 			// Quando separação origem SC9 gera empenho
 			If lRet .And. Self:oOrdServ:GetOrigem() == "SC9"
-                cServOld := Self:oMovServic:GetServico()
+                /*cServOld := Self:oMovServic:GetServico()
                 If Self:oMovServic:GetServico() == cSegSepara
                     Self:oMovServic:SetServico(cPriSepara)
-                EndIf
-				lRet := XWmsAtuSC9((cAliasDCF)->DCF_CARGA,; //RODOLFO - AJUSTADO PARA NAO CONSIDERAR O SERVICO NA QUERY
+                EndIf*/
+				lRet := WmsAtuSC9((cAliasDCF)->DCF_CARGA,; //RODOLFO - AJUSTADO PARA NAO CONSIDERAR O SERVICO NA QUERY
 									(cAliasDCF)->DCF_DOCTO,;
 									(cAliasDCF)->DCF_SERIE,;
 									Self:oMovPrdLot:GetProduto(),;
@@ -1316,9 +1316,9 @@ Private lEstWmsCq   := Nil
 									Val(Self:oOrdServ:GetRegra())),;
 									CtoD(''),;
 									Self:GetLibPed() == "1")
-                If Self:oMovServic:GetServico() <> cServOld //RODOLFO
+                /*If Self:oMovServic:GetServico() <> cServOld //RODOLFO
                     Self:oMovServic:SetServico(cServOld)
-                EndIf
+                EndIf*/
                                                     
 			EndIf
 			If lRet .And. Self:oOrdServ:GetOrigem() == "SD4"
@@ -3629,3 +3629,4 @@ Local cSeqSC9   := "01"
 
 RestArea(aAreaAnt)
 Return cSeqSC9
+

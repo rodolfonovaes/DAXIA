@@ -27,7 +27,7 @@ cQrySB8			:= ""
 cQrySB8			:= " SELECT * FROM " + RetSqlName("SB8") + " SB8 "
 cQrySB8			+= " WHERE "
 cQrySB8			+= "       SB8.B8_FILIAL   = '" + xFilial("SB8") + "' "
-cQrySB8			+= "   AND SB8.B8_XCFABRI  <> ' ' "
+cQrySB8			+= "   AND SB8.B8_LOTEFOR  <> ' ' "
 cQrySB8			+= "   AND SB8.B8_LOCAL    = '"+ cLocQual + "' "
 cQrySB8			+= "   AND SB8.D_E_L_E_T_ = ' ' "
 cQrySB8			:= ChangeQuery( cQrySB8 )
@@ -40,14 +40,9 @@ While ( cAliasQry )->( !Eof() )
     SB8->( DbSetOrder( 7 ) ) 
     If SB8->( DbSeek( xFilial("SB8") + ( cAliasQry )->B8_PRODUTO + ( cAliasQry )->B8_LOTECTL ) )
         While SB8->( !Eof() ) .AND. SB8->B8_FILIAL = ( cAliasQry )->B8_FILIAL .AND. SB8->B8_PRODUTO = ( cAliasQry )->B8_PRODUTO .AND. SB8->B8_LOTECTL = ( cAliasQry )->B8_LOTECTL    
-            If SB8->B8_LOCAL <> '98'
+            If SB8->B8_LOCAL <> '98' .And. Empty(SB8->B8_LOTEFOR)
 				If RecLock("SB8", .F. )
-					SB8->B8_NFABRIC := ( cAliasQry )->B8_NFABRIC
-					SB8->B8_XPAISOR	:= ( cAliasQry )->B8_XPAISOR
-					SB8->B8_CLIFOR	:= ( cAliasQry )->B8_CLIFOR
-					SB8->B8_LOJA	:= ( cAliasQry )->B8_LOJA
-					SB8->B8_XCFABRI	:= ( cAliasQry )->B8_XCFABRI
-					SB8->B8_XLFABRI	:= ( cAliasQry )->B8_XLFABRI
+					SB8->B8_LOTEFOR := ( cAliasQry )->B8_LOTEFOR
 					SB8->( MsUnLock() )
 				EndIf                
             EndIf

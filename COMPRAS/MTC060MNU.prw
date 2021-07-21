@@ -7,7 +7,7 @@
 //Uso.......: Gravar descrição do produto na tabela SB8                               // 
 //Chamado...: Ponto de Entrada na rotina de Consulta Saldos por Lote - MATC060        //
 //------------------------------------------------------------------------------------//
-User Function MTC060MNU
+xUser Function MTC060MNU
 Local cQuery
 Local nRet
 

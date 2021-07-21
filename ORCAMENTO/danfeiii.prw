@@ -13,11 +13,11 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   013 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
+#DEFINE MAXITEM   015 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
 #DEFINE MAXITEMP2 048        
 #DEFINE MAXITEMP2F 048                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC  056                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXITEMC  057                                                // Máxima de caracteres por linha de produtos/serviços
 
 /*******************************************************************************************************************************
 DAXIA INICIO - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO CRUZ
@@ -3507,23 +3507,26 @@ For nY := 1 To nLenItens
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
 	EndIf	
 
-	if nxlin == 0
-		If !Empty(cFCI)
-			nLinha := nLinha + 9
-		Else
-			nLinha := nLinha + 9
-		EndIf
-	else 
-		If !Empty(cFCI)
-			nLinha := nLinha + 14
-		Else
-			nLinha := nLinha + 14
-		EndIf		
-	endif	
-
+	If aAux[1][1][nY] == "-"
+		nLinha := nLinha + 7
+	Else
+		if nxlin == 0
+			If !Empty(cFCI)
+				nLinha := nLinha + 9
+			Else
+				nLinha := nLinha + 9
+			EndIf
+		else 
+			If !Empty(cFCI)
+				nLinha := nLinha + 11
+			Else
+				nLinha := nLinha + 11
+			EndIf		
+		endif	
+	EndIf
 	// Rodolfo - Tratamento para não imprimir a segunda folha em branco
-	If nL >= nLenItens - 6 .And. lPag1 .And. nFolhas > 1
-		nL := 13
+	If nL >= MAXITEM - 4 .And. lPag1 .And. nFolhas > 1 .And. aAux[1][1][nY + 1] == "-"
+		nL := MAXITEM
 	EndIf
 
 Next nY 

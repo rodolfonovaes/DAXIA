@@ -9,7 +9,7 @@
 //Uso.......: Gravar informações nos campos da tabela SB8 - B8_NFABRIC / B8_XPAISOR
 //Versao....: 12
 //------------------------------------------------------------------------------------//
-User Function A175GRV()
+User Function A175GRV()xxxx
 
 Local _cQUpd   := ""
 Local _nStatus := 0

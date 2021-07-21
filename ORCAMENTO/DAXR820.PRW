@@ -820,12 +820,12 @@ While !oReport:Cancel() .And. !(cAliasTop)->(Eof())
 	dbSkip()
 
 	// Para impressoras com Frente e Verso
-	IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
+	/*IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
 		lSwHead := .F.
 		oReport:HideHeader()
 		oReport:StartPage() 
 		oReport:EndPage() 
-	ENDIF
+	ENDIF*/
 EndDo
 
 If lPlanilha

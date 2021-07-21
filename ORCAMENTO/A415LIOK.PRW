@@ -10,15 +10,15 @@ LOCAL _nQuant	:= (cAliasSCK)->CK_QTDVEN
 LOCAL _dEntreg	:= (cAliasSCK)->CK_ENTREG
 LOCAL _lDeleta	:= (cAliasSCK)->CK_FLAG
 
-LOCAL _lPerigo  := .F. 													// INDICA SE O PRODUTO  PERIGOSO
+LOCAL _lPerigo  := .F. 													// INDICA SE O PRODUTO ? PERIGOSO
 Local nLinha := TMP1->(Recno())
-
+ //TMP1->( Eof() )
 //msgalert(FUNNAME())
 IF FUNNAME() = "MATA415" .AND. !_lDeleta
 	
 	SB5->(DBSETORDER(1))
 	IF SB5->(DBSEEK(XFILIAL("SB5")+_cProduto))
-		_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
+		_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO ? PERIGOSO!
 		
 		IF _lPerigo
 			DBSELECTAREA("Z00")
@@ -221,8 +221,12 @@ IF FUNNAME() = "MATA415" .AND. !_lDeleta
 	ENDIF
 ENDIF
 
+
+
 U_UpdTotal() //Chamo essa função apenas para atualizar o valor do rodapé na moeda REAL
 U_RetFrete() // no caso de deletar a linha eu recalculo o frete
+
+
 TMP1->(DbGoTo(nLinha))
 GetDRefresh()
 

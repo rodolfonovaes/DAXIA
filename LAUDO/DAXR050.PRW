@@ -76,10 +76,11 @@ Private oFont16N      := TFont():New( "Arial", 16, 16, , .T., , , , .T., .F. )  
 
 //Default cLote := "000500"
 CONOUT("DAXR050-001 -> Iniciando a Geração do Certificado/Laudo")
+CONOUT("DAXR050-001 -> TESTE GRAVACAO DOS ARQUIVOS")
 
 IF lJob  // Gerada por JOB
 
-    CONOUT("DAXR050-002 -> Ajustando os parâmetros para execução por JOB")
+    CONOUT("DAXR050-002 -> Ajustando os parâmetros para execução por JOB ")
     mv_par01  := aDados[1]      // Nota Fiscal - Saída
 	mv_par02  := aDados[2]      // Serie
 	mv_par03  := aDados[3]	    // Lote                               
@@ -180,17 +181,23 @@ ELSEIF  cTipo == "E"
             AND SB1.B1_COD     = QEK.QEK_PRODUT
             AND SB8.B8_PRODUTO = QEK.QEK_PRODUT
             AND SB8.B8_LOTECTL = QEK.QEK_LOTE
-            AND SB8.B8_LOCAL = QEK.QEK_LOCORI
             AND QEK.%NotDel%
             AND SB8.%NotDel%
             AND SB1.%NotDel%
     ENDSQL
 ELSEIF  cTipo == "F"
     BEGINSQL ALIAS cAliasNF
-        SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE, SD2.D2_ITEM AS ITEM , SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
+        SELECT  DISTINCT SD2.D2_DOC     AS    NOTA, SD2.D2_SERIE AS      SERIE,  SD2.D2_CLIENTE AS   CLIENTE, SD2.D2_LOJA   AS     LOJA, 
                         SA1.A1_NOME    AS    NOME, SB1.B1_COD   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
-                        SD2.D2_LOTECTL AS    LOTE, SD2.D2_QUANT AS QUANTIDADE, D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
-                        SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMLOTE AS NUMLOTE
+                        SD2.D2_LOTECTL AS    LOTE,  D2_EMISSAO     AS   EMISSAO, SB1.B1_TIPO   AS     TIPO,
+                        SB8.B8_LOTEFOR AS LOTEFOR, SD2.D2_NUMLOTE AS NUMLOTE,
+                        (SELECT SUM(SD2A.D2_QUANT) 
+                        FROM %table:SD2% SD2A (NOLOCK)
+                        WHERE SD2A.D2_FILIAL = SD2.D2_FILIAL 
+                        AND SD2A.D2_DOC = SD2.D2_DOC 
+                        AND SD2A.D2_COD = SD2.D2_COD 
+                        AND SD2A.D2_LOTECTL = SD2.D2_LOTECTL 
+                        AND SD2A.%NotDel% )  AS QUANTIDADE
         FROM    %table:SD2% SD2 (NOLOCK),
                 %table:SB1% SB1 (NOLOCK),
                 %table:SA1% SA1 (NOLOCK),
@@ -210,6 +217,23 @@ ELSEIF  cTipo == "F"
                 AND SB1.%NotDel%
                 AND SD2.%NotDel%
                 AND SB8.%NotDel%
+        GROUP BY 
+                SD2.D2_DOC ,
+                SD2.D2_SERIE ,
+                SD2.D2_CLIENTE,
+                SD2.D2_LOJA ,
+                SA1.A1_NOME ,
+                SB1.B1_COD , 
+                SB1.B1_DESC ,
+                SB1.B1_TIPOCQ, 
+                SD2.D2_LOTECTL,
+                SD2.D2_QUANT ,
+                D2_EMISSAO ,
+                SB1.B1_TIPO ,
+                SB8.B8_LOTEFOR,
+                SD2.D2_NUMLOTE, 
+                D2_FILIAL , 
+                D2_COD                
     ENDSQL
 ENDIF
 CONOUT("DAXR050-005 -> Consulta Executada")
@@ -351,8 +375,9 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
     File2Printer( cFilePrint, "PDF" )
     oPrinter:cPathPDF := cLocal
     oPrinter:EndPage()
-    //oPrinter:Preview()
-    oPrinter:Print()
+    sleep(30000)
+    oPrinter:Preview()
+    //oPrinter:Print()
     CONOUT("DAXR050 -> Fim da impressão")
     RestArea( aArea )
 
@@ -364,7 +389,7 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
         IF FILE(UPPER(cLocal+""+cArquivo+".pdf"),,.T.)
             RETURN UPPER(cLocal+""+cArquivo+".pdf")
         ELSE
-            RETURN "ERRO: PDF NÃO FOI GERADO"
+            RETURN "ERRO: PDF NÃO FOI GERADO..."
         ENDIF
     ENDIF
 
@@ -768,6 +793,8 @@ oPrinter:StartPage() // Inicio/salto de pagina
 oPrinter:SayBitmap( 010, 020, cBitmap1, 130, 73 )  // Impressao do logo Daxia
 oPrinter:SayBitmap( 010, 460, cBitmap2, 130, 73 )  // Impressao do logo Daxia
 oPrinter:Box( 105, 020, 160, 570, "-4" ) // Impressao do box do cabecalho - Dados do Cliente
+
+
 If POSICIONE('SF2',1,xFilial('SF2') + aCab[1] + aCab[2] , 'F2_TIPO') == 'B' 
     oPrinter:Say( 115, 025, "Cliente:", oFont12N )
     oPrinter:Say( 115, 065, POSICIONE('SA2',1,xFilial('SA2') + aCab[3] + aCab[4] , 'A2_NOME'), oFont12 )
@@ -775,6 +802,7 @@ Else
     oPrinter:Say( 115, 025, "Cliente:", oFont12N )
     oPrinter:Say( 115, 065, aCab[5], oFont12 )
 EndIf
+
 oPrinter:Say( 115, 450, "Código/Loja:", oFont12N )
 oPrinter:Say( 115, 510, aCab[3] + "/" + aCab[4], oFont12 )
 oPrinter:Say( 135, 025, "Quantidade do item:", oFont12N )

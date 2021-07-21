@@ -611,7 +611,11 @@ ElseIf cAlias == 'SCJ'
 		cClasFis := TMP1->CK_CLASFIS
 		lContinua 	:= .T.	
 	Else
-		Alert('Produto ' + Alltrim(Posicione('SB1',1,xFilial('SB1')  + cCodProd , 'B1_DESC'))+ ' sem valor cadastrado na tabela de preço!')
+		If empty(cCondPag)
+			Alert('Informe a condição de pagamento!')
+		Else
+			Alert('Produto ' + Alltrim(Posicione('SB1',1,xFilial('SB1')  + cCodProd , 'B1_DESC'))+ ' sem valor cadastrado na tabela de preço!')
+		EndIf
 	EndIf	
 
 	nValMerc  	:= nPrcVen * nQtdVen
@@ -723,7 +727,11 @@ ElseIf cAlias == 'SC5'
 		nMargem	  := DA1->DA1_XMARG
 		lContinua 	:= .T.	
 	Else
-		Alert('Produto ' + Alltrim(Posicione('SB1',1,xFilial('SB1')  + cCodProd , 'B1_DESC'))+ ' sem valor cadastrado na tabela de preço!')	
+		If empty(cCondPag)
+			Alert('Informe a condição de pagamento!')
+		Else	
+			Alert('Produto ' + Alltrim(Posicione('SB1',1,xFilial('SB1')  + cCodProd , 'B1_DESC'))+ ' sem valor cadastrado na tabela de preço!')	
+		EndIf
 	EndIf	
 	
 	//nPrcVen   	:= M->C6_PRCVEN	
@@ -1683,6 +1691,9 @@ If SF4->F4_BASEICM > 0
 Else		
 	If  nAliqICM > 0
 		nVlrIcm := ((nValMerc * nAliqICM)/100)
+	Else
+		nAliqICM	:= MaFisRet(nItem,"IT_ALIQICM") //ajuste 07/07 - nao estava retornando icms corretamente quando o cliente era suframa
+		nVlrIcm := ((nValMerc * nAliqICM)/100)			
 	EndIf		
 EndIf	
 
@@ -2648,6 +2659,9 @@ While !TMP1->(EOF()) .And. !lSZL
 
 		If SA1->A1_CONTRIB == '1' .And. nVlrIcm > 0 // contribuinte
 			nVlrIcm  := ((nNegociado * nAliqIcm)/100)
+		ElseIf SA1->A1_CONTRIB == '1' 
+			nAliqICM	:= MaFisRet(nItem,"IT_ALIQICM") //ajuste 07/07 - nao estava retornando icms corretamente quando o cliente era suframa
+			nVlrIcm := ((nVlrBase * nAliqICM)/100)		
 		EndIf		
 
 		nTotPicm += nAliqICM
@@ -5030,3 +5044,113 @@ Return
 User Function AXCADZZC()
 AxCadastro('ZZC','Indicadores x Meses')
 Return
+
+
+ /*/{Protheus.doc} VlCivil()
+	(long_description)
+	@type  Function
+	@author user
+	@since date
+	@version version
+	@param param, param_type, param_descr
+	@return return, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	/*/
+User Function VlCivil()
+Local _lRet := .T.
+LOCAL cAliasSCK := aHeaderSCK[1][9]       // ITENS DA TABELA SCK
+Local cTransp	:= M->CJ_XTRANSP
+Local cRedes	:= ''
+Local cCliente	:= M->CJ_CLIENT
+Local cLoja		:= M->CJ_LOJAENT
+Local cProduto	:= IIF(Empty((cAliasSCK)->CK_PRODUTO),M->CK_PRODUTO , (cAliasSCK)->CK_PRODUTO)
+Local _dEntreg	:= (cAliasSCK)->CK_ENTREG
+Local cMsgP		:= ''
+Local cMsgS		:= ''
+
+SB5->(DBSETORDER(1))
+IF SB5->(DBSEEK(XFILIAL("SB5")+cProduto))
+	IF SB5->B5_PRODCON <> "S"
+		Return .T.
+	EndIf
+Else
+	_lRet := .F.
+	Alert('Complemento de produto não encontrado!')	
+EndIf
+
+If M->CJ_XTPFRET == '3' //REDESPACHO
+	cRedes := M->CJ_XTREDES
+EndIf
+
+dbSelectArea("SA4")
+dbSetOrder(1)
+IF !dbSeek(xFilial("SA4")+cTransp)
+	_lRet := .F.
+	Alert('Transportadora não encontrada!')
+EndIf			
+
+DBSELECTAREA("SA1") 
+DBSETORDER(1)
+IF  _lRet .And. SA1->(DBSEEK( XFILIAL("SA1")+ cCliente + cLoja )) 	.And. SA1->A1_EST == 'SP' .And. (SA4->A4_EST == 'SP' .Or. 	Alltrim(cTransp)  == '000950')
+	IF 	Alltrim(cTransp)  == '000950' .AND. SB5->B5_PRODCON == "S"
+		cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+		cMsgS := " Altere a Transportadora ou contate a Logistica para adequação do cadastro" 
+		Help( ,, 'VlCivil (003)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+		_lRet := .F.	
+	Else
+		IF  _lRet .AND. SB5->B5_PRODCON == "S"
+			IF SB5->B5_YVLLPC < _dEntreg
+				cMsgP := "Não á permitido vender o produto " + ALLTRIM(cProduto) + " pois a Daxia está com a Licença Vencida, contate o departamento fiscal da Daxia."
+				cMsgS := "" //"Regitre o processo de Licenciamento do Produto: ("+ ALLTRIM(cProduto) +")."
+				Help( ,, 'VlCivil (001)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+				_lRet := .F.
+			ENDIF		
+			IF _lRet .And. SA4->A4_YVLLPC < _dEntreg
+				cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+				cMsgS := " Altere a Transportadora ou contate a Logistica para adequação do cadastro" 
+				Help( ,, 'VlCivil (002)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+				_lRet := .F.
+			ENDIF														
+		EndIf
+	EndIf
+EndIF
+
+If !empty(cRedes) .And. _lRet
+
+	dbSelectArea("SA4")
+	dbSetOrder(1)
+	IF !dbSeek(xFilial("SA4")+cRedes)
+		_lRet := .F.
+		Alert('Transportadora de redespacho não encontrada!')
+	EndIf			
+
+	DBSELECTAREA("SA1") 
+	DBSETORDER(1)
+	IF  _lRet .And. SA1->(DBSEEK( XFILIAL("SA1")+ cCliente + cLoja )) 	.And. SA1->A1_EST == 'SP' .And. (SA4->A4_EST == 'SP' .Or. 	Alltrim(cTransp)  == '000950')
+		IF 	Alltrim(cTransp)  == '000950' .AND. SB5->B5_PRODCON == "S"
+			cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+			cMsgS := " Altere a Transportadora de redespacho ou contate a Logistica para adequação do cadastro" 
+			Help( ,, 'VlCivil (003)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+			_lRet := .F.	
+		Else
+			IF  _lRet .AND. SB5->B5_PRODCON == "S"
+				IF SB5->B5_YVLLPC < _dEntreg
+					cMsgP := "Não á permitido vender o produto " + ALLTRIM(cProduto) + " pois a Daxia está com a Licença Vencida, contate o departamento fiscal da Daxia."
+					cMsgS := "" //"Regitre o processo de Licenciamento do Produto: ("+ ALLTRIM(cProduto) +")."
+					Help( ,, 'VlCivil (001)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+					_lRet := .F.
+				ENDIF		
+				IF _lRet .And. SA4->A4_YVLLPC < _dEntreg
+					cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+					cMsgS := " Altere a Transportadora de redespacho ou contate a Logistica para adequação do cadastro" 
+					Help( ,, 'VlCivil (002)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+					_lRet := .F.
+				ENDIF														
+			EndIf
+		EndIf
+	EndIF
+EndIf
+	
+Return _lRet

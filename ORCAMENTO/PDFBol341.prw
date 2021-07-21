@@ -392,7 +392,8 @@ Static Function GetBolDado(aItens, aLog, nTipoCart)
 	// Carregando dados do Documento
 	DbSelectArea("SE1")
 	DbSetOrder(1) // E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
-	If !DbSeek( aItens[5] + aItens[6] + aItens[7] + aItens[8] + aItens[9] )
+	SE1->(DbGoTo(aItens[11]))
+	If aItens[11]  <> SE1->(RECNO())
 		AAdd( aLog, "Erro Título " + aItens[6] + "-" + aItens[7] + ". Título não encontrado. Filial: " + aItens[5] + ", Prefíxo: " + aItens[6] + ", Numero: " + aItens[7] + ", Parcela: " + aItens[8] )
 		Return .F.
 	EndIf
@@ -814,6 +815,9 @@ STATIC Function PDFPrinter()
 	Private oFont8     := TFont():New( "Arial"          , 09, 09, , .F., , , , ,.F. ) //Dados do Cliente
 	Private oFont9     := TFont():New( "Times New Roman", 09, 14, , .T., , , , ,.F. ) //Linha Digitavel
 	
+	If oPrn == Nil
+		Return
+	EndIf
 	oPrn:startpage()
 
 	// parte 1

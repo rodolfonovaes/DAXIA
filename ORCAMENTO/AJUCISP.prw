@@ -156,10 +156,12 @@ If File( cFileImp )
 			if  !SZ7->(Dbseek(xFilial('SZ7') + SUBSTR(cLine,18,8)))
 				LjWriteLog(cLog, "Linha : " + Alltrim(STR(nLinha)) + ' Registro não encontrado na SZ7! '+ SUBSTR(cLine,18,8) )  
             Else
-                Reclock('SZ7',.F.)  
-                SZ7->Z7_DTMAIAC := STOD(SUBSTR(cLine,65,8))
-                SZ7->Z7_VLMAIAC := VAL(SUBSTR(cLine,73,15)) / 100
-                MsUnlock()
+				If SZ7->Z7_VLMAIAC <  VAL(SUBSTR(cLine,73,15)) / 100
+					Reclock('SZ7',.F.)  
+					SZ7->Z7_DTMAIAC := STOD(SUBSTR(cLine,65,8))
+					SZ7->Z7_VLMAIAC := VAL(SUBSTR(cLine,73,15)) / 100
+					MsUnlock()
+				EndIF
 			EndIf
 			
 			FT_FSkip()		

@@ -67,6 +67,7 @@ If MsgYesNo("Confirma a alteração dos campos?", "Observação - Daxia" )
 		SC5->C5_TRANSP  	:= MV_PAR03
         SC5->C5_XNMTRAN     := Posicione("SA4",1,xFilial("SA4")+ALLTRIM(MV_PAR03),"A4_NOME")
 		SC5->C5_XTREDES		:= MV_PAR04	
+        SC5->C5_REDESP		:= MV_PAR04
 		SC5->C5_VEICULO		:= MV_PAR05
 		SC5->C5_ZZOUTXT		:= MV_PAR06	
 		SC5->C5_ZZLAUDO		:= MV_PAR07	
@@ -95,7 +96,7 @@ Local aParamBox := {}
 Local aPergRet	:= {}
 
 aAdd(aParamBox, {1, "Data Entrega"			, SC6->C6_ENTREG  ,  ,'U_VDTENTR()', ,, 50, .F.} )			//1
-aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,,'SA4' ,, 50, .F.} )	//2
+aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,'U_DXVLSA4()','SA4' ,, 50, .F.} )	//2
 aAdd(aParamBox, {1, "Pedido Vinculado"		, SC5->C5_XPEDVIN , "@!" ,,'SC5VIN' ,, 50, .F.} )//3
 aAdd(aParamBox, {1, "Mensagem Nota"			, SC5->C5_MENNOTA , "@!" ,,'' ,, 50, .F.} )//4
 
@@ -220,3 +221,55 @@ User Function zAtuPerg(cPergAux, cParAux, xConteud)
      
     RestArea(aArea)
 Return
+
+//Valida a transportadora 
+User Function DXVLSA4()
+Local lRet := .T.
+Local aArea := GetArea()
+Local cTransp := IIF(IsInCallStack('U_DXATUSC5'),MV_PAR02,MV_PAR03)
+Local dDtEntr := IIF(IsInCallStack('U_DXATUSC5'),MV_PAR01,STOD(''))
+Local cMsgP := ''
+Local cMsgS := ''
+
+dbSelectArea("SA4")
+SA4->(dbSetOrder(1))
+IF !SA4->(dbSeek(xFilial("SA4")+cTransp))
+	lRet := .F.
+	Alert('Transportadora não encontrada!')
+EndIf	
+
+If SA4->A4_EST == 'SP'
+    SC6->(DbSetOrder(1))
+    If lRet .And.  SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM))
+        While SC6->(C6_FILIAL + C6_NUM) == xFilial('SC6') + SC5->C5_NUM .And. lRet
+            SB5->(DBSETORDER(1))
+            IF SB5->(DBSEEK(XFILIAL("SB5")+SC6->C6_PRODUTO))
+                IF SB5->B5_PRODCON <> "S"
+                    SC6->(DbSkip())
+                    Loop
+                EndIf
+            Else
+                lRet := .F.
+                Alert('Complemento de produto não encontrado!')	
+            EndIf
+
+            IF 	lRet .And. Alltrim(cTransp)  == 'RETIRA' .AND. SB5->B5_PRODCON == "S"
+                cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+                cMsgS := " Altere a Transportadora ou contate a Logistica para adequação do cadastro" 
+                Help( ,, 'VlCivil (002)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+                lRet := .F.	
+            EndIf
+
+            IF lRet .And. SA4->A4_YVLLPC < IIF(dDtEntr <> STOD(' '),dDtEntr,SC6->C6_ENTREG)
+				cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+				cMsgS := " Altere a Transportadora ou contate a Logistica para adequação da data de validade no cadastro" 
+				Help( ,, 'VlCivil (001)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+				lRet := .F.
+            EndIf
+            SC6->(DbSkip())
+        EndDo
+    EndIf
+EndIf
+
+RestArea(aArea)
+Return lRet

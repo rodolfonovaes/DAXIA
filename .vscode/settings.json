@@ -147,24 +147,24 @@
             "environment": "teste",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
-            "port": "18011",
+            "port": "18012",
             "ssl" : true,
             "user": "totvs.rnovaes",
-            "passwordCipher": "lCtWsaMiuywUzunqs5Rw0mAo4HSQ2E9NzFtO+GUykENAcqdtHPmBuE4VvlSMh9jGAAs+Z6SK7iZgnykhQlgzjk8O=",
+            "passwordCipher": "7nsZXlsoS/W/RxtptNrMbO2AN1NKT3BldUQRlPDFAHIJS4Oq6uwCIVGUqj5ZaYPXAAeNtyCdciqs0wkDa4etSj1/=",
             "language": "PORTUGUESE",
             "rpoType": "TOP"
-        },
+        }, //Suzana2
         {
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "191205P",
             "smartClientPath": "C:\\SMARTCLIENT_TESTE\\",
-            "environment": "dev",
+            "environment": "rodolfo",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
-            "port": "8002",
+            "port": "8023",
             "ssl" : true,
             "user": "totvs.rnovaes",
-            "passwordCipher": "lCtWsaMiuywUzunqs5Rw0mAo4HSQ2E9NzFtO+GUykENAcqdtHPmBuE4VvlSMh9jGAAs+Z6SK7iZgnykhQlgzjk8O=",
+            "passwordCipher": "7nsZXlsoS/W/RxtptNrMbO2AN1NKT3BldUQRlPDFAHIJS4Oq6uwCIVGUqj5ZaYPXAAeNtyCdciqs0wkDa4etSj1/=",
             "language": "PORTUGUESE",
             "rpoType": "TOP"
         },
@@ -205,6 +205,6 @@
     "advpl.debug_showPrivates": true,
     "advpl.debug_showPublic": true,
     "totvsLanguageServer.welcomePage": false,
-    "advpl.selectedEnvironment": "DAXIA__TESTE_INTERNO",
-    "totvsLanguageServer.askCompileResult": true
+    "totvsLanguageServer.askCompileResult": true,
+    "advpl.selectedEnvironment": "DAXIA__PROD_INTERNO"
 }

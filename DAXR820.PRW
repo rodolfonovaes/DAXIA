@@ -281,9 +281,14 @@ TRCell():New(oSection6, 'NNR_DESCRI' , 'NNR' , /*Titulo*/ 		, PesqPict('NNR','NN
 
 // Personalização DAXIA
 oSection6:Cell("ConsUnit"):SetTitle("Cons. Unit.")
+oSection6:Cell("ConsUnit"):SetSize(5)
 oSection6:Cell("D4_DTVALID"):SetTitle("Dt.Val.")
+oSection6:Cell("D4_DTVALID"):SetSize(15)
 oSection6:Cell("B1_UM"):SetTitle("UN.")
 oSection6:Cell("D4_QUANT"):SetTitle("Qtd.")
+oSection6:Cell("D4_QUANT"):SetSize(10)
+oSection6:Cell("D4_LOCAL"):SetSize(15)
+oSection6:Cell("D4_LOTECTL"):SetSize(10)
 //Fonte seção Materiais
 // RETIRADO PARA CORRIGIR O ENCAVALAMENTO
 /*
@@ -758,6 +763,8 @@ While !oReport:Cancel() .And. !(cAliasTop)->(Eof())
 			oSection6:Cell("ConsUnit"  ):SetValue(aArray[nCntFor][14])
 
 			//aAdd( aArray[nCntFor], SD4->D4_QTDEORI/(cAliasTop)->(C2_QUANT) )
+			oSection6:Cell("D4_COD"    ):SetSize(15)
+			oSection6:Cell("B1_DESC"    ):SetSize(20)
 
 			If mv_par12 == 1
 				oSection6:Cell("D4_LOTECTL"):SetValue(aArray[nCntFor][11])
@@ -813,12 +820,12 @@ While !oReport:Cancel() .And. !(cAliasTop)->(Eof())
 	dbSkip()
 
 	// Para impressoras com Frente e Verso
-	IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
+	/*IF  MOD( oReport:Page()+1, 2 ) == 1 // SE PRÓXIMA PAGINA É PAR - IMPRIMO VERSO
 		lSwHead := .F.
 		oReport:HideHeader()
 		oReport:StartPage() 
 		oReport:EndPage() 
-	ENDIF
+	ENDIF*/
 EndDo
 
 If lPlanilha

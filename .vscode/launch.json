@@ -1,22 +1,18 @@
+
 {
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "totvs_language_debug",
+			"name": "Advpl Debug",
+			"type": "advpl",
 			"request": "launch",
-			"cwb": "${workspaceRoot}",
-			"name": "DAXIA_PRD",
+			"args": [],
+			"cwd": "${workspaceRoot}",
+			"programRun": "${command:AskForProgramName}",
+			"stopOnEntry": false,
+			"enviromentInfo": "${command:GetEnvInfos}",
+			"workspace": "${workspaceFolder}/",
 			"smartclientBin": "C:\\SMARTCLIENT_TESTE\\smartclient.exe",
-			"program": "SIGAMDI",
-			"programArguments": "",
-			"enableMultiThread": false,
-			"enableProfile": false,
-			"isMultiSession": true,
-			"isAccessibilityMode": false,
-			"doNotShowSplash": false,
-			"language": "",
-			"ignoreFiles": true,
-			"enableTableSync": true
 		}
 	]
 }

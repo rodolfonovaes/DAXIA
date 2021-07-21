@@ -85,7 +85,7 @@ IF DBSEEK(xFilial("SC6")+cPedido)
 			_nQuant  := SC6->C6_QTDVEN
 			SB5->(DBSETORDER(1))
 			IF SB5->(DBSEEK(XFILIAL("SB5")+cProduto))
-				_lPerigo := ( SB5->B5_PRODPF == "S" /*.OR. SB5->B5_PRODCON == "S"*/ .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
+				_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
 				
 				IF _lPerigo
 					DBSELECTAREA("Z00")
@@ -132,53 +132,23 @@ IF DBSEEK(xFilial("SC6")+cPedido)
 						ENDIF
 					ENDIF
 					// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA CIVIL
-					/*
-					IF  _lRet .AND. SB5->B5_PRODCON == "S"
-						IF SB5->B5_YVLLPC < _dEntreg
-							cMsgP := "Não á permitido vender o produto " + ALLTRIM(cProduto) + " pois a Daxia está com a Liceça Vencida."
-							cMsgS := "Regitre o processo de Licenciamento do Produto: ("+ ALLTRIM(cProduto) +")."
-							Help( ,, 'M460MARK (007)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-							_lRet := .F.
-						ENDIF
-						IF _lRet
-							DBSELECTAREA("SA1")
-							DBSETORDER(1)
-							IF  DBSEEK( XFILIAL("SA1")+ SC5->C5_CLIENT + SC5->C5_LOJAENT ) 
-								DBSELECTAREA("Z00")
-								DBSETORDER(1)
-								IF !DBSEEK(XFILIAL("Z00")+SA1->A1_EST)
-									cMsgP := "Não á permitido vender o produto " + ALLTRIM(cProduto) + " para o endereço de Entrega do Cliente."
-									cMsgS := ""
-									Help( ,, 'M460MARK (008)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ENDIF
-							ENDIF
-						ENDIF
-						IF _lRet
-							DBSELECTAREA("AI0")
-							DbSetOrder(1) //AI0_FILIAL + AI0_CODCLI + AI0_LOJA
-							IF AI0->( DbSeek( xFilial("AI0")+ SC5->C5_CLIENTE+SC5->C5_LOJACLI ))
-								IF !( AI0->AI0_YPROPC == "S" )
-									cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(cProduto) + "), pois o cliente não possui licença."
-									cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
-									Help( ,, 'M460MARK (009)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ENDIF
-								IF _lRet .AND. AI0->AI0_YVLLPC < _dEntreg
-									cMsgP := "Não é permitido vender o produto " + ALLTRIM(cProduto) + " pois a Licença do Cliente está Vencida na Data da Entrega."
-									cMsgS := "Solicite a data de validade da licença renovada do Produto: ("+ ALLTRIM(cProduto) +")."
-									Help( ,, 'M460MARK (010)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
-									_lRet := .F.
-								ENDIF
-							ELSE
-								cMsgP := "Não é permitido vender o Produto (" + ALLTRIM(cProduto) + "), pois o cliente não possui licença."
-								cMsgS := "Verifique se o cliente possui Licença e providencie o cadastro da mesma."
-								Help( ,, 'M460MARK (011)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+					If _lRet .And. SB5->B5_PRODCON == "S"
+						SA4->(DbSetOrder(1))       
+						If SA4->(DbSeek(xFilial('SA4') + SC5->C5_TRANSP)) 
+							If SA4->A4_YVLLPC < SC6->C6_ENTREG
 								_lRet := .F.
-							ENDIF	
-						ENDIF
-					ENDIF
-					*/
+								cMsgP := "Este Produto é controlado pela Policia Civil, o transporte deve ser feito por Transportadora com Licença da Policia Civil vigente."
+								cMsgS := " Altere a Transportadora ou contate a Logistica para adequação do cadastro" 
+								Help( ,, 'VlCivil (002)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})                 
+							EndIf
+						Else
+							_lRet := .F.
+							cMsgP := "Cadastro de transportadora não localizado!"
+							cMsgS := " Altere a Transportadora ou contate a Logistica para adequação do cadastro" 
+							Help( ,, 'VlCivil (002)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})               
+						EndIf		
+					EndIf			
+
 					// TRATAMENTO PRODUTO PERIGOSO - CONTROLE EXERCITO 
 					IF _lRet .AND. SB5->B5_PRODEX  == "S"
 						IF SB5->B5_YVLLEX < _dEntreg

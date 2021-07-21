@@ -107,10 +107,6 @@ Static Function ProcCisp()
 
 		memowrite("c:\windows\temp\cquery.txt",GetLastQuery()[2])
 		
-		ALERT('TESTE')
-		ALERT(dDataBase)
-
-
 		FWMsgRun(, {|| MontaLayout(cAliasQry,dVenc,2) }, "Processando", "Processando Cobrança...")
 
 		(cAliasQry)->(dbCloseArea())

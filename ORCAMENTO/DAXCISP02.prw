@@ -74,6 +74,8 @@ Static Function EXECUTA(_oRegua,lJob)
 	Local nIndex   := 0
 	Local cIndice  := ""
 	Local cFiltro  := ""
+	Local cQuery   := ""
+	Local cAliasQry	:= ""
 	
 	Local nValorDA	 := 0.00
 	Local nValorF	 := 0.00
@@ -129,6 +131,7 @@ Static Function EXECUTA(_oRegua,lJob)
 	Private dDataAte	:= dDataBase
 	Private nGeraCli	:= 1
 	Private nTime	:= Val(Time())
+	Private	_CLIENTE	:= ''
 	
 
 	If lJob
@@ -150,44 +153,97 @@ Static Function EXECUTA(_oRegua,lJob)
 
 	If nGeraCli == 2 // Só clientes com movimento
 		SD2->( ProcRegua( LastRec()/10 ) )	
-		dbSelectArea("SD2")
-		dbSetOrder(5)
-		dbSeek(xFilial("SD2") + Dtos(dDataDe),.T.)
-		do While !Eof() .and. SD2->D2_FILIAL == xFilial("SD2") .and. SD2->D2_EMISSAO <= dDataAte
+
+		cQuery	:= ''
+		cAliasQry := GetNextAlias()
+		
+
+		cQuery := "SELECT D2_CLIENTE , D2_LOJA  "
+		cQuery += "  FROM " + RetSQLTab('SD2') + " SD2 "
+		cQuery += "  INNER JOIN " + RetSQLTab('SA1') + " SA1 ON A1_COD = D2_CLIENTE AND A1_LOJA = D2_LOJA AND A1_PESSOA = 'J'  SA1.D_E_L_E_T_ = ' '"
+		cQuery += "  WHERE  "
+		cQuery += "  D2_EMISSAO  <= '" +  DTOS(dDataAte) + "'   "
+		cQuery += "  AND SD2.D_E_L_E_T_ = ' '"
+
+		If Select(cAliasQry) > 0 
+			(cAliasQry)->(DbCloseArea())
+		EndIf
+
+		TcQuery cQuery new Alias ( cAliasQry )
+		(cAliasQry)->(dbGoTop())
+		
+		do While !(cAliasQry)->(EOF()) 
 			IF !lJob
         		_oRegua:IncRegua1('Verificando Clientes com Movimento')
 			EndIf
-			If aScan(aMovi,SD2->D2_CLIENTE+SD2->D2_LOJA) == 0
-				aadd(aMovi,SD2->D2_CLIENTE+SD2->D2_LOJA)
+			If aScan(aMovi,(cAliasQry)->D2_CLIENTE+(cAliasQry)->D2_LOJA) == 0
+				aadd(aMovi,(cAliasQry)->D2_CLIENTE+(cAliasQry)->D2_LOJA)
 			Endif
-			dbSkip()
+			(cAliasQry)->(dbSkip())
 		Enddo
 
-		dbSelectArea("SE1")
-		dbSetOrder(6)
-		dbSeek(xFilial("SE1") + Dtos(dDataDe),.T.)
-		do While !Eof() .and. SE1->E1_FILIAL == xFilial("SE1") .and. SE1->E1_EMISSAO <= dDataAte
+		(cAliasQry)->(DbCloseArea())
+
+
+		cAliasQry := GetNextAlias()
+		
+
+		cQuery := "SELECT E1_CLIENTE , E1_LOJA  "
+		cQuery += "  FROM " + RetSQLTab('SE1') + " SE1 "
+		cQuery += "  INNER JOIN " + RetSQLTab('SA1') + " SA1 ON A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA AND A1_PESSOA = 'J'  SA1.D_E_L_E_T_ = ' '"
+		cQuery += "  WHERE  "
+		cQuery += "  E1_EMISSAO  <= '" +  DTOS(dDataAte) + "'   "
+		cQuery += "  AND SE1.D_E_L_E_T_ = ' '"
+
+		If Select(cAliasQry) > 0 
+			(cAliasQry)->(DbCloseArea())
+		EndIf
+
+		TcQuery cQuery new Alias ( cAliasQry )
+		(cAliasQry)->(dbGoTop())
+
+		do While !(cAliasQry)->(EOF()) 
             IF !lJob
 				_oRegua:IncRegua1('Verificando Clientes com Movimento')
 			EndIf
-			If aScan(aMovi,SE1->E1_CLIENTE+SE1->E1_LOJA) == 0
-				aadd(aMovi,SE1->E1_CLIENTE+SE1->E1_LOJA)
+			If aScan(aMovi,(cAliasQry)->E1_CLIENTE+(cAliasQry)->E1_LOJA) == 0
+				aadd(aMovi,(cAliasQry)->E1_CLIENTE+(cAliasQry)->E1_LOJA)
 			Endif
-			dbSkip()
+			(cAliasQry)->(dbSkip())
 		Enddo
+
+		(cAliasQry)->(DbCloseArea())
+
 
 		dbSelectArea("SE5")
 		dbSetOrder(5)
 		dbSeek(xFilial("SE5") + Dtos(dDataDe),.T.)
-		do While !Eof() .and. SE5->E5_FILIAL == xFilial("SE5") .and. SE5->E5_DATA <= dDataAte
+
+		cQuery := "SELECT E5_CLIFOR , E5_LOJA  "
+		cQuery += "  FROM " + RetSQLTab('SE5') + " SE5 "
+		cQuery += "  INNER JOIN " + RetSQLTab('SA1') + " SA1 ON A1_COD = E5_CLIFOR AND A1_LOJA = E5_LOJA AND A1_PESSOA = 'J'  SA1.D_E_L_E_T_ = ' '"
+		cQuery += "  WHERE  "
+		cQuery += "  E5_DATA  <= '" +  DTOS(dDataAte) + "'   "
+		cQuery += "  AND SE5.D_E_L_E_T_ = ' ' AND E5_RECPAG = 'R' "
+
+		If Select(cAliasQry) > 0 
+			(cAliasQry)->(DbCloseArea())
+		EndIf
+
+		TcQuery cQuery new Alias ( cAliasQry )
+		(cAliasQry)->(dbGoTop())
+
+		do While !(cAliasQry)->(EOF()) 		
 			IF !lJob
 				_oRegua:IncRegua1('Verificando Clientes com Movimento')				
 			EndIf
-			If aScan(aMovi,SE5->E5_CLIFOR+SE5->E5_LOJA) == 0 .AND. SE5->E5_RECPAG == "R"
-				aadd(aMovi,SE5->E5_CLIFOR+SE5->E5_LOJA)
+			If aScan(aMovi,(cAliasQry)->E5_CLIFOR+(cAliasQry)->E5_LOJA) == 0 
+				aadd(aMovi,(cAliasQry)->E5_CLIFOR+(cAliasQry)->E5_LOJA)
 			Endif
-			dbSkip()
+			(cAliasQry)->(dbSkip())
 		Enddo
+
+		(cAliasQry)->(DbCloseArea())
 	Else
 		/*SA1->( ProcRegua( LastRec()/10 ) )	
 		SA1->(DbGoTop())
@@ -201,7 +257,6 @@ Static Function EXECUTA(_oRegua,lJob)
 	Endif
 
 	
-
 	If !Empty( cArqCli )
 		cArqImp    := FCreate( AllTrim( cArqCli ) )
 
@@ -211,12 +266,12 @@ Static Function EXECUTA(_oRegua,lJob)
 		SA1->( ProcRegua( LastRec() ) )
 		SA1->( DbSeek( xFilial( "SA1" ) ) )
 
-		While !SA1->( Eof() ) .and. SA1->A1_FILIAL == xFilial( "SA1" ) 
+		While !SA1->( Eof() ) //.and. SA1->A1_FILIAL == xFilial( "SA1" ) 
 			IF !lJob
 				_oRegua:IncRegua1('Processando Clientes...')
 			EndIf
 
-			If /*Len( AllTrim( SA1->A1_CGC ) ) # 14 .or.*/ Iif(nGeraCli==1,.F.,ascan(aMovi,SA1->A1_COD+SA1->A1_LOJA) == 0)
+			If /*Len( AllTrim( SA1->A1_CGC ) ) # 14 .or.*/ Iif(nGeraCli==1,.F.,ascan(aMovi,SA1->A1_COD+SA1->A1_LOJA) == 0) .Or. SA1->A1_PESSOA == 'F'
 				SA1->( DbSkip() )
 				Loop
 			EndIf
@@ -416,7 +471,7 @@ Static Function EXECUTA(_oRegua,lJob)
 
 		While !SA1->( Eof() ) .and. SA1->A1_FILIAL == xFilial( "SA1" ) 
 
-			If /*Len( AllTrim( SA1->A1_CGC ) ) # 14 .or.*/ Empty( SA1->A1_CGC )  .or. Iif(nGeraCli==1,.F.,ascan(aMovi,SA1->A1_COD+SA1->A1_LOJA) == 0)
+			If /*Len( AllTrim( SA1->A1_CGC ) ) # 14 .or.*/ Empty( SA1->A1_CGC )  .or. Iif(nGeraCli==1,.F.,ascan(aMovi,SA1->A1_COD+SA1->A1_LOJA) == 0) .Or. SA1->A1_PESSOA == 'F'
 				IncProc( "Inf. Comerciais do CGC -> " + TransForm( Left( SA1->A1_CGC , 8 ) , "@R XX.XXX.XXX" ) )
 				SA1->( DbSkip() )
 				Loop
@@ -430,8 +485,12 @@ Static Function EXECUTA(_oRegua,lJob)
 			DbSelectArea( "EMI" )
 			//DEBUG
 			cCGC		:=  Left( SA1->A1_CGC , 8 )
+			//If cCGC == '10823480'
+		//		Alert('OPA')
+		//	EndIF
+			_CLIENTE	:= RetCliente(cCGC)
 			cTipo		:= IIF(Len(Alltrim(SA1->A1_CGC)) <= 11 , "2" , "1")
-			dDataCad	:=  SA1->A1_DTCAD
+			dDataCad	:= RetDtCad(cCGC)//SA1->A1_DTCAD - REMOVER NO FUTURO
 			nLimite		:= 0.00
 			cTpGar		:= "0"                             	// Tipo Garantia
 			cGrauGar	:= "00"							   	// Grau Garantia
@@ -494,7 +553,7 @@ Static Function EXECUTA(_oRegua,lJob)
 					nValorMA	:= 0
 				EndIf
 
-				If dDataMA > dDataUC
+				If dDataMA > dDataUC  .And.  nValorMA > 0
 					dDataUC := dDataMA
 					nValorUC := nValorMA
 				EndIf
@@ -552,11 +611,6 @@ Static Function EXECUTA(_oRegua,lJob)
 				EndIf
 			EndIf
 
-			If ( dDataAte - SZ7->Z7_DTULTCO ) > 365 .and. nValorDA <= 0 .or. Empty( SZ7->Z7_DTULTCO )
-				SZ7->( MsUnLock() )
-				Loop
-			EndIf
-
 			cLinha	:= cTipo		
 
 			// Código do associado
@@ -590,19 +644,14 @@ Static Function EXECUTA(_oRegua,lJob)
 			StrZero( Month( dDataUC ) , 2 ) +;
 			StrZero( Day( dDataUC ) , 2 )
 
-			// Valor da última compra
-			//			If Round( nValorUC , 2 ) < Round( SZ7->Z7_VLULTCO , 2 )
-			//				nValorUC	:= Round( SZ7->Z7_VLULTCO , 2 )
-			//			EndIf
-
 			cLinha   := cLinha + StrZero( Int( Round( nValorUC * 100 , 0 ) ) , 15 )
 
 			// Data do maior acúmulo
-			If Empty( dDataMA ) .And. nValorMA > 0
+			If dDataMA == STOD(' ') .And. nValorMA > 0
 				//Caso o campo criado ainda não esteja preenchido
 				dDataMA		:= SZ7->Z7_DTMAIAC
 			Else
-				If Empty( dDataMA )
+				If dDataMA == STOD(' ')
 					dDataMA		:= dDataUC
 					nValorMA	:= Round( nValorUC , 2 )
 				EndIf
@@ -614,7 +663,6 @@ Static Function EXECUTA(_oRegua,lJob)
 					nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
 				EndIf
 			EndIf //COMENTEI - NAO ENTENDI O PQ TA ACUMULANDO O VALOR DE TODOS OS CLIENTES
-
 
 			// ADAPTADO BRUNO, NAO GRAVOU O VALOR ANTERIOR , ENTAO ATUALIZA PARA ASSUMIR O VALOR DO ULTIMO TITULO SE ELE FOR MAIOR
 			If SZ7->Z7_VLULTCO > SZ7->Z7_VLMAIAC .And. SZ7->Z7_DTMAIAC >= YearSub(dDatabase,1)
@@ -666,7 +714,7 @@ Static Function EXECUTA(_oRegua,lJob)
 				dDataMA := dDataUC
 			EndIf
 
-			If nValorMA < nValorDA .And. dDataUC >= YearSub(dDatabase,1)
+			If nValorMA < nValorDA //.And. dDataUC >= YearSub(dDatabase,1)
 				nValorMA := nValorDA
 				dDataMA	 := dDataUC
 			EndIf					
@@ -674,7 +722,18 @@ Static Function EXECUTA(_oRegua,lJob)
 			If dDataUC < SZ7->Z7_DTULTCO
 				dDataUC := SZ7->Z7_DTULTCO
 				nValorUC := SZ7->Z7_VLULTCO
-			EndIf						
+			EndIf				
+			
+			If dDataMA == CTOD(' ')
+				dDataMA		:= SZ7->Z7_DTMAIAC
+				nValorMA	:= Round( SZ7->Z7_VLMAIAC , 2 )
+			EndIf
+
+			If nValorMA ==  nValorUC 
+				nValorMa	:= nValorUc
+				dDataMA		:= dDataUC
+			EndIf
+
 			cLinha  := cLinha + StrZero( Year( dDataMA ) , 4 ) +;
 			StrZero( Month( dDataMA ) , 2 ) +;
 			StrZero( Day( dDataMA ) , 2 )
@@ -713,33 +772,37 @@ Static Function EXECUTA(_oRegua,lJob)
 			//cLinha  := cLinha + StrZero( Int( Round( ( nQtdDias1 / nQtdTit1 ) * 100 , 0 ) ) , 06 )
 			cLinha  := cLinha + StrZero( Int( Round( ( nMdAriaVen) * 100 , 0 ) ) , 06 )
 
-			// Valor do débito atual - vencido a mais de 5 dias
-			cLinha  	:= cLinha + StrZero( Int( Round( nValorD5F * 100 , 0 ) ) , 15 )
 
 			// Média ponderada - vencido a mais de 5 dias
 			//cLinha  := cLinha + StrZero( Round( nValorD5C / nValorD5F , 0 )  , 4 )
-			If nValorD5F == 0
+			If nValorD5F == 0 .Or. nMedPAtr5 == 0
 				nMedPAtr5 := 0
+				nValorD5F := 0
 			EndIf
+
+			// Valor do débito atual - vencido a mais de 5 dias
+			cLinha  	:= cLinha + StrZero( Int( Round( nValorD5F * 100 , 0 ) ) , 15 )			
 			cLinha  := cLinha + StrZero( Round( nMedPAtr5 , 0 )  , 4 )
 
-			// Valor do débito atual - vencido a mais de 15 dias
+
+
 			
-			cLinha  	:= cLinha + StrZero( Int( Round( nValorD15F * 100 , 0 ) ) , 15 )
-
-			// Média ponderada - vencido a mais de 15 dias
-			If nValorD15F == 0
+			If nValorD15F == 0 .Or. nMedPAtr15 == 0
 				nMedPAtr15 := 0
+				nValorD15F := 0
 			EndIf			
+			// Valor do débito atual - vencido a mais de 15 dias
+			cLinha  	:= cLinha + StrZero( Int( Round( nValorD15F * 100 , 0 ) ) , 15 )
+			// Média ponderada - vencido a mais de 15 dias			
 			cLinha  := cLinha + StrZero( Round( nMedPAtr15 , 0 )  , 4 )
-
-			// Valor do débito atual - vencido a mais de 30 dias
-			cLinha  	:= cLinha + StrZero( Int( Round( nValorD30F * 100 , 0 ) ) , 15 )
-
-			// Média ponderada - vencido a mais de 30 dias
-			If nValorD30F == 0
+			
+			If nValorD30F == 0 .Or. nMedPAtr30 == 0
 				nMedPAtr30 := 0
-			EndIf			
+				nValorD30F := 0
+			EndIf		
+			// Valor do débito atual - vencido a mais de 30 dias
+			cLinha  	:= cLinha + StrZero( Int( Round( nValorD30F * 100 , 0 ) ) , 15 )	
+			// Média ponderada - vencido a mais de 30 dias			
 			cLinha  := cLinha + StrZero( Round( nMedPAtr30 , 0 )  , 4 )
 
 			// Data da penúltima compra
@@ -753,6 +816,11 @@ Static Function EXECUTA(_oRegua,lJob)
 		//		dDataPV	:= SZ7->Z7_DTPENCO
 		//		nValorPV	:= Round( SZ7->Z7_VLPENCO , 2 )
 		//	EndIf
+
+			If dDataPV == STOD(' ') .And. SZ7->Z7_DTPENCO < dDataUC .And. SZ7->Z7_DTPENCO <> STOD(' ') .And. SZ7->Z7_VLULTCO > 0
+				dDataPV		:= SZ7->Z7_DTPENCO
+				nValorPV    := Round( SZ7->Z7_VLULTCO , 2 )
+			EndIf
 
 			If dDataPV == dDataUC
 				dDataPV		:= STOD(' ')
@@ -795,7 +863,7 @@ Static Function EXECUTA(_oRegua,lJob)
 			// Vendas sem crédito
 			cLinha	:= cLinha + Space( 02 )
 
-			cLinha  := cLinha + Chr( 13 ) + Chr( 10 )
+		cLinha  := cLinha + Chr( 13 ) + Chr( 10 )
 
 			FWrite( cArqImp , cLinha , Len( cLinha ) )
 
@@ -810,7 +878,7 @@ Static Function EXECUTA(_oRegua,lJob)
 				cErro += 'Cliente - ' + cCGC + ' - - Média Ponderada Título a Vencer OU Prazo Médio Vendas SEM Débito Atual a Vencer ' + CRLF
 			EndIf
 
-			If nValorMA < nValorDA
+			If nValorMA < nValorDA .And. dDataBase - dDataMA < 365
 				cErro += 'Cliente - ' + cCGC + ' - Valor do Maior Acúmulo MENOR QUE Débito Atual ' + CRLF
 			EndIf
 
@@ -1009,12 +1077,11 @@ Local cAliasQry := GetNextAlias()
 Local nRet		:= 0
 
 cQuery := "SELECT SUM(E1_SALDO) -  "
-cQuery += "(SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE = '" + cCliente + "' AND SE1A.E1_LOJA = '" + cLoja + "' AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) AS SALDO" 
+cQuery += "ISNULL((SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE + SE1A.E1_LOJA  IN " + _CLIENTE + " AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ),0) AS SALDO" 
 cQuery += "  FROM " + RetSQLTab('SE1') 
 cQuery += "  WHERE  "
-cQuery += "  SE1.E1_FILIAL = '" + xFilial('SE1') + "' AND SE1.E1_CLIENTE = '" + cCliente + "'  "
-cQuery += " AND SE1.E1_LOJA = '" + cLoja + "'  "
-cQuery += " AND " + DTOS(dDataAte) + " - SE1.E1_VENCREA  >= '" + Str(nDias) + "'  "
+cQuery += "  SE1.E1_CLIENTE + SE1.E1_LOJA  IN " + _CLIENTE + "  "
+cQuery += " AND DATEDIFF(day, SUBSTRING(SE1.E1_VENCREA,1,4)+'-'+SUBSTRING(SE1.E1_VENCREA,5,2)+'-'+SUBSTRING(SE1.E1_VENCREA,7,2),'" + SUBSTR(DTOS(dDataAte),1,4) +"-"+ SUBSTR(DTOS(dDataAte),5,2) + "-"+ SUBSTR(DTOS(dDataAte),7,2) +"' )  >= " + Str(nDias) + "  "
 cQuery += " AND SE1.E1_TIPO = 'NF' "
 cQuery += " AND SE1.E1_STATUS = 'A' "
 cQuery += "  AND SE1.D_E_L_E_T_ = ' '"
@@ -1039,11 +1106,10 @@ Local cAliasQry := GetNextAlias()
 Local nRet		:= 0
 
 cQuery := "SELECT SUM(E1_SALDO) -  "
-cQuery += "ISNULL((SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE = '" + cCliente + "' AND SE1A.E1_LOJA = '" + cLoja + "' AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) ,0)AS SALDO" 
+cQuery += "ISNULL((SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE + SE1A.E1_LOJA  IN " + _CLIENTE + "  AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) ,0)AS SALDO" 
 cQuery += "  FROM " + RetSQLTab('SE1') 
 cQuery += "  WHERE  "
-cQuery += "  SE1.E1_FILIAL = '" + xFilial('SE1') + "' AND SE1.E1_CLIENTE = '" + cCliente + "'  "
-cQuery += " AND SE1.E1_LOJA = '" + cLoja + "'  "
+cQuery += "  SE1.E1_CLIENTE + SE1.E1_LOJA  IN " + _CLIENTE + "  "
 cQuery += " AND " + DTOS(dDataAte) + " - SE1.E1_VENCREA  < 0  "
 cQuery += " AND SE1.E1_TIPO = 'NF' "
 cQuery += " AND SE1.E1_STATUS = 'A' "
@@ -1069,10 +1135,10 @@ Local cQuery	:= ""
 Local nRet 		:= 0
 Local cAlias   	:= GetNextAlias()         
 
-cQuery := "SELECT F2_VALBRUT AS VLUC FROM SF2010 SF2 WHERE SF2.D_E_L_E_T_ = '' AND F2_CLIENTE = '" + SA1->A1_COD + "' AND SF2.F2_TIPO = 'N' AND F2_EMISSAO = ( "
-cQuery += "SELECT MAX(F2_EMISSAO) "
+cQuery := "SELECT F2_VALBRUT AS VLUC FROM SF2010 SF2 WHERE SF2.D_E_L_E_T_ = '' AND F2_CLIENTE + F2_LOJA IN  " + _CLIENTE + " AND SF2.F2_TIPO = 'N' AND F2_EMISSAO = ( "
+cQuery += "SELECT TOP 1MAX(F2_EMISSAO) "
 cQuery += "FROM SF2010 SF2 "
-cQuery += "WHERE F2_CLIENTE = '" + SA1->A1_COD + "' AND  F2_TIPO = 'N' AND SF2.D_E_L_E_T_ = '' "
+cQuery += "WHERE F2_CLIENTE + F2_LOJA IN  " + _CLIENTE + "AND  F2_TIPO = 'N' AND SF2.D_E_L_E_T_ = '' "
 cQuery += "GROUP BY F2_CLIENTE )"
 
 cQuery  := ChangeQuery(cQuery)
@@ -1089,7 +1155,7 @@ Local cAlias   	:= GetNextAlias()
 
 cQuery += "SELECT MAX(F2_EMISSAO) AS DATA"
 cQuery += "FROM SF2010 SF2 "
-cQuery += "WHERE F2_CLIENTE = '" + SA1->A1_COD + "' AND SF2.D_E_L_E_T_ = '' AND F2_TIPO = 'N' "
+cQuery += "WHERE F2_CLIENTE + F2_LOJA IN  " + _CLIENTE + " AND SF2.D_E_L_E_T_ = '' AND F2_TIPO = 'N' "
 cQuery += "GROUP BY F2_CLIENTE "
 
 cQuery  := ChangeQuery(cQuery)
@@ -1107,8 +1173,8 @@ Local cAlias   	:= GetNextAlias()
 
 cQuery += "SELECT SUM(E1_VALOR) AS ACUMULO, E1_EMISSAO "
 cQuery += "FROM SE1010 SE1  "
-cQuery += "WHERE E1_CLIENTE = '" + SA1->A1_COD + "' AND SE1.D_E_L_E_T_ = '' "
-cQuery += "  AND E1_EMISSAO >= " + DTOS(YearSub(dDataBase,1)) + " "
+cQuery += "WHERE E1_CLIENTE + E1_LOJA IN " + _CLIENTE + " AND SE1.D_E_L_E_T_ = '' "
+cQuery += "  AND E1_EMISSAO >= " + DTOS(YearSub(dDataBase,1)) + " AND E1_TIPO = 'NF' "
 cQuery += "GROUP BY E1_EMISSAO  ORDER BY ACUMULO DESC"
 
 cQuery  := ChangeQuery(cQuery)
@@ -1126,10 +1192,10 @@ Local cQuery	:= ""
 Local nRet 		:= 0
 Local cAlias   	:= GetNextAlias()         
 
-cQuery := "SELECT F2_EMISSAO DATA , F2_VALBRUT AS VALOR FROM SF2010 SF2 WHERE SF2.D_E_L_E_T_ = '' AND F2_CLIENTE = '" + SA1->A1_COD + "' AND F2_TIPO = 'N' AND F2_EMISSAO < ( "
-cQuery += "SELECT MAX(F2_EMISSAO) "
+cQuery := "SELECT F2_EMISSAO DATA , F2_VALBRUT AS VALOR FROM SF2010 SF2 WHERE SF2.D_E_L_E_T_ = '' AND F2_CLIENTE + F2_LOJA IN  " + _CLIENTE + "  AND F2_TIPO = 'N' AND F2_EMISSAO < ( "
+cQuery += "SELECT TOP 1 MAX(F2_EMISSAO) "
 cQuery += "FROM SF2010 SF2 "
-cQuery += "WHERE F2_CLIENTE = '" + SA1->A1_COD + "' AND F2_TIPO = 'N' AND SF2.D_E_L_E_T_ = '' "
+cQuery += "WHERE F2_CLIENTE + F2_LOJA IN  " + _CLIENTE + " AND F2_TIPO = 'N' AND SF2.D_E_L_E_T_ = '' "
 cQuery += "GROUP BY F2_CLIENTE ) ORDER BY F2_EMISSAO DESC"
 
 cQuery  := ChangeQuery(cQuery)
@@ -1153,7 +1219,7 @@ Local nQtdTit	:= 0
 
 cQuery := "SELECT E1_VALOR , E1_VENCTO , E1_BAIXA   "
 cQuery += "FROM SE1010 SE1 "
-cQuery += "WHERE SE1.D_E_L_E_T_ = '' AND E1_CLIENTE = '" + SA1->A1_COD + "' AND E1_TIPO = 'NF' " 
+cQuery += "WHERE SE1.D_E_L_E_T_ = '' AND SE1.E1_CLIENTE + SE1.E1_LOJA IN  " + _CLIENTE + " AND E1_TIPO = 'NF' " 
 
 If nDias > 0 //Média Ponderada Atraso Títulos Vencidos e Não Pagos + 5 Dias 
 	//cQuery += " AND SE1.E1_VENCTO - " + DTOS(dDataAte) + "   < '" + Str(nDias) + "'  "
@@ -1206,7 +1272,7 @@ Local nQtdTit	:= 0
 
 cQuery := "SELECT E1_VALOR , E1_VENCTO , E1_EMISSAO   "
 cQuery += "FROM SE1010 SE1 "
-cQuery += "WHERE SE1.D_E_L_E_T_ = '' AND E1_CLIENTE = '" + SA1->A1_COD + "' AND E1_TIPO = 'NF' AND E1_VENCTO > '" + DTOS(dDatabase) + "' "
+cQuery += "WHERE SE1.D_E_L_E_T_ = '' AND SE1.E1_CLIENTE + SE1.E1_LOJA  IN " + _CLIENTE + " AND E1_TIPO = 'NF' AND E1_VENCTO > '" + DTOS(dDatabase) + "' "
 cQuery += " AND SE1.E1_STATUS = 'A' "
 
 cQuery  := ChangeQuery(cQuery)
@@ -1237,11 +1303,10 @@ Local cAliasQry := GetNextAlias()
 Local nRet		:= 0
 
 cQuery := "SELECT SUM(E1_SALDO) -  "
-cQuery += "ISNULL((SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE = '" + cCliente + "' AND SE1A.E1_LOJA = '" + cLoja + "' AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) ,0)AS SALDO" 
+cQuery += "ISNULL((SELECT SUM(E1_SALDO) FROM SE1010 SE1A WHERE SE1A.E1_CLIENTE + SE1A.E1_LOJA  IN " + _CLIENTE + "  AND SE1A.E1_TIPO = 'RA'  AND SE1A.E1_STATUS = 'A' AND SE1A.D_E_L_E_T_ = ' ' ) ,0)AS SALDO" 
 cQuery += "  FROM " + RetSQLTab('SE1') 
 cQuery += "  WHERE  "
-cQuery += "  SE1.E1_FILIAL = '" + xFilial('SE1') + "' AND SE1.E1_CLIENTE = '" + cCliente + "'  "
-cQuery += " AND SE1.E1_LOJA = '" + cLoja + "'  "
+cQuery += "  SE1.E1_CLIENTE + SE1.E1_LOJA IN " + _CLIENTE + "  "
 cQuery += " AND SE1.E1_TIPO = 'NF' "
 cQuery += " AND SE1.E1_STATUS = 'A' "
 cQuery += "  AND SE1.D_E_L_E_T_ = ' '"
@@ -1259,3 +1324,62 @@ EndIf
 
 (cAliasQry)->(DbCloseArea())
 Return nRet
+
+
+
+
+Static Function RetCliente(cCGC)
+Local cQuery	:= ''
+Local cAliasQry := GetNextAlias()
+Local cRet		:= "("
+
+cQuery := "SELECT A1_COD + A1_LOJA  AS CLIENTE"
+cQuery += "  FROM " + RetSQLTab('SA1') 
+cQuery += "  WHERE  "
+cQuery += "  A1_CGC LIKE '" + cCGC + "%'  "
+cQuery += "  AND D_E_L_E_T_ = ' '"
+
+If Select(cAliasQry) > 0 
+	(cAliasQry)->(DbCloseArea())
+EndIf
+
+TcQuery cQuery new Alias ( cAliasQry )
+(cAliasQry)->(dbGoTop())
+
+While !(cAliasQry)->(EOF()) 
+	cRet += "'" + (cAliasQry)->CLIENTE + "',"
+	(cAliasQry)->(dbSkip())
+EndDo
+
+cRet := SUBSTR(cRet,1,Len(cRet) - 1 ) + ")"
+
+(cAliasQry)->(DbCloseArea())
+Return cRet
+
+
+
+Static Function RetDtCad(cCGC)
+Local cQuery	:= ''
+Local cAliasQry := GetNextAlias()
+Local dData		:= STOD(' ')
+
+cQuery := "SELECT A1_DTCAD  AS DATA "
+cQuery += "  FROM " + RetSQLTab('SA1') 
+cQuery += "  WHERE  "
+cQuery += "  A1_CGC LIKE '" + cCGC + "%'  "
+cQuery += "  AND D_E_L_E_T_ = ' ' ORDER BY A1_DTCAD"
+
+If Select(cAliasQry) > 0 
+	(cAliasQry)->(DbCloseArea())
+EndIf
+
+TcQuery cQuery new Alias ( cAliasQry )
+(cAliasQry)->(dbGoTop())
+
+If !(cAliasQry)->(EOF()) 
+	dData := STOD((cAliasQry)->DATA)
+EndIf
+
+
+(cAliasQry)->(DbCloseArea())
+Return dData

@@ -96,7 +96,7 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
 
         nRecSC6 := SC6->(Recno())
         If lRet
-            lRet := U_DAXVNOTA(SC6->C6_NUM, SC6->C6_PRODUTO)
+      //      lRet := U_DAXVNOTA(SC6->C6_NUM, SC6->C6_PRODUTO)
         EndIf
         SC6->(DbGoTo(nRecSC6))
 

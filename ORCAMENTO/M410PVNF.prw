@@ -14,6 +14,10 @@ Local lAtualiza     := .F.
 Local lRet          := .T.
 Local nQtdAux       := 0
 Local nRecSC6       := 0
+Local nRecSC9       := 0
+Local cMsgP         := ''
+Local cMsgS         := ''
+nRecSC9 := SC9->(Recno())
 
 SC6->(DbSetOrder(1))
 If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
@@ -103,13 +107,14 @@ If SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM)) .And. Empty(SC5->C5_NOTA)
 
         nRecSC6 := SC6->(Recno())
         If lRet
-            lRet := U_DAXVNOTA(SC6->C6_NUM, SC6->C6_PRODUTO)
+        //    lRet := U_DAXVNOTA(SC6->C6_NUM, SC6->C6_PRODUTO)
         EndIf
         SC6->(DbGoTo(nRecSC6))
 
         SC6->(DbSkip())
     EndDo
 EndIf
+SC9->(DbGoTo(nRecSC9))
 RestArea(aArea)
 
 Return lRet
@@ -138,7 +143,7 @@ EndIf
 Reclock('SC5',.F.)
 SC5->C5_PESOL     := nPesLiq
 SC5->C5_PBRUTO    := nPesBrut
-SC5->C5_VOLUME1   := nVolume
+SC5->C5_VOLUME1   := IIF(nVolume < 1, 1, nVolume)
 //SC5->C5_ESPECI1   := 'VOLUMES'
 MsUnlock()
 Return
