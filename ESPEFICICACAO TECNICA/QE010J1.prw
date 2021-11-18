@@ -28,6 +28,16 @@ Local cFile  := ''
 Local cProd := PARAMIXB[2]
 Local cRev  := PARAMIXB[3]
 
+If MsgYesNo('Houve uma alteração na especificação e será disparado um e-mail com a nova especificação para os clientes.' + CRLF + 'Deseja continuar?', 'Envio de especificação tecnica')
+    If !MsgYesNo('Confirma o envio?', 'Envio de especificação tecnica')
+        RestArea(aArea)
+        Return    
+    EndIf
+Else
+    RestArea(aArea)
+    Return
+EndIf
+
 SB1->(DbSetOrder(1))
 SB1->(DbSeek(xFilial('SB1')  + cProd))
 
@@ -37,26 +47,34 @@ SB5->(DbSeek(xFilial('SB5')  + cProd))
 SB8->(DbSetOrder(6))
 SB8->(DbSeek(xFilial('SB8')  + PADR(QEK->QEK_LOTE,TAMSX3('B8_LOTECTL')[1])))
 
-
-Aadd(aEspec,QE6->QE6_XCODET)                //1 cEspec criar na QE6 e QP6
+Aadd(aEspec, Alltrim(QE6->QE6_XCODET) + '-REV-' + Alltrim(cRev))                         //1 cEspec criar na QE6 e QP6
 Aadd(aEspec,cRev)                           //2 cRev
-Aadd(aEspec,DTOC(QE6->QE6_DTINI))                //3 cData
-Aadd(aEspec,cProd)                          //4 Produto
-Aadd(aEspec,SB1->B1_DESC)                   //5 cNomeCom
-Aadd(aEspec,SB5->B5_XCEME)                  //6 cProduto    ------- criar
-Aadd(aEspec,SB5->B5_XINS)                   //7 cIns
-Aadd(aEspec,SB1->B1_XDESC) //8 cDescricao
-Aadd(aEspec,POSICIONE('SX5',1, xFilial('SX5') + "S0" + SB1->B1_ORIGEM, 'X5_DESCRI'))                         //9 cProcedencia ExistCpo("SX5","S0"+M->B1_ORIGEM)
+Aadd(aEspec,DTOC(dDataBase))                        //3 cData
+Aadd(aEspec,cProd)                            //4 Produto
+Aadd(aEspec,SB1->B1_DESC)                           //5 cNomeCom
+Aadd(aEspec,SB1->B1_XNOMECO)                    //6 cProduto    ------- criar
+Aadd(aEspec,SB1->B1_XINS)                              //7 cIns
+Aadd(aEspec,SB1->B1_XDESCRI)                        //8 cDescricao
+Aadd(aEspec,SB1->B1_ORIGEM)                         //9 cProcedencia
 Aadd(aEspec,SB1->B1_XEMBALA)    //10cEmbalagem
 Aadd(aEspec,SB1->B1_XESTOCA)    //11cEstocagem
-Aadd(aEspec,Alltrim(Str(SB1->B1_PRVALID)) + ' dias')   //12cValidade PEGAR DA B1 o TIPO DE PRAZO para compor
+Aadd(aEspec,Alltrim(Str(SB1->B1_PRVALID)) + ' dias')    //12cValidade
 Aadd(aEspec,SB1->B1_XINFNUT)    //13cInfNutricional  
 Aadd(aEspec,IIF(SB5->B5_XOGM == 'S','Sim','Produto Livre de OGM'))    //14 cOgm  
 Aadd(aEspec,SB1->B1_XINFADI)    //15 cInfAdicionais  
 Aadd(aEspec,SB1->B1_XLEGISL)    //16cLegislacao  
 Aadd(aEspec,SB1->B1_XFUNCIO)    //17cFuncionalidade  
-Aadd(aEspec,SB1->B1_XAPLICA)    //18cAplicacoes    
+Aadd(aEspec,SB5->B5_XAPLICA)    //18cAplicacoes   ALTERAR PARA B5!!!!  
 Aadd(aEspec,SB1->B1_XOBSERV)    //19cObservacoes    
+Aadd(aEspec,IIF(SB1->B1_GRUPO == '0002',SB5->B5_XINCNAM,'Não Aplicavel'))    //20 INC NAME
+Aadd(aEspec,IIF(SB1->B1_GRUPO == '0002',SB5->B5_XCAS,'Não Aplicavel'))       //21 CAS
+Aadd(aEspec,SB5->B5_XCOMPOS)       //22 COMPOSICAO
+Aadd(aEspec,U_zCmbDesc(SB1->B1_XORIG,'B1_XORIG'))       //23 ORIGEM
+Aadd(aEspec,SB1->B1_XPAIS)       //24 PAIS
+Aadd(aEspec,SB5->B5_XMICRO)       //25 MICROBIOLOGICAS
+Aadd(aEspec,SB5->B5_XNUTRI)       //26 info nutricional
+Aadd(aEspec,IIF(SB5->B5_XOGM == 'S',SB5->B5_XOOGM,'Não Aplicavel'))       //27 Origem OGM
+Aadd(aEspec,SB5->B5_XMANIP)       //28 Manipulacao 
 
 oSay:SetText("Gerando PDF...")
 cFile := U_DXESPEC(aEspec,1)

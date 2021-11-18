@@ -136,6 +136,14 @@ If SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM ))
                 nVolume += IIF(SB1->B1_CONV > 0 ,SC9->C9_QTDLIB / SB1->B1_CONV ,SC9->C9_QTDLIB)
             EndIf    
         EndIf
+        If !Empty(SC9->C9_LOTECTL)
+            SZL->(DbSetOrder(1))
+            If SZL->(DBSeek(xFilial('SZL') + SC5->C5_XNUMCJ + SC9->( C9_ITEM + C9_PRODUTO) ))
+                RecLock('SZL', .F.)
+                SZL->ZL_LOTECTL := SC9->C9_LOTECTL    
+                MsUnlock()
+            EndIf
+        EndIf
 
         SC9->(DbSkip())
     EndDo
@@ -143,7 +151,9 @@ EndIf
 Reclock('SC5',.F.)
 SC5->C5_PESOL     := nPesLiq
 SC5->C5_PBRUTO    := nPesBrut
-SC5->C5_VOLUME1   := IIF(nVolume < 1, 1, nVolume)
+If SC5->C5_XTPOPER <> '10'
+    SC5->C5_VOLUME1   := IIF(nVolume < 1, 1, nVolume)
+EndIf
 //SC5->C5_ESPECI1   := 'VOLUMES'
 MsUnlock()
 Return

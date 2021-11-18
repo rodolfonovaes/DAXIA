@@ -13,6 +13,23 @@
 			"enviromentInfo": "${command:GetEnvInfos}",
 			"workspace": "${workspaceFolder}/",
 			"smartclientBin": "C:\\SMARTCLIENT_TESTE\\smartclient.exe",
-		}
+		},
+		{
+			"type": "totvs_language_debug",
+			"request": "launch",
+			"cwb": "${workspaceRoot}",
+			"name": "DAXIA_PRD",
+			"smartclientBin": "C:\\SMARTCLIENT_TESTE\\smartclient.exe",
+			"program": "SIGAMDI",
+			"programArguments": "",
+			"enableMultiThread": false,
+			"enableProfile": false,
+			"isMultiSession": true,
+			"isAccessibilityMode": false,
+			"doNotShowSplash": false,
+			"language": "",
+			"ignoreFiles": true,
+			"enableTableSync": true
+		}			
 	]
 }

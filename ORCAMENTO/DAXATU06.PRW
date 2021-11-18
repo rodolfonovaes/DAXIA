@@ -98,6 +98,9 @@ Static Function fMSNewGetDados1()
     Elseif aFields[nX] == "Preço em Dólar"
       Aadd(aHeadOrc, {aFields[nX],"VLDOL",PesqPict("SCK","CK_PRCVEN"),TamSx3("CK_PRCVEN")[1],TamSx3("CK_PRCVEN")[2],".T.",;
         SX3->X3_USADO,"N",SX3->X3_F3,SX3->X3_CONTEXT,SX3->X3_CBOX,SX3->X3_RELACAO})
+    Elseif aFields[nX] == "CK_DESCRI"
+      Aadd(aHeadOrc, {cTitulo,SX3->X3_CAMPO,SX3->X3_PICTURE,85,SX3->X3_DECIMAL,SX3->X3_VALID,;
+        SX3->X3_USADO,SX3->X3_TIPO,SX3->X3_F3,SX3->X3_CONTEXT,SX3->X3_CBOX,SX3->X3_RELACAO})  
     Endif
   Next nX
 
@@ -264,6 +267,8 @@ Static Function LoadaCols()
               SF2->(dbSeek(FWxFilial("SF2")+cNF))          
               aColsOrc[Len(aColsOrc)][nCont] := SF2->F2_EMISSAO
           EndIf             
+      Elseif Alltrim(aHeadOrc[nCont][2]) == "CK_DESCRI" 
+          aColsOrc[Len(aColsOrc)][nCont] :=  Posicione('SB1',1,xFilial('SB1') + (cAliasQry)->CK_PRODUTO,'B1_DESC')
       Else
         aColsOrc[Len(aColsOrc)][nCont] :=  (cAliasQry)->&(aHeadOrc[nCont][2])
       Endif

@@ -1,6 +1,6 @@
 User FUNCTION CNTA300()
 Local aParam := PARAMIXB
-Local oModel := aParam[1]
+Local oModel 
 Local xRet   := .T.
 Local oModelCNB := NIL
 Local oModelCNZ := NIL
@@ -11,8 +11,14 @@ Local lClvl   := .F.
 Local n         := 0
 Local x         := 0
 
+//Se tiver parâmetros
+If  (aParam == Nil)
+    Break
+EndIf
 
 If aParam[2] == 'MODELPOS' 
+    oModel := aParam[1]
+
     For n := 1 to oModel:GetModel("CNBDETAIL"):Length()
         oModelCNB	:= oModel:GetModel("CNBDETAIL")
         oModelCNZ	:= oModel:GetModel("CNZDETAIL")

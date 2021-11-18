@@ -13,6 +13,7 @@ User Function MTA440C9()
     Local aAreaSC5 := SC5->(GetArea())
     Local cStatusCred := ""
     Local cStatusEst := ""
+    LOcal nPosSC9   := SC9->(Recno())
 
     SC5->(dbSetorder(1))
     SC5->(dbSeek(FWxFilial("SC5")+SC9->C9_PEDIDO))
@@ -37,7 +38,11 @@ User Function MTA440C9()
         // Log de Atualização
         // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
         // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
-        SC9->C9_XLOGLIB := RecLog(SC9->C9_PEDIDO , 1 )
+        If !empty(SC5->C5_XLOGLIB )
+            SC9->C9_XLOGLIB := SC5->C5_XLOGLIB
+        Else
+            SC9->C9_XLOGLIB := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() //RecLog(SC9->C9_PEDIDO , 1 )
+        EndIf
         SC9->(MsUnLock())        
     EndIf
 
@@ -51,33 +56,48 @@ User Function MTA440C9()
 
     //IF FieldPos("C9_XLOGCRE") > 0  .AND. ; // CASO O CAMPO EXISTA
  //    IF   ( EMPTY(ALLTRIM(cAntesCRD)) .OR. ; // CASO O STATUS ANTERIOR SEJA  VAZIO EU ATUALIZO
-    If  ALLTRIM(cAntesCRD) <> ALLTRIM(cStatusCred) .And. Empty(cStatusCred) .And. IsInCallStack('MATA450')// CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
-
-        // REGISTRO QUEM LIBEROU
-        Reclock("SC9",.F.)
-        // Log de Atualização
-        // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
-        // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
-        SC9->C9_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
-        SC9->(MsUnLock())
-    
-        Reclock("SC5",.F.)
-        SC5->C5_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
-        SC5->(MsUnLock())
+    If  ALLTRIM(cAntesCRD) <> ALLTRIM(cStatusCred) .And. Empty(cStatusCred) .And. (IsInCallStack('MATA450') .Or. IsInCallStack('MATA456') )// CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
+        SC9->(DbSetOrder(1))
+        IF SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM))
+            While SC5->(C5_FILIAL + C5_NUM) == SC9->(C9_FILIAL + C9_PEDIDO)
+                If Empty(SC9->C9_BLCRED)
+                    // REGISTRO QUEM LIBEROU
+                    Reclock("SC9",.F.)
+                    // Log de Atualização
+                    // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
+                    // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
+                    SC9->C9_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
+                    SC9->(MsUnLock())
+                
+                    Reclock("SC5",.F.)
+                    SC5->C5_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
+                    SC5->(MsUnLock())
+                EndIf
+                SC9->(DbSkip())
+            EndDo
+            SC9->(DbGoTo(nPosSC9))
+        EndIf
         
     ENDIF
 
-    If Empty(SC9->C9_XLOGCRE) .And. Empty(cStatusCred) .And. IsInCallStack('MATA450') //Liberação comercial//Caso o log esteja vazio e esteja liberado no credito 
-        Reclock("SC9",.F.)
-        // Log de Atualização
-        // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
-        // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
-        SC9->C9_XLOGCRE := RecLog(SC9->C9_PEDIDO , 2)
-        SC9->(MsUnLock())  
+    If Empty(SC9->C9_XLOGCRE) .And. Empty(cStatusCred) .And. (IsInCallStack('MATA450') .Or. IsInCallStack('MATA456') ) //Liberação comercial//Caso o log esteja vazio e esteja liberado no credito 
+        SC9->(DbSetOrder(1))
+        IF SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM))
+            While SC5->(C5_FILIAL + C5_NUM) == SC9->(C9_FILIAL + C9_PEDIDO)    
+                Reclock("SC9",.F.)
+                // Log de Atualização
+                // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
+                // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
+                SC9->C9_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
+                SC9->(MsUnLock())  
 
-        Reclock("SC5",.F.)
-        SC5->C5_XLOGCRE := SC9->C9_XLOGCRE
-        SC5->(MsUnLock())              
+                Reclock("SC5",.F.)
+                SC5->C5_XLOGCRE := SC9->C9_XLOGCRE
+                SC5->(MsUnLock())  
+                SC9->(DbSkip())
+            EndDo
+            SC9->(DbGoTo(nPosSC9))
+        EndIf                           
     EndIf
 
     //ATUALIZA SITUACAO DO ESTOQUE
@@ -90,7 +110,7 @@ User Function MTA440C9()
 
     //IF FieldPos("C9_XLOGEST") > 0  .AND. ; // CASO O CAMPO EXISTA
     //IF    ( EMPTY(ALLTRIM(cAntesEST)) .OR. ; // CASO O STATUS ANTERIOR SEJA  VAZIO EU ATUALIZO
-    If  ALLTRIM(cAntesEST) <> ALLTRIM(cStatusEst) .And. Empty(cStatusEst)// CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
+    If  ALLTRIM(cAntesEST) <> ALLTRIM(cStatusEst) .And. Empty(cStatusEst) .And. !(IsInCallStack('MATA450') .Or. IsInCallStack('MATA456') )// CASO O STATUS ATUAL SEJA  DIFERENTE DO ANTERIOR EU ATUALIZO
         // REGISTRO QUEM LIBEROU
         Reclock("SC9",.F.)
         // Log de Atualização
@@ -105,12 +125,19 @@ User Function MTA440C9()
     ENDIF
 
     If Empty(SC9->C9_XLOGEST) .And. Empty(cStatusEst) //Caso o log esteja vazio e esteja liberado no credito 
-        Reclock("SC9",.F.)
-        // Log de Atualização
-        // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
-        // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
-        SC9->C9_XLOGEST := RecLog(SC9->C9_PEDIDO , 3)
-        SC9->(MsUnLock())        
+        SC9->(DbSetOrder(1))
+        IF SC9->(DbSeek(xFilial('SC9') + SC5->C5_NUM))
+            While SC5->(C5_FILIAL + C5_NUM) == SC9->(C9_FILIAL + C9_PEDIDO)       
+                Reclock("SC9",.F.)
+                // Log de Atualização
+                // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
+                // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
+                SC9->C9_XLOGEST := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusEst
+                SC9->(MsUnLock())  
+                SC9->(DbSkip())
+            EndDo
+            SC9->(DbGoTo(nPosSC9))
+        EndIf                        
     EndIf    
 
     //ATUALIZA SITUACAO DO WMS
@@ -144,7 +171,7 @@ User Function MTA440C9()
             ENDIF
     	ENDIF
  //   ENDIF
-
+    SC9->(DbGoTo(nPosSC9))
     RestArea(aAreaSC5)
     RestArea(aAreaSC9)
 

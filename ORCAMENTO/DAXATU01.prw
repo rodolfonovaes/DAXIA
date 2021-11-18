@@ -293,6 +293,33 @@ If VldBranco() .And. MsgYesNo('Confirma a ação?')
 
             U_UpdDA1()
 
+            If SD1->D1_FILIAL == '0103'
+                //ajuste para as filiais 0102 e 0104
+                SBZ->(DbSetOrder(1))
+                If SBZ->(DBSeek('0102' + SD1->D1_COD))
+                    If SBZ->BZ_MCUSTD == '1'
+                        RecLock('SBZ', .F.)
+                        SBZ->BZ_CUSTD := nCusto + 0.13
+                        MsUnlock()
+                    Else
+                        RecLock('SBZ', .F.)
+                        SBZ->BZ_CUSTD := nCusto + xMoeda(0.13,2,1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
+                        MsUnlock()                
+                    EndIF
+                EndIF
+
+                If SBZ->(DBSeek('0104' + SD1->D1_COD))
+                    If SBZ->BZ_MCUSTD == '1'
+                        RecLock('SBZ', .F.)
+                        SBZ->BZ_CUSTD := nCusto + 0.30
+                        MsUnlock()
+                    Else
+                        RecLock('SBZ', .F.)
+                        SBZ->BZ_CUSTD := nCusto + xMoeda(0.30,2,1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
+                        MsUnlock()                
+                    EndIF
+                EndIF
+            EndIf
         EndIf
     Next
     MsgInfo('Registros Atualizados!')

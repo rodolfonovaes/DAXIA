@@ -14,7 +14,7 @@
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
 #DEFINE MAXITEM   015                                                // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 048        
+#DEFINE MAXITEMP2 049        
 #DEFINE MAXITEMP2F 048                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  057                                                // Máxima de caracteres por linha de produtos/serviços
@@ -3362,7 +3362,7 @@ For nY := 1 To nLenItens
 			
 			DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)			
 			DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)  
-			nLinha := 169
+			nLinha := 181
 	
 			nL:=0
 			lPag2 := .F.
@@ -3379,7 +3379,7 @@ For nY := 1 To nLenItens
 			
 			DanfeCab(oDanfe,nPosV,oNFe,oIdent,oEmitente,nFolha,nFolhas,cCodAutSef,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,@nLine,@nBaseCol,@nBaseTxt,aUf)			
 			DanfeIT(oDanfe, @nLine, @nBaseCol, @nBaseTxt, nFolha, nFolhas, @aColProd, aMensagem, nPosMsg, aTamCol)
-			nLinha := 169
+			nLinha := 181
 	
 			nL:=0		
 		EndIf

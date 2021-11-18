@@ -23,13 +23,17 @@ _cItem    := ascan(aheader,{|x|upper(alltrim(x[2]))=="D1_ITEM"})
 _cCfop    := ascan(aheader,{|x|upper(alltrim(x[2]))=="D1_CF"})
 _Ret      := .t.
 
+If IsInCallStack('IMPORTCOL')
+	Return _Ret
+EndIf
+
 lTransf := procname(9) == "A310PROC"
 
 If !aCols[n,Len(acols[n])]
 	
 	If Empty(aCols[n,_cConta]) .AND. aCols[n,_cRAteio] == '2' .and. !lTransf
 		MSGBOX("Deverá ser informado C Contábil. Verifique! ","AVISO","STOP")
-		_Ret := .F.
+		_Ret := .F. 
 		
 	ElseIf Empty(aCols[n,_cItemcta]) .AND. aCols[n,_cRAteio] == '2' .and. !lTransf .and. POSICIONE("CT1",1,xFilial("CT1")+aCols[n,_cConta],"CT1_ITOBRG")=="1"
 		MSGBOX("Deverá ser informado Nº Processo. Verifique! ","AVISO","STOP")

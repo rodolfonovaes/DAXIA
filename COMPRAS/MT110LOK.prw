@@ -53,10 +53,10 @@ If !aCols[n,Len(acols[n])] .And. !l110Auto // Verifica se a linha está deletada
                 Help('', 1, 'MT110LOK02',, 'Item obrigatorio para essa conta contabil.', 1, 0)
             EndIf
 
-            If (lClvl .And. Empty(cClvl))
-                lRet := .F.
-                Help('', 1, 'MT110LOK03',, 'Classe de valor obrigatorio para essa conta contabil. ', 1, 0)
-            EndIf    
+            //If (lClvl .And. Empty(cClvl))
+              //  lRet := .F.
+                //Help('', 1, 'MT110LOK03',, 'Classe de valor obrigatorio para essa conta contabil. ', 1, 0)
+            //EndIf    
         EndIf
 		
 	EndIf

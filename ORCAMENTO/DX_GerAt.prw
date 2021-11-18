@@ -471,7 +471,7 @@ For nXCnt := 1 to Len( aGrAtv )
 NexT
 
 If .not. lNMarc
-   MsgAlert( OEMToANSI( "Nao hÃ¡ item(ns) marcado(s) para separacao. Favor verificar!" ), OEMToANSI( "*Geracao de Atividades" ) )
+   MsgAlert( OEMToANSI( "Nao há item(ns) marcado(s) para separacao. Favor verificar!" ), OEMToANSI( "*Geracao de Atividades" ) )
 Else
    If MsgYesNo( "Confirma a geracao das atividades CRM para os itens marcados?", "*Geracao de Atividades" )
       GrvGA() // Funcao estatica da geracao cadastro de atividades CRM.
@@ -894,9 +894,9 @@ For nXCnt := 1 to Len( aGrAtv )
 NexT
 
 If .not. lNMarc
-   MsgAlert( OEMToANSI( "Nao hÃ¡ item(ns) marcado(s) para separacao. Favor verificar!" ), OEMToANSI( "*Geracao de Atividades" ) )
+   MsgAlert( OEMToANSI( "Nao há item(ns) marcado(s) para separacao. Favor verificar!" ), OEMToANSI( "*Geracao de Atividades" ) )
 Else
-   If MsgYesNo('Confirma a geraÃ§Ã£o automatica das atividades marcadas?')
+   If MsgYesNo('Confirma a geração automatica das atividades marcadas?')
       For nX := 1 to Len( aGrAtv )
          If aGrAtv[nX][11] // Tarefa marcada pelo usuario 
             oModel    := FWLoadModel( "CRMA180" )
@@ -905,7 +905,7 @@ Else
             oModel:SetOperation( 3 ) // 3, de Insercao
             oModel:Activate()
 
-            nPos :=MV_PAR29
+            nPos :=IIF(ValType(MV_PAR29) == 'C', Val(MV_PAR29),MV_PAR29)
             If nPos > 0
                cPriori := Alltrim(aPriori[nPos])
             Else
@@ -929,7 +929,7 @@ Else
             EndIf
             oModelCRM:LoadValue( "AOF_FILIAL", xFilial( "AOF" ) )
             oModelCRM:LoadValue( "AOF_TIPO",   "1" )
-            oModelCRM:LoadValue( "AOF_ASSUNT", ALLTRIM(STR(MV_PAR29)) )
+            oModelCRM:LoadValue( "AOF_ASSUNT", ALLTRIM(STR(IIF(ValType(MV_PAR29) == 'C', Val(MV_PAR29),MV_PAR29))) )
             oModelCRM:LoadValue( "AOF_DESCRI", cDesc )
             oModelCRM:LoadValue( "AOF_CHAVE",  aGrAtv[nX][3] )
             oModelCRM:LoadValue( "AOF_DTINIC", dDatabase )

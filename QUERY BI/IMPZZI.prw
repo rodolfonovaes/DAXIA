@@ -117,6 +117,7 @@ Local nH			:= 0
 Local nPosErro		:= 0
 Local nPosPais		:= 0
 Local nPosAno		:= 0
+Local nPosProd		:= 0
 Local nPosMes		:= 0
 Local nPosPeso		:= 0
 Local nPosCod		:= 0
@@ -155,7 +156,79 @@ If File( cFileImp )
 		FT_FGoTop()
 
 		LjWriteLog(cLog, "Iniciando importação do arquivo " + cFileImp )
-		
+		cLine 	:= AllTrim(FT_FReadLn())
+		aLine 	:= Separa(cLine,cToken)
+		nPosPais	:= ascan(aLine,'PAIS DE ORIGEM')
+		nPosAno		:= ascan(aLine,'ANO')
+		nPosProd	:= ascan(aLine,'CODPROD')
+		nPosMes		:= ascan(aLine,'MES')
+		nPosPeso	:= ascan(aLine,'PESO LIQUIDO')
+		//nPosCod		:= ascan(aLine,'NOME DO PRODUTO')
+		nPosDesc	:= ascan(aLine,'NOME DO PRODUTO')
+		nPosInco	:= ascan(aLine,'INCOTERM')
+		nPosUF		:= ascan(aLine,'UF DESEMBARACO')
+		nPosNcm		:= ascan(aLine,'NCM')
+		nPosModal	:= ascan(aLine,'MODAL')
+		nPosExp		:= ascan(aLine,'EXPORTADOR NORMALIZADO')
+		nPosFob		:= ascan(aLine,'VALOR FOB TOTAL')
+		nPosCif		:= ascan(aLine,'VALOR CIF TOTAL')
+		nPosImp		:= ascan(aLine,'IMPORTADOR NORMALIZADO')
+
+		If nPosPais == 0 
+			Alert('Coluna PAIS DE ORIGEM não encontrada!')
+			Return
+		EndIf
+		If nPosAno == 0 
+			Alert('Coluna ANO não encontrada!')
+			Return
+		EndIf
+		If nPosMes == 0 
+			Alert('Coluna MES não encontrada!')
+			Return
+		EndIf
+		If nPosPeso == 0 
+			Alert('Coluna PESO LIQUIDO  não encontrada!')
+			Return
+		EndIf
+		If nPosDesc == 0 
+			Alert('Coluna NOME DO PRODUTO  não encontrada!')
+			Return
+		EndIf
+		If nPosInco == 0 
+			Alert('Coluna INCOTERM  não encontrada!')
+			Return
+		EndIf
+		If nPosUF == 0 
+			Alert('Coluna UF DESEMBARACO  não encontrada!')
+			Return
+		EndIf
+		If nPosNcm == 0 
+			Alert('Coluna NCM  não encontrada!')
+			Return
+		EndIf
+		If nPosModal == 0 
+			Alert('Coluna MODAL  não encontrada!')
+			Return
+		EndIf
+		If nPosExp == 0 
+			Alert('Coluna EXPORTADOR NORMALIZADO  não encontrada!')
+			Return
+		EndIf
+		If nPosFob == 0 
+			Alert('Coluna VALOR FOB TOTAL não encontrada!')
+			Return
+		EndIf
+		If nPosCif == 0 
+			Alert('Coluna VALOR CIF TOTAL  não encontrada!')
+			Return
+		EndIf
+		If nPosImp == 0 
+			Alert('Coluna IMPORTADOR NORMALIZADO não encontrada!')
+			Return
+		EndIf																						
+
+		FT_FSkip()
+
 		// Le o arquivo ja processando as inclusoes
 		While !FT_FEof() 
 		
@@ -180,18 +253,17 @@ If File( cFileImp )
 			ZZI->ZZI_PAIS	:= aLine[nPosPais]
 			ZZI->ZZI_ANO	:= aLine[nPosAno]
 			ZZI->ZZI_MES	:= aLine[nPosMes]
-			//ZZI->ZZI_DATA	:= aLine[nPosPais]
-			ZZI->ZZI_PESO	:= aLine[nPosPeso]
+			ZZI->ZZI_PRODUT	:= aLine[nPosProd]
+			ZZI->ZZI_PESO	:= Val(STRTRAN(aLine[nPosPeso],',','.'))
 			ZZI->ZZI_DSCPRO	:= aLine[nPosDesc]
 			ZZI->ZZI_INCOTE	:= aLine[nPosInco]
-			ZZI->ZZI_UF		:= aLine[nPosUF]
+			ZZI->ZZI_UFDESM		:= aLine[nPosUF]
 			ZZI->ZZI_NCM	:= aLine[nPosNcm]
 			ZZI->ZZI_MODAL	:= aLine[nPosModal]
 			ZZI->ZZI_EXPORT	:= aLine[nPosExp]
-			ZZI->ZZI_FOB	:= Val(aLine[nPosFob])
-			ZZI->ZZI_CIF	:= Val(aLine[nPosCif])
+			ZZI->ZZI_FOB	:= Val(STRTRAN(aLine[nPosFob],',','.'))
+			ZZI->ZZI_CIF	:= Val(STRTRAN(aLine[nPosCif],',','.'))
 			ZZI->ZZI_IMPORT	:= aLine[nPosImp]
-
 
 			MsUnlock()
 			
@@ -208,7 +280,7 @@ If File( cFileImp )
 			 DeletaLido(cFileImp)			
 
 		Endif
-        HS_MSGINF("Ocorreram os seguintes erros na geração do arquivo :" + CRLF + cLog ,"Ajuste SB1")
+        
 		LjWriteLog(cLog, "Fim da importação do arquivo " + cFileImp )
 		MsgInfo('Fim da Atualização!')
 	EndIf

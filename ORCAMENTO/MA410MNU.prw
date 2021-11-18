@@ -19,6 +19,8 @@ Local cUsers   := SupergetMV('ES_NIVMARG',.T.,'totvs.rnovaes')
 Local lComercial    := .F.
 Local lGeral        := .F.
 Local n             := 0
+Local cUsrRoma := SupergetMV('ES_USRROMA',.T.,'')
+Local aGrupos   := UsrRetGrp()
 
 For n := 1 to len(aGrpCom)
     If ascan(aGrp,aGrpCom[n]) > 0
@@ -48,7 +50,21 @@ If at(UPPER(Alltrim(UsrRetName( retcodusr() ))),UPPER(cUsers)) > 0 .Or. at(UPPER
 EndIf
 
 aAdd( aRotina, { "*Imprimir", "U_DX_RELPV()", 0 , 7, 0, Nil } )
-
-
+If Autoriza(aGrupos,cUsrRoma)
+    aAdd( aRotina, { "*Romaneio", "U_DX_ROMAN()", 0 , 7, 0, Nil } )
+EndIf
 
 Return
+
+Static Function Autoriza(aGrupos,cGrupos)
+Local lRet := .F.
+Local n     := 0
+
+For n := 1 to Len(aGrupos)
+    If aGrupos[n] $ cGrupos
+        lRet := .T.
+        Exit
+    EndIf
+Next
+
+Return lRet

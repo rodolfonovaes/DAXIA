@@ -18,6 +18,7 @@ Local aParam      := {}
 Local aParMoeda 	:= {}
 Local aRetMoeda   := {}
 Local aRet        := {}
+Local aArea	:= GetArea()
 PRIVATE lEnd
 
 aAdd(aParam, {1, "De"   , CriaVar('B1_COD',.F.) ,  ,, 'SB1',, 60, .F.} )
@@ -47,6 +48,7 @@ Else
 		Processa({|| U_DAXTAB({'     ','ZZZZZZ'})},"Processando Registros","Atualizando tabela de preço, Aguarde...")
 	EndIf
 EndIf
+RestArea(aArea)
 Return(.T.)
 
 
@@ -83,6 +85,7 @@ Local cAliasQry := GetNextAlias()
 Local cCondPag  := '001'
 Local n         := 0
 Local dDataDe   := Posicione('DA0',1,xFilial('DA0') + cCodTab,'DA0_DATDE')
+Local aArea	:= GetArea()
 PRIVATE lMsErroAuto := .F.
 /*
 GETMV('ES_DTDA0')
@@ -225,6 +228,7 @@ Else
     	MsgInfo('Não foram encontrados dados para a pesquisa!')
 	EndIf
 EndIf
+RestArea(aArea)
 Return 
 
 
@@ -246,6 +250,7 @@ Local cParc	:= ''
 Local cAux	:= ''
 Local aAux	:= {}
 Local nAux	:= 0
+Local aArea	:= GetArea()
 
 SE4->(DbSetOrder(1))
 IF SE4->(DbSeek(xFilial('SE4') + cCondPag))
@@ -375,7 +380,7 @@ IF SE4->(DbSeek(xFilial('SE4') + cCondPag))
 		nRet := ((nPrcFin / 30) * Round(((&cParc)/nParc),0)) 
 	EndIf
 EndIf
-
+RestArea(aArea)
 Return nRet
 
 
@@ -388,6 +393,7 @@ Local cAliasQry := GetNextAlias()
 Local cQuery    := ''
 Local nAtu      := 0
 Local nValor    := 0
+Local aArea	:= GetArea()
 
 cQuery := "	SELECT CK_PRODUTO, SCK.R_E_C_N_O_ AS REC  , CJ_CONDPAG" 
 cQuery += " FROM " + RetSqlName( "SCK" ) + " SCK "
@@ -434,6 +440,8 @@ End transaction
 If !IsInCallStack('U_AVCADGE')
 	MsgInfo(Alltrim(STR(nAtu)) + ' itens de orçamentos atualizados!')
 EndIf
+
+RestArea(aArea)
 Return  
 
 
@@ -446,8 +454,10 @@ Local cProduto  := ''
 Local cProdPi   := ''
 Local nI        := 0
 Local aAux      := {}
+Local aAreaSBZ	:= SBZ->(GetArea())
 Private cPilha  := ''
 Private nChamadas := 0 
+
 
 Conout('DAXTAB - Atualizando PA - ' + time())
 
@@ -556,6 +566,7 @@ If !(cAliasQry)->(Eof())
 EndIf
 
 Conout('DAXTAB - Fim da atualização PA - ' + time())
+RestArea(aAreaSBZ)
 Return 
 
 
@@ -566,7 +577,7 @@ Local nRet      := 0
 Local aProds    := {}
 Local nI        := 0
 Local nAux      := 0
-
+Local aArea	:= GetArea()
 cPilha += cProd + CRLF
 
 SG1->(DbSetOrder(1))
@@ -619,6 +630,7 @@ For nI := 1 to Len(aProds)
     MsUnlock()    
 Next
 
+RestArea(aArea)
 Return nRet
 
 
@@ -716,6 +728,7 @@ Local lSZL			:= .F.
 Local nSCKBkp		:= 0
 Local nSeleciona    := 0
 Local nAux          := 0
+Local aArea	:= GetArea()
 
 SA1->(DbSetOrder(1)) //--A1_FILIAL+A1_COD+A1_LOJA
 SA1->(DbSeek(FwxFilial('SA1') + cCodCli + cLoja))
@@ -1144,6 +1157,7 @@ While SCK->(CK_FILIAL + CK_NUM) == SCJ->(CJ_FILIAL + CJ_NUM)
 EndDo
 
 MafisEnd()
+RestArea(aArea)
 Return
 
 

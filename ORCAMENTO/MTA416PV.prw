@@ -204,7 +204,11 @@ If ( cAliasQry )->( !Eof() )
         EndIf
         
         If nPRegWms > 0 
-            _aCols[nAux][nPRegWms] := '3'
+            If Alltrim(_aCols[nAux][nPProd]) $ SuperGetMV('ES_PRDFIFO',.F.,'0207030001')
+                _aCols[nAux][nPRegWms] := '4'
+            Else
+                _aCols[nAux][nPRegWms] := '3'
+            EndIf
         EndIf
 
         DbSelectArea('SZD')

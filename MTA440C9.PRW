@@ -31,18 +31,18 @@ User Function MTA440C9()
 
         If       Empty(SC9->C9_XLOGCRE) .And. EMPTY(ALLTRIM(cAntesCRD))
 
-        // REGISTRO QUEM LIBEROU
-        Reclock("SC9",.F.)
-        // Log de Atualização
-        // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
-        // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
-        SC9->C9_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
-        SC9->(MsUnLock())
-    
-        Reclock("SC5",.F.)
-        SC5->C5_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
-        SC5->(MsUnLock())
+            // REGISTRO QUEM LIBEROU
+            Reclock("SC9",.F.)
+            // Log de Atualização
+            // xxxxxx.xxxxx;99/99/9999;99:99;99;xxxxx;99
+            // <<usuário>>;<<data>>;<<hora>>;<<funçao>>;<<valor novo>>
+            SC9->C9_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
+            SC9->(MsUnLock())
         
+            Reclock("SC5",.F.)
+            SC5->C5_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + cStatusCred
+            SC5->(MsUnLock())
+        EndIf
     ENDIF
 
     //ATUALIZA SITUACAO DO ESTOQUE

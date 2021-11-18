@@ -23,7 +23,7 @@ Local cExtension    :=  '*.PDF'
 Local cPathDest     := 'C:\temp\'
 Local cArqModel     := ''
 Local cNewFile      := ''
-Local cModel        := 'DXESPTEC'
+Local cModel        := 'DXESPTEC2'
 Local lContinua     := .T.
 Local n             := 0
 Local aOrgano       := {}
@@ -36,6 +36,8 @@ Local aCabec        := {}
 Local aLaudo        := {}
 Local cLaudo        := ''
 Local cEspec        := ''
+Local nX            := 0
+
 cArqModel := cStartpath + 'MODELOS\'+ cModel + '.dotm'
 
 // ---------------------------------------
@@ -85,7 +87,7 @@ aCabec := { ''                      , ; // 01 - Nota Fiscal de Saída
  //   lContinua := .F.
  //   Alert('Não foram encontrado dados das propriedades fisico quimicas/microbiologicas')
 //EndIF
-lContinua := .T.
+
 If lContinua
     //cPathDest  := Alltrim(cGetFile ('Arquivo' + cExtension + '|' + cExtension +'|' , 'Selecione a pasta para gravação.', 1, '', .T., GETF_LOCALHARD+GETF_RETDIRECTORY,.F.))
     cFileName := If(Right(cPathDest, 1) == '\', '', '\') + alltrim(SB1->B1_COD) + StrTran(cExtension, '*', '')
@@ -116,24 +118,37 @@ If lContinua
         OLE_SetDocumentVar(oWord, 'cEstocagem' 	        , aEspec[11])
         OLE_SetDocumentVar(oWord, 'cValidade' 	        , aEspec[12])
         OLE_SetDocumentVar(oWord, 'cInfNutricional'     , aEspec[13])
-        OLE_SetDocumentVar(oWord, 'cOgm'                , aEspec[14])
+        //OLE_SetDocumentVar(oWord, 'cOgm'                , aEspec[14])
         OLE_SetDocumentVar(oWord, 'cInfAdicionais'      , aEspec[15])
         OLE_SetDocumentVar(oWord, 'cLegislacao'         , aEspec[16])
         OLE_SetDocumentVar(oWord, 'cFuncionalidade'     , aEspec[17])
         OLE_SetDocumentVar(oWord, 'cAplicacoes'         , aEspec[18])
         OLE_SetDocumentVar(oWord, 'cObservacoes'        , aEspec[19])
+        OLE_SetDocumentVar(oWord, 'cIncName'            , aEspec[20])
+        OLE_SetDocumentVar(oWord, 'cCas'                , aEspec[21])
+        OLE_SetDocumentVar(oWord, 'cComposicao'         , aEspec[22])
+        OLE_SetDocumentVar(oWord, 'cOrigem'             , aEspec[23])
+        OLE_SetDocumentVar(oWord, 'cPais'               , aEspec[24])
+        OLE_SetDocumentVar(oWord, 'cMicrobio'           , aEspec[25])
+        OLE_SetDocumentVar(oWord, 'cInfNutricional'     , aEspec[26])
+        OLE_SetDocumentVar(oWord, 'cOgm'                , aEspec[27])
+        OLE_SetDocumentVar(oWord, 'cPreparacao'         , aEspec[28])
+          
 
 
         If nTipo == 1 // entrada
             QE8->(DbSetOrder(1))
             IF QE8->(DbSeek(xFilial('QE8') + aEspec[4] + aEspec[2]))
                 While xFilial('QE8') + aEspec[4] + aEspec[2] == QE8->(QE8_FILIAL + QE8_PRODUT + QE8_REVI) 
-                    If QE8->QE8_LABOR == 'FISQUI'
+                    If QE8->QE8_LABOR == 'ORGANO'
                         aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
                     EndIf
                     If ALLTRIM(QE8->QE8_LABOR) == 'MICRO'
                         aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
                     EndIf
+                    If ALLTRIM(QE8->QE8_LABOR) == 'FISQUI'
+                        aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                    EndIf                    
                     QE8->(DbSkip())
                 EndDo
             EndIF
@@ -158,6 +173,8 @@ If lContinua
                         aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
                     ElseIF ALLTRIM(QE7->QE7_LABOR) == 'MICRO'
                         aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
+                    ElseIf ALLTRIM(QE7->QE7_LABOR) == 'ORGANO'
+                        aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})                        
                     EndIf
                     QE7->(DbSkip())
                 EndDo
@@ -166,12 +183,17 @@ If lContinua
             QP8->(DbSetOrder(1))
             IF QP8->(DbSeek(xFilial('QE8') + aEspec[4] + aEspec[2]))
                 While xFilial('QP8') + aEspec[4] + aEspec[2] == QP8->(QP8_FILIAL + QP8_PRODUT + QP8_REVI)
-                    If QP8->QP8_LABOR == 'FISQUI'
-                        aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QP8->QP8_ENSAIO,'QE1_DESCPO'),QP8->QP8_TEXTO})
+                    If QP8->QP8_LABOR == 'ORGANO'
+                        aadd(aOrgano,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
                     EndIf
                     If ALLTRIM(QP8->QP8_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QP8->QP8_ENSAIO,'QE1_DESCPO'),QP8->QP8_TEXTO})
-                    EndIf                    
+                        aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
+                    EndIf    
+                    If ALLTRIM(QP8->QP8_LABOR) == 'FISQUI'
+                        If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aFisico,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
+                        EndIf
+                    EndIf                                      
                     QP8->(DbSkip())
                 EndDo
             EndIF
@@ -188,9 +210,13 @@ If lContinua
                     ENDIF
 
                     If ALLTRIM(QP7->QP7_LABOR) == 'FISQUI'
-                        aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QP7->QP7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aFisico,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})
+                        EndIf
                     ElseIF ALLTRIM(QP7->QP7_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QP7->QP7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})
+                    ElseIf ALLTRIM(QP7->QP7_LABOR) == 'ORGANO'
+                        aadd(aOrgano,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})                                                
                     EndIf
                     QP7->(DbSkip())
                 EndDo
@@ -208,32 +234,36 @@ If lContinua
         While SX3->(DbSeek('ZZH_SENS' + cContador)) .And. Alltrim(SX3->X3_TITULO) <> 'x'
             
             If ZZH->(DbSeek(xFilial('ZZH') + aEspec[4]))
-                aAdd(aAlerg,{})
-                Aadd(aAlerg[Len(aAlerg)],SX3->X3_TITULO)
-                //C=Contem;N=Nao Contem;P=Pode Conter;D=Contem Derivados 
-                Do Case
-                    Case  ZZH->&('ZZH_SENS'+cContador) == 'C'                                                                        
-                        Aadd(aAlerg[Len(aAlerg)],'Contem')
-                    Case  ZZH->&('ZZH_SENS'+cContador) == 'N'                                                                        
-                        Aadd(aAlerg[Len(aAlerg)],'Não Contem')
-                    Case  ZZH->&('ZZH_SENS'+cContador) == 'P'                                                                        
-                        Aadd(aAlerg[Len(aAlerg)],'Pode Conter')
-                    Case  ZZH->&('ZZH_SENS'+cContador) == 'D'                                                                        
-                        Aadd(aAlerg[Len(aAlerg)],'Contem Derivados')                                               
-                EndCase
-                Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AORI'+cContador)) //Origem
-                Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AOBS'+cContador)) //Observacoes
+                
+                If ZZH->&('ZZH_SENS'+cContador) <> 'N' 
+                    aAdd(aAlerg,{})
+                    Aadd(aAlerg[Len(aAlerg)],SX3->X3_TITULO)
+                    //C=Contem;N=Nao Contem;P=Pode Conter;D=Contem Derivados 
+                    Do Case
+                        Case  ZZH->&('ZZH_SENS'+cContador) == 'C'                                                                        
+                            Aadd(aAlerg[Len(aAlerg)],'Contem')
+                        Case  ZZH->&('ZZH_SENS'+cContador) == 'N'                                                                        
+                            Aadd(aAlerg[Len(aAlerg)],'Não Contem')
+                        Case  ZZH->&('ZZH_SENS'+cContador) == 'P'                                                                        
+                            Aadd(aAlerg[Len(aAlerg)],'Pode Conter')
+                        Case  ZZH->&('ZZH_SENS'+cContador) == 'D'                                                                        
+                            Aadd(aAlerg[Len(aAlerg)],'Contem Derivados')                                               
+                    EndCase
+                    Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AORI'+cContador)) //Origem
+                    Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AOBS'+cContador)) //Observacoes     
+                EndIf                                                           
             EndIf
             cContador := Soma1(cContador)
         EndDo
 
-
+        OLE_SetDocumentVar(oWord, 'nTotOrgano' 		, Len(aOrgano))
         For n := 1 to Len(aOrgano)
             OLE_SetDocumentVar(oWord, 'cParam' 		+ AllTrim(Str(n)) +  '1'	, aOrgano[n][1])
             OLE_SetDocumentVar(oWord, 'cEspec' 		+ AllTrim(Str(n)) +  '2'	, aOrgano[n][2])
         Next
+    
 
-        OLE_SetDocumentVar(oWord, 'nTotOrgano' 		, Len(aOrgano))
+        
         OLE_ExecuteMacro(oWord, "Organolepticas")
 
 
@@ -245,32 +275,24 @@ If lContinua
         OLE_SetDocumentVar(oWord, 'nTotFisico' 		, Len(aFisico))
         OLE_ExecuteMacro(oWord, "FisicoQuimicas")
 
-        If Len(aMicro) == 0
-            OLE_SetDocumentVar(oWord, 'cParamMicro' 		+ '1' +  '1'	, 'N/A')
-            OLE_SetDocumentVar(oWord, 'cEspecMicro' 		+ '1' +  '2'	, 'N/A')      
-            OLE_SetDocumentVar(oWord, 'nTotMicro' 		, 1)
-            OLE_ExecuteMacro(oWord, "MicroBiologicas")                          
-        Else
-            For n := 1 to Len(aMicro)
-                OLE_SetDocumentVar(oWord, 'cParamMicro' 		+ AllTrim(Str(n)) +  '1'	, aMicro[n][1])
-                OLE_SetDocumentVar(oWord, 'cEspecMicro' 		+ AllTrim(Str(n)) +  '2'	, aMicro[n][2])
-            Next
+        For n := 1 to Len(aMicro)
+            OLE_SetDocumentVar(oWord, 'cParamMicro' 		+ AllTrim(Str(n)) +  '1'	, aMicro[n][1])
+            OLE_SetDocumentVar(oWord, 'cEspecMicro' 		+ AllTrim(Str(n)) +  '2'	, aMicro[n][2])
+        Next
 
-            OLE_SetDocumentVar(oWord, 'nTotMicro' 		, Len(aMicro))
-            OLE_ExecuteMacro(oWord, "MicroBiologicas")                
-        EndIf
-
-
+        OLE_SetDocumentVar(oWord, 'nTotMicro' 		, Len(aMicro))
 
 
         For n := 1 to Len(aAlerg)
-            OLE_SetDocumentVar(oWord, 'cAlerg' 		+ AllTrim(Str(n)) 	    , aAlerg[n][1])
+            OLE_SetDocumentVar(oWord, 'cAlerg' 		    + AllTrim(Str(n)) 	, aAlerg[n][1])
             OLE_SetDocumentVar(oWord, 'cAlergTipo' 		+ AllTrim(Str(n)) 	, aAlerg[n][2])
             OLE_SetDocumentVar(oWord, 'cAlergOri' 		+ AllTrim(Str(n)) 	, aAlerg[n][3])
             OLE_SetDocumentVar(oWord, 'cAlergObs' 		+ AllTrim(Str(n)) 	, aAlerg[n][4])
         Next
-
         OLE_SetDocumentVar(oWord, 'nTotAlerge' 		, Len(aAlerg))
+    
+
+        
         OLE_ExecuteMacro(oWord, "Alergenicos")
 
         OLE_UpDateFields(oWord)
@@ -287,3 +309,5 @@ If lContinua
     EndIf
 EndIf    
 Return cNewFile
+
+

@@ -1,0 +1,2629 @@
+#INCLUDE "MATA380.CH"
+#INCLUDE "PROTHEUS.CH"
+#DEFINE USADO CHR(0)+CHR(0)+CHR(1)
+
+Static lWmsNew := SuperGetMV("MV_WMSNEW",.F.,.F.)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ MATA380  ³ Autor ³ Marcos Bregantim      ³ Data ³ 19/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa de Ajuste das Requisicoes Empenhadas (SD4)        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpA1 = Array para ser utilizado na rotina automatica      ³±±
+±±³          ³ ExpN1 = Opcao do aRotina                                   ³±±
+±±³          ³ ExpA2 = Array com quantidade, Localizacao e Numero de Serie³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function Mata380(xRotAuto,nOpcAuto,xEmpAuto)
+Local lPyme := Iif(Type("__lPyme") <> "U",__lPyme,.F.)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis para filtrar browse                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aIndexSD4    := {}
+Local cFiltraSD4   := ""
+
+PRIVATE lZeraEmp   := .F.
+PRIVATE aRotAuto   := Nil
+PRIVATE aEmpAuto   := Nil
+PRIVATE l380 := .T., l381 := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Array contendo as Rotinas a executar do programa      ³
+//³ ----------- Elementos contidos por dimensao ------------     ³
+//³ 1. Nome a aparecer no cabecalho                              ³
+//³ 2. Nome da Rotina associada                                  ³
+//³ 3. Usado pela rotina                                         ³
+//³ 4. Tipo de Transa‡„o a ser efetuada                          ³
+//³    1 -Pesquisa e Posiciona em um Banco de Dados              ³
+//³    2 -Simplesmente Mostra os Campos                          ³
+//³    3 -Inclui registros no Bancos de Dados                    ³
+//³    4 -Altera o registro corrente                             ³
+//³    5 -Estorna registro selecionado gerando uma contra-partida³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE aRotina := MenuDef()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Array contendo os campos aceitos no MATXATU                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE aAcho:={}   
+PRIVATE aSDC :={}
+
+AADD(aAcho,"D4_COD")
+AADD(aAcho,"D4_LOCAL")
+AADD(aAcho,"D4_OP")
+AADD(aAcho,"D4_DATA")
+AADD(aAcho,"D4_QUANT")
+AADD(aAcho,"D4_QTDEORI")
+AADD(aAcho,"D4_QTSEGUM")
+AADD(aAcho,"D4_TRT")
+AADD(aAcho,"D4_NUMLOTE")
+AADD(aAcho,"D4_LOTECTL")
+AADD(aAcho,"D4_DTVALID")
+AADD(aAcho,"D4_POTENCI")
+
+if SD4->(FieldPos('D4_ROTEIRO')) > 0
+	AADD(aAcho,"D4_OPERAC")
+	AADD(aAcho,"D4_ROTEIRO")
+EndIf
+
+dbSelectArea("SX3")
+dbSeek("SD4")
+While !Eof() .And. (X3_ARQUIVO == "SD4")
+	If X3USO(X3_USADO) .And. cNivel >= X3_NIVEL .And. (ASCAN(aAcho,Trim(X3_CAMPO))==0) .And. X3_PROPRI == "U"
+		AADD(aAcho,Trim(X3_CAMPO))
+	EndIf
+	dbSkip()
+EndDo
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define o cabecalho da tela de atualizacoes                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE cCadastro := OemToAnsi(STR0006)	//"Ajuste das Requisi‡”es Empenhadas"
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Deixa o SD4 em ordem de OP p/mBrowse                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SD4")
+dbSetOrder(2)
+
+If nOpcAuto == Nil
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Ativa tecla F4 para comunicacao com Saldos dos Lotes         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Set Key VK_F4 To ShowF4()
+EndIf
+
+Pergunte("MTA380",.F.)
+
+If nOpcAuto == Nil
+	Set Key VK_F12 To MTA380PERG()
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Endereca a funcao de BROWSE                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nOpcAuto <> Nil
+	DEFAULT nOpcAuto := 3
+	aRotAuto := xRotAuto
+	aEmpAuto := xEmpAuto
+	MBrowseAuto(nOpcAuto,aRotAuto,"SD4")
+Else
+	If ExistBlock( "M380FIL" )
+		cFiltraSD4	:= ExecBlock( "M380FIL", .F., .F. )
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta MBROWSE padrao                                                   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	mBrowse( 6, 1,22,75,"SD4",,,,,,,,,,,,,,,,,,cFiltraSD4)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Restaura a condicao de Entrada                                          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SD4")
+	dbSetOrder(1)
+EndIf
+If nOpcAuto == Nil
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Desativa tecla F4                                            ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Set Key VK_F4 To
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Desativa tecla que aciona perguntas                            ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Set Key VK_F12 To
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Recupera a Integridade dos dados                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SD4")
+dbSetOrder(1)
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Visual³ Autor ³ Marcos Bregantim      ³ Data ³ 19/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa para Visualizacao da requisicao empenhada         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380Visual(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Visual(cAlias,nReg,nOpc)
+dbSelectArea(cAlias)
+AxVisual(cAlias,nReg,nOpc,aAcho)
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Inclui³ Autor ³ Marcos Bregantim      ³ Data ³ 19/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa para inclusao de requisicoes empenhadas           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380Inclui(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Inclui(cAlias,nReg,nOpc)
+Local nFor:=1,nOpca:=0,nSomaSD4:=0,nSomaSD42UM:=0
+Local aTravas    :={},aEmpenhos:={}
+Local lLocaliza  :=.F.
+Local lConsVenc  := GetMV('MV_LOTVENC')=='S'
+Local aUsButtons := {}
+Local lMt380Grv  := Existblock("MT380GRV",.f.,.f.)
+
+PRIVATE cLoteAnt:=Criavar("D4_NUMLOTE"),cLotCtlAnt:=Criavar("D4_LOTECTL")
+PRIVATE nQtdAnt:=0,nQtdAnt2UM:=0,cLocal:=Criavar("D4_LOCAL"),nQtdOriAnt :=0
+
+Begin Transaction
+	dbSelectArea(cAlias)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Ponto de Entrada que adiciona botoes do usuario na EnchoiceBar         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If ExistBlock( "MA380BUT" )
+		If ValType( aUsButtons := ExecBlock( "MA380BUT", .F., .F. ) ) # "A"
+			aUsButtons := {}
+		EndIf
+	EndIf
+
+	nOpca := AxInclui(cAlias,nReg,nOpc,aAcho,,,"A380TudoOk(nOpc)",,"a380NumLot()",aUSButtons,NIL,aRotAuto)
+
+	If nOpca == 1
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Array com quantidade, Localizacao e Numero de Serie               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Valtype(aEmpAuto) # "A"
+			AADD(aEmpenhos,{SD4->D4_QUANT,CriaVar("DC_LOCALIZ"),CriaVar("DC_NUMSERI"),SD4->D4_QTSEGUM,.F.})		
+		Else
+			If ValType(aEmpAuto)=="A" .And. Len(aEmpAuto)> 0
+				aEmpenhos:= aEmpAuto
+			EndIf
+		Endif
+		lLocaliza:=Localiza(SD4->D4_COD,.T.) .And. mv_par01 == 1
+		If lLocaliza
+			A380DigLoc(@aEmpenhos)
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Soma quantidade empenhada p/ empenhar diferenca caso necessario   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			nSomaSD4    :=0
+			nSomaSD42UM :=0
+			For nFor:=1 to Len(aEmpenhos)
+				If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+					nSomaSD4    += aEmpenhos[nFor,1]
+					nSomaSD42UM += aEmpenhos[nFor,4]
+				EndIf
+			Next nFor
+			If QtdComp(nSomaSD4) < QtdComp(SD4->D4_QUANT)
+				AADD(aEmpenhos,{SD4->D4_QUANT-nSomaSD4,CriaVar("DC_LOCALIZ"),CriaVar("DC_NUMSERI"),SD4->D4_QTSEGUM-nSomaSD42UM,.F.})
+			EndIf
+		EndIf
+		For nFor:=1 to Len(aEmpenhos)
+			If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Atualiza arq. de saldos  B2_QEMP                                  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				lLocaliza:=lLocaliza .And. !Empty(aEmpenhos[nFor,2]+aEmpenhos[nFor,3])
+				GravaEmp(SD4->D4_COD,;
+							SD4->D4_LOCAL,;
+							aEmpenhos[nFor,1],;
+							ConvUM(SD4->D4_COD,aEmpenhos[nFor,1],aEmpenhos[nFor,4],2),;
+							SD4->D4_LOTECTL,;
+							SD4->D4_NUMLOTE,;
+							aEmpenhos[nFor,2],;
+							aEmpenhos[nFor,3],;
+							SD4->D4_OP,;
+							SD4->D4_TRT,;
+							NIL,;
+							NIL,;
+							"SC2",;
+							NIL,;
+							SD4->D4_DATA,;
+							@aTravas,;
+							.F.,;
+							NIL,;
+							.T.,;
+							.F.,;
+							lConsVenc,;
+							!Empty(SD4->D4_LOTECTL+SD4->D4_NUMLOTE).Or.lLocaliza,;
+							!Empty(SD4->D4_LOTECTL+SD4->D4_NUMLOTE).Or.lLocaliza)
+				// Deve gravar o empenho no novo WMS quado for o caso - lWmsNew
+				If lWmsNew .And. lLocaliza .And. IntWms(SD4->D4_COD)
+					WmsEmpReq("SC2",;
+								 SD4->D4_COD,;
+								 SD4->D4_LOCAL,;
+								 aEmpenhos[nFor,1],;
+								 aEmpenhos[nFor,2],;
+								 SD4->D4_LOTECTL,;
+								 SD4->D4_NUMLOTE,;
+								 aEmpenhos[nFor,3],;
+								 SD4->D4_OP,;
+								 SD4->D4_TRT,;
+								 SD4->D4_IDDCF,;
+								 /*cIdUnitiz*/,;
+								 .F.,; // lEstorno
+								 .T.,; // lCriaSDC
+								 .T.)  // lEmpD14
+				EndIf
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Remove travas dos registros utilizados                  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				MaDesTrava(aTravas)
+			EndIf
+		Next nFor
+		If lMt380Grv
+			Execblock("MT380GRV",.F.,.F.)
+		EndIf
+
+		If PCPIntgPPI()
+		   IntegPPI(.F.)
+		EndIf
+	EndIf
+End Transaction
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Altera³ Autor ³ Marcos Bregantim      ³ Data ³ 19/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa para alteracao de requisicoes empenhadas          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380Altera(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Altera(cAlias,nReg,nOpc)
+Local nOpca      := 0
+Local aUsButtons := {}
+Local lMt380Alt  := Existblock("MT380ALT")
+Local aAreaSD41  := {}
+Local cOpD4
+
+PRIVATE cLoteAnt   :=Criavar("D4_NUMLOTE")
+PRIVATE cLotCtlAnt :=Criavar("D4_LOTECTL")
+PRIVATE cLocal     :=Criavar("D4_LOCAL")
+PRIVATE nQtdAnt    :=0
+PRIVATE nQtdAnt2UM :=0
+PRIVATE nQtdOriAnt :=0
+PRIVATE aAlter     :={}
+PRIVATE aAltQtd    :={}
+PRIVATE lPerSoZero :=.F.
+
+lZeraEmp  := .F.
+cOpD4     := SD4->D4_OP
+
+dbSelectArea("SC2")
+dbSetOrder(1)
+If dbSeek(xFilial("SC2")+SD4->D4_OP)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se a OP ja' foi encerrada ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(C2_DATRF)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Permite inclusao somente de qtd zero|
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If QtdComp(SD4->D4_QUANT) > QtdComp(0) .And. SD4->(D4_QUANT <= D4_QTDEORI) .And.  ;
+			Aviso(STR0017,STR0022,{STR0020,STR0021})== 1	// "Aviso" ### "A Op ja esta encerrada, mas existe empenhos pendentes. Deseja zerar empenhos?" ###"Sim" ### "Nao"
+			Aviso(STR0017,STR0023+;							// "Aviso" ### 'Independente de existir valor maior que zero no campo de saldo empenhado ("Sal.Empenho"), '
+				  STR0024,{STR0025})						// 'o conteudo a ser gravado na confirmacao sera zero.' ### "Ok"
+			lPerSoZero := .T.
+			lZeraEmp   := .T.
+		Else
+			Help(" ",1,"MA240OPENC")
+			dbSelectArea("SD4")
+			Return
+		EndIf
+	EndIf
+	If IsProdProt(SC2->C2_PRODUTO) .And. !IsInCallStack("DPRA340INT")
+		Aviso(STR0014,STR0032,{"OK"}) //-- Protótipos podem ser manipulados somente através do módulo Desenvolvedor de Produtos (DPR).
+		Return
+	EndIf
+EndIf
+
+//-- Valida integração com WMS - Ordem de Serviço de Separação
+If IntWms(SD4->D4_COD) .And. !WmsAvalSD4("1",SD4->(Recno()))
+	Return
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Armazena a quantidade anterior do D4_QUANT para apurar a diferenca³
+//³ e o numero de lote anterior.                                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea(cAlias)
+nQtdAnt	   := D4_QUANT
+nQtdAnt2UM := D4_QTSEGUM
+nQtdOriAnt := D4_QTDEORI
+cLoteAnt   := D4_NUMLOTE
+cLotCtlAnt := D4_LOTECTL
+cLocal	   := D4_LOCAL
+
+AADD(aAlter,"D4_QUANT")
+AADD(aAlter,"D4_QTDEORI")
+AADD(aAlter,"D4_DATA")
+AADD(aAlter,"D4_QTSEGUM")
+M->D4_QUANT:= nQtdAnt
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Permite alterar local e lote caso n„o tenha ocorrido nenhuma      ³
+//³ producao nesta OP.                                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Empty(SC2->C2_QUJE)
+	AADD(aAlter,"D4_LOCAL")
+	AADD(aAlter,"D4_NUMLOTE")
+	AADD(aAlter,"D4_LOTECTL")
+EndIf
+
+dbSelectArea("SX3")
+dbSetOrder(1)
+dbSeek("SD4")
+While !Eof() .And. (X3_ARQUIVO == "SD4")
+	If X3USO(X3_USADO) .And. cNivel >= X3_NIVEL .And. (ASCAN(aAlter,Trim(X3_CAMPO))==0) .And. X3_PROPRI == "U"
+		AADD(aAlter,Trim(X3_CAMPO))
+	EndIf
+	dbSkip()
+EndDo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de Entrada que adiciona botoes do usuario na EnchoiceBar         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock( "MA380BUT" )
+	If ValType( aUsButtons := ExecBlock( "MA380BUT", .F., .F. ) ) # "A"
+		aUsButtons := {}
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inclusao de botao que permite zerar empenhos (bops:87301)    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Aadd(aUsButtons,{ "ESTOMOVI" , { || A380ZEmp() }, STR0027 ,STR0016}) //"Zera Empenho Lote/Endereco"##"Zera Emp."
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia para rotina de Alteracao de requisicoes empenhadas     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nOpca := AxAltera(cAlias,nReg,nOpc,aAcho,aAlter,,,"A380TudoOk(nOpc)",,,aUSButtons,NIL,aRotAuto)
+If !Empty(aRotAuto)
+	nPos := aScan(aRotAuto,{|x| x[1] == "ZERAEMP"})
+		If ( nPos > 0 .and. aRotAuto[nPos,2] == "S" )   
+			lZeraEmp := .T.	
+		End
+EndIf
+
+aSDC := {}
+
+aAreaSD41 := SD4->(GetArea())
+dbSelectArea("SD4")
+dbSetOrder(2) 
+dbGoTop()
+dbSeek(xFilial("SD4")+cOpD4)
+While !EOF() .And. SD4->(D4_FILIAL+D4_OP) == xFilial("SD4")+cOpD4
+	a380GraSdc(SD4->D4_FILIAL,SD4->D4_OP,SD4->D4_COD,SD4->D4_LOCAL)	
+	SD4->(dbSkip())
+End
+RestArea(aAreaSD41)
+
+If nOpca == 1
+	A380Grava(nQtdAnt,cLoteAnt,cLotCtlAnt,cLocal,nQtdAnt2UM)
+
+	If lMt380Alt
+		Execblock("MT380ALT",.F.,.F.)
+	EndIf
+
+	If PCPIntgPPI()
+	   IntegPPI(.F.)
+	EndIf
+EndIf
+
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Exclui³ Autor ³ Marcos Bregantim      ³ Data ³ 19/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa de exclusao de Requisicoes empenhadas             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380Exclui(ExpC1,ExpN1,ExpN2)                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Exclui(cAlias,nReg,nOpc)
+Local aArea		:= GetArea()
+Local aParam    := {{|| .T.}, {|| A380DelOK(nOpc)}, {|| A380DelAtu()}, {|| .T.}}
+Local nOpcA		:= 0	
+Local cSeek,cCompara,aOldArea
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se a OP ja' foi encerrada ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SC2")
+dbSeek(xFilial("SC2")+SD4->D4_OP)
+If !Empty(C2_DATRF)
+	Help(" ",1,"MA240OPENC")
+	dbSelectArea("SD4")
+	Return
+EndIf
+
+If IsProdProt(SC2->C2_PRODUTO) .And. !IsInCallStack("DPRA340INT")
+	Aviso(STR0014,STR0032,{"OK"}) //-- Protótipos podem ser manipulados somente através do módulo Desenvolvedor de Produtos (DPR).
+	Return
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se ja baixou empenho nao permite a exclusao                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If (SD4->D4_QUANT < SD4->D4_QTDEORI)
+	Aviso(STR0014,STR0015,{STR0025},nil,nil,1) //"Atencao"###"Nao pode ser excluido um empenho que ja foi parcialmente baixado."
+	dbSelectArea("SD4")
+	Return
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se o produto utilizar localizacaoe e ja baixou empenho nao permite a exclusao   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Localiza(SD4->D4_COD,.T.)
+	dbSelectArea("SDC")
+	aOldArea:=GetArea()
+	dbSetOrder(2)
+	// Procura por empenho com saldo
+	cSeek:=xFilial("SDC")+SD4->D4_COD+SD4->D4_LOCAL+SD4->D4_OP+SD4->D4_TRT+SD4->D4_LOTECTL+SD4->D4_NUMLOTE
+	cCompara:="DC_FILIAL+DC_PRODUTO+DC_LOCAL+DC_OP+DC_TRT+DC_LOTECTL+DC_NUMLOTE"
+	dbSeek(cSeeK)
+	While !Eof() .And. cSeek == &cCompara
+		If DC_QUANT < DC_QTDORIG
+			Aviso(STR0014,STR0015,{STR0025},nil,nil,1) //"Atencao"###"Nao pode ser excluido um empenho que ja foi parcialmente baixado."
+			RestArea(aOldArea)
+			dbSelectArea("SD4")
+			Return
+		EndIf
+		dbSkip()
+	End
+	RestArea(aOldArea)
+	dbSelectArea("SD4")
+EndIf
+
+//-- Valida integração com WMS - Ordem de Serviço de Separação
+If IntWms(SD4->D4_COD) .And. !WmsAvalSD4("1",SD4->(Recno()))
+	Return
+EndIf
+
+dbSelectArea(cAlias)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Abre tela para confirmação da exclusão ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nOpcA:= AxDeleta(cAlias,nReg,nOpc,,,,aParam,aRotAuto)
+
+If nOpcA == 2 .And. PCPIntgPPI()
+   IntegPPI(.T.)
+EndIf
+RestArea(aArea)
+
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380TudoOk³ Autor ³Rodrigo de A. Sartorio ³ Data ³ 09/12/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Avalia se o empenho pode ser efetuado.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380TudoOk()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380TudoOK(nOpc)
+Local lRet      := .T.
+Local cAlias    :=Alias()
+Local nRecno    :=Recno()
+Local nOrdem    :=IndexOrd()
+Local cSeek     :=""
+Local nQtdJaEmp :=0
+Local lConsVenc := GetMV('MV_LOTVENC')=='S'
+Local lLocaliza := Localiza(M->D4_COD,.T.) .And. mv_par01 == 1
+Local nRegSD4   := SD4->(Recno())
+Local cOpOrig   := SD4->D4_OPORIG
+Local lEmpPrev  := If(SuperGetMV("MV_QTDPREV")== "S",.T.,.F.)
+Local lMT380SE  := .T.
+Local lNegEstr  := SuperGetMV("MV_NEGESTR",.F.,.F.)
+Local lIntACD	  := SuperGetMV("MV_INTACD",.F.,"0") == "1"
+Local lIntSFC   := IntegraSFC() .And. !IsInCallStack("DPRA340INT")
+Local lEmpPrdOp := SuperGetMV("MV_EMPDOP",.F.,.T.)
+Local lProces   := SuperGetMV("MV_APS",.F.,"") == "TOTVS" .Or. FindFunction('ExisteSFC') .And. ExisteSFC("SC2") .OR. SuperGetMV("MV_PCPATOR",.F.,.F.) == .T.
+Local cRoteiro  := ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se tem permissao de armazem  |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+lRet := MaAvalPerm(3,{M->D4_LOCAL,M->D4_COD})
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ponto de Entrada MT380SE, permite executar ou não a verificação de validação³
+//³	entre o saldo original e a quantidade já requisitada.                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. ExistBlock('MT380SE')
+	lMT380SE := ExecBlock('MT380SE', .F., .F.) 
+	If ValType(lMT380SE)<>"L"
+		lMT380SE := .T.
+	EndIf
+EndIf
+
+//valida lotes
+If SB1->B1_RASTRO = 'N' .And. M->D4_LOTECTL != Criavar("D4_LOTECTL")
+	lRet:=A380LotCtl()
+EndIf
+
+//Valida se o produto a ser empenhado é diferente do produto final
+IF !lEmpPrdOp 
+	DbSelectArea("SC2")
+	DbSetOrder(1)
+	If DbSeek(xFilial("SC2")+SC2->C2_NUM) .And. (SC2->C2_PRODUTO == M->D4_COD)
+		Help(" ",1,"MA380EMPDOP")
+		lRet:=.F.
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Nao permite alterar saldo original para qtd menor que a qtd ja requisitada ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. Altera .And. lMT380SE
+	If l380
+		If (SD4->D4_QTDEORI - SD4->D4_QUANT) <> (M->D4_QTDEORI - M->D4_QUANT)
+			Help(" ",1,"A380AQTOR")
+			lRet:=.F.
+		EndIf
+	EndIf
+EndIf
+
+If lRet .And. Altera 
+	lRet := A380AltQtd()
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Analisa se o tipo do armazem permite a movimentacao |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. AvalBlqLoc(M->D4_COD,M->D4_LOCAL,Nil)
+	lRet := .F.
+EndIf
+
+dbSelectArea("SD4")
+dbSetOrder(1)
+If lRet .And. Rastro(M->D4_COD)
+	If Rastro(M->D4_COD,"S")
+		If lLocaliza
+			lRet := (!Empty(M->D4_NUMLOTE) .And. !Empty(M->D4_LOTECTL))
+		Else
+			lRet := (Empty(M->D4_NUMLOTE) .And. Empty(M->D4_LOTECTL)) .Or. (!Empty(M->D4_NUMLOTE) .And. !Empty(M->D4_LOTECTL))
+		EndIf
+	Else
+		If lLocaliza
+			lRet := !Empty(M->D4_LOTECTL)
+		EndIf
+	EndIf
+	If !lRet
+		Help(" ",1,"A240NUMLOTE") //Digite o numero do lote.
+	EndIf
+	If lRet .And. M->D4_QUANT < 0 .And. !Empty(If(Rastro(M->D4_COD,"S"),M->D4_LOTECTL+M->D4_NUMLOTE,M->D4_LOTECTL))
+		Help(" ",1,"MA380EMPNG")
+		lRet:=.F.
+	EndIf
+	
+	If lRet .And. dbSeek(xFilial("SD4")+M->D4_COD+M->D4_OP+M->D4_TRT)
+		While SD4->(!Eof()) .And. SD4->(D4_FILIAL+D4_COD+D4_OP+D4_TRT) == xFilial("SD4")+M->D4_COD+M->D4_OP+M->D4_TRT
+			If SD4->D4_LOTECTL == M->D4_LOTECTL .AND. SD4->D4_NUMLOTE = M->D4_NUMLOTE .AND. D4_LOCAL == M->D4_LOCAL .And. If(Altera,nRegSD4 # Recno() .And. cOpOrig == D4_OPORIG,.T.)
+				lRet:=.F.
+				Help(" ",1,"MA380JACAD")
+			ElseIf SD4->D4_LOTECTL == M->D4_LOTECTL .AND. SD4->D4_NUMLOTE = M->D4_NUMLOTE .AND. !Altera .And. nOpc == 3  .And. SD4->D4_TRT == M->D4_TRT
+				lRet:=.F.
+				Help(" ",1,"MA380JACAD")		
+			ElseIf ( ( SD4->D4_QUANT > 0 .AND. M->D4_QUANT < 0) .OR. ( SD4->D4_QUANT < 0 .AND. M->D4_QUANT > 0) .AND. If(Altera,nRegSD4 # Recno() ,.T.))
+				lRet:=.F.
+				Help(" ",1,"MA380JACAD")
+			EndIf
+			dbSkip()
+		End
+	EndIf
+	
+	If lRet
+		dbSelectArea("SB8")
+		If Rastro(M->D4_COD,"S")
+			dbSetOrder(2)
+			cSeek:=xFilial("SB8")+M->D4_NUMLOTE+M->D4_LOTECTL+M->D4_COD+M->D4_LOCAL
+		Else
+			dbSetOrder(3)
+			cSeek:=xFilial("SB8")+M->D4_COD+M->D4_LOCAL+M->D4_LOTECTL
+		EndIf
+		If dbSeek(cSeek)
+			If (Rastro(M->D4_COD,"S") .And. cLoteAnt != M->D4_NUMLOTE) .Or. (Rastro(M->D4_COD,"L") .And. cLotCtlAnt != M->D4_LOTECTL)
+				nQtdJaEmp:=0
+			Else
+				nQtdJaEmp:=nQtdAnt
+			EndIf
+			If Rastro(M->D4_COD,"S")
+				If SB8Saldo(Nil,lConsVenc,Nil,Nil,Nil,lEmpPrev)+nQtdJaEmp < M->D4_QUANT
+					lRet:=.F.
+					Help(" ",1,"MA380SALDO")
+				EndIf
+			Else
+				If SaldoLote(M->D4_COD,M->D4_LOCAL,M->D4_LOTECTL,Nil,Nil,lConsVenc)+nQtdJaEmp < M->D4_QUANT
+					lRet:=.F.
+					Help(" ",1,"MA380SALDO")
+				EndIf
+			EndIf
+		Else
+			If !Empty(M->D4_LOTECTL)
+				Help(" ",1,"A240LOTERR")
+				lRet := .F.
+			EndIf
+		EndIf
+	EndIf
+ElseIf lRet
+		If SD4->(dbSeek(xFilial("SD4")+M->D4_COD+M->D4_OP+M->D4_TRT))
+		While SD4->(!Eof()) .And. SD4->(D4_FILIAL+D4_COD+D4_OP+D4_TRT) == xFilial("SD4")+M->D4_COD+M->D4_OP+M->D4_TRT
+			If SD4->D4_LOCAL == M->D4_LOCAL .And. If(Altera,nRegSD4 # Recno() .And. cOpOrig == SD4->D4_OPORIG,.T.)
+				lRet:=.F.
+				Help(" ",1,"MA380JACAD") 
+			ElseIf ( nQtdAnt = M->D4_QUANT .And. M->D4_QUANT < 0 .And. !lNegEstr ) 
+				Help(" ",1,"A380ESTNGR")
+				lRet:= .F.	
+			ElseIf !Altera .And. nOpc == 3 .And. SD4->D4_LOCAL == M->D4_LOCAL 
+				lRet:=.F.
+				Help(" ",1,"MA380JACAD")		
+			EndIf
+			SD4->(dbSkip())
+		End
+	EndIf
+EndIf
+
+if SD4->(FieldPos('D4_ROTEIRO')) > 0 .AND. !Empty(M->D4_OPERAC)
+	// Verifica se operação informada existe
+	dbSelectArea('SC2')
+	SC2->(dbSetOrder(1))
+	SC2->(dbSeek(xFilial('SC2')+M->D4_OP))
+
+	If !Empty(SC2->C2_ROTEIRO)
+		cRoteiro := SC2->C2_ROTEIRO
+	else
+		If !Empty(Posicione('SB1',1,xFilial('SB1')+SC2->C2_PRODUTO,'B1_OPERPAD'))
+			cRoteiro := SB1->B1_OPERPAD
+		Else
+			cRoteiro := StrZero(1, TamSX3("G2_CODIGO")[1])
+		EndIf
+	Endif
+
+
+	if lProces
+		dbSelectArea('SHY')
+		SHY->(dbSetOrder(1))
+		IF !SHY->(dbSeek(xFilial('SHY')+PadR(M->D4_OP,TamSX3("D4_OP")[1])+cRoteiro+M->D4_OPERAC))
+			Help(" ",1,"A380NOOPER") // A operação informada não existe para a ordem de produção.
+			lRet:= .F.
+		Endif
+	Else
+		dbSelectArea('SG2')
+		SG2->(dbSetOrder(1))
+		if !SG2->(dbSeek(xFilial('SG2')+SC2->C2_PRODUTO+cRoteiro+M->D4_OPERAC))
+			Help(" ",1,"A380NOOPER") // A operação informada não existe para a ordem de produção.
+			lRet:= .F.
+		Endif
+	Endif
+
+	if lRet
+		M->D4_PRODUTO := SC2->C2_PRODUTO
+
+	   If !Empty(SC2->C2_ROTEIRO)
+		   M->D4_ROTEIRO := SC2->C2_ROTEIRO
+	   Else
+	     	If !Empty(Posicione('SB1',1,xFilial('SB1')+SC2->C2_PRODUTO,'B1_OPERPAD') )
+        		M->D4_ROTEIRO := SB1->B1_OPERPAD
+		   Else
+			   M->D4_ROTEIRO := StrZero(1, TamSX3("G2_CODIGO")[1])
+		   Endif
+	   Endif
+	Endif
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Chamada para integracao com o modulo ACD - Faz validacao do Ajuste de Empenho ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. lIntACD
+	lRet := CBMT380INC()
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Este ponto  de entrada  tem a finalidade de confirmar  ³
+//³ ou nao a inclusao.                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If lRet .And. ExistTemplate('MT380INC')
+	lRet := ExecTemplate('MT380INC', .F., .F.)
+EndIf
+
+If lRet .And. ExistBlock('MT380INC')
+	lRet := ExecBlock('MT380INC', .F., .F.)
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Chama rotina para integracao com SFC(Chao de Fabrica) ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. lIntSFC
+	lRet := A380IntSFC(nOpc)	
+EndIf
+
+dbSelectArea(cAlias)
+dbSetOrder(nOrdem)
+dbGoTo(nRecno)
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380ValOP ³ Autor ³ Gilson do Nascimento  ³ Data ³ 28/07/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Avalia se a Op escolhida ja' foi encerrada.                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380ValOP()                                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380ValOP()
+Local cOP := &(READVAR()),lRet := .T.
+
+dbSelectArea("SC2")
+If dbSeek(xFilial("SC2")+cOP)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se a OP ja' foi encerrada ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lRet .And. !Empty(SC2->C2_DATRF)
+		Help(" ",1,"A250ENCERR")
+		lRet := .F.
+	EndIf
+Else
+	Aviso(STR0017,STR0038,{"OK"}) //-- Ordem de produção não cadastrada.
+	lRet := .F.
+EndIf
+
+If lRet .And. IsProdProt(SC2->C2_PRODUTO) .And. !IsInCallStack("DPRA340INT")
+	Aviso(STR0014,STR0032,{"OK"}) //-- Protótipos podem ser manipulados somente através do módulo Desenvolvedor de Produtos (DPR).
+	lRet := .F.
+EndIf
+dbSelectArea("SD4")
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Quant ³ Autor ³Rodrigo de A. Sartorio ³ Data ³ 27/06/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Verifica se as qtds digitadas s„o v lidas.                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380Quant()                                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Quant(lTudoOk)
+Local aArea      := GetArea()
+Local lRet       :=.T.
+Local lNegEstr 	 := SuperGetMV("MV_NEGESTR",.F.,.F.)
+Local nQuant     := 0
+Local nQtdeOri   := 0
+Local n381OriAnt := 0
+Local n381QtdAnt := 0
+Local nValorDigi :=&(ReadVar())
+Local lMT380SE   := .T.
+Local lVldQtd    := .T.
+
+Default lTudoOk  := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ponto de Entrada MT380SE, permite executar ou não a verificação de validação³
+//³	entre o saldo original e a quantidade já requisitada.                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock('MT380SE')
+	lMT380SE := ExecBlock('MT380SE', .F., .F.) 
+	If ValType(lMT380SE)<>"L"
+		lMT380SE := .T.
+	EndIf
+EndIf
+
+If l381 .And. !lTudoOk .And. Type('l381Auto')=="L" .And. l381Auto
+	//Se é EXECAUTO do MATA381 não faz a validação da qtd. no campo, e sim no TUDOOK.
+	lVldQtd := .F.
+EndIf
+
+If l380
+	nQuant   := M->D4_QUANT
+	nQtdeOri := M->D4_QTDEORI
+ElseIf l381
+	If Altera
+		dbSelectArea("SD4")
+		dbGoTo(aCols[n,Len(aHeader)])
+		n381OriAnt := SD4->D4_QTDEORI
+		n381QtdAnt := SD4->D4_QUANT
+	EndIf		
+	nQuant   := If(ReadVar()=="M->D4_QUANT"  ,M->D4_QUANT  ,aCols[n,nPosQuant] )
+	nQtdeOri := If(ReadVar()=="M->D4_QTDEORI",M->D4_QTDEORI,aCols[n,nPosQtdOri])
+EndIf
+
+If ReadVar() == "M->D4_QUANT"
+	If lRet .And. (Altera .And. Valtype(lZeraEmp)== "L" .And. lZeraEmp)
+		nQuant := 0	
+	ElseIf lRet .And. lVldQtd .And. ((nQtdeOri > 0) .And. (nValorDigi > nQtdeOri) .And. lMT380SE) .Or. ;
+	                  	            ((nQtdeOri < 0) .And. (nValorDigi < nQtdeOri) .And. lMT380SE) .Or. ;
+	                  	            (nQtdeOri == 0 .And. nValorDigi # 0)
+		Help(" ",1,"A380QUANT")
+		lRet:=.F.
+	ElseIf nValorDigi < 0 .And. !lNegEstr
+		Help(" ",1,"A380ESTNGR")
+		lRet:= .F.		
+	EndIf
+ElseIf ReadVar() == "M->D4_QTDEORI"
+	If l380
+		If ( (nQtdOriAnt < 0) .And. (nValorDigi > nQuant) ) .Or. ;
+		   ( (nQtdOriAnt > 0) .And. (nValorDigi < nQuant) )
+			Help(" ",1,"A380QTDORI")
+			lRet:=.F.
+		EndIf
+	Else
+		If lVldQtd .And. (( (n381OriAnt < 0) .And. (nValorDigi > nQuant) ) .Or. ;
+		   ( (n381OriAnt > 0) .And. (nValorDigi < nQuant) ))
+			Help(" ",1,"A380QTDORI")
+			lRet:=.F.
+		EndIf
+	EndIf
+	If lRet .And. lVldQtd .And. ((nValorDigi > 0) .And. (nQuant > nValorDigi) .And. lMT380SE) .Or. ;
+ 		((nValorDigi < 0) .And. (nQuant < nValorDigi) .And. lMT380SE) .Or. ;
+        (nValorDigi == 0 .And. nQuant # 0)
+		Help(" ",1,"A380QUANT")
+		lRet:=.F.
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ajusta a quantidade digitada do material de acordo com o campo B1_TIPODEC   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet                                                                                               
+	If l380
+		A380TipDec(M->D4_COD,M->D4_QTDEORI,M->D4_QUANT)
+	ElseIf l381
+		A380TipDec(	aCols[n,nPosCod],;
+					If(ReadVar()=="M->D4_QTDEORI"	,M->D4_QTDEORI	,aCols[n,nPosQtdOri]),;
+					If(ReadVar()=="M->D4_QUANT"		,M->D4_QUANT	,aCols[n,nPosQuant]))
+	EndIf
+	nQuant := If(l380.Or.ReadVar()=="M->D4_QUANT",M->D4_QUANT,aCols[n,nPosQuant])
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa quantidade na segunda unidade de medida                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet
+	If ReadVar() == "M->D4_QUANT"
+		If l380
+			M->D4_QTSEGUM := ConvUm(M->D4_COD,nQuant,M->D4_QTSEGUM,2)
+		ElseIf l381
+			aCols[n,nPosSegUM] := ConvUm(aCols[n,nPosCod],nQuant,aCols[n,nPosSegUM],2)
+		EndIf
+		If l380 .And. Valtype(aRotAuto) # "A"
+			nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_QTSEGUM" })
+			If nEndereco > 0
+				aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := Transform(M->D4_QTSEGUM,PesqPictQT("D4_QTSEGUM"))
+			EndIf
+		EndIf
+	EndIf
+EndIf
+
+RestArea(aArea)
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380LotCtl³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 09.12.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida a quantidade com o lote e verifica se o Lote Proprio³±±
+±±³          ³ coincide com o lote do sistema.                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380LotCtl()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380LotCtl()
+Local cVar:=ReadVar(),cConteudo:=&(ReadVar())
+Local aArea := GetArea()
+Local lRet:=.T.
+Local cLoteCtl:= If(l380.Or.ReadVar()=="M->D4_LOTECTL",M->D4_LOTECTL,aCols[n,nPosLotCtl])
+Local cLote   := If(l380.Or.ReadVar()=="M->D4_NUMLOTE",M->D4_NUMLOTE,aCols[n,nPosLote])
+Local cCod    := If(l380,M->D4_COD,aCols[n,nPosCod])
+Local cLocEmp := If(l380,M->D4_LOCAL,aCols[n,nPosLocal])
+Local nQtdSD4 := If(l380,M->D4_QUANT,aCols[n,nPosQuant])
+Local nQtdOri := If(l380,M->D4_QTDEORI,aCols[n,nPosQtdOri])
+Local cSeek:=""
+Local nSaldo:=0
+Local lAtu:=.F.
+Local lConsVenc := GetMV('MV_LOTVENC')=='S'
+Local lEmpPrev  := If(SuperGetMV("MV_QTDPREV")== "S",.T.,.F.)
+Local c381LotAnt := CriaVar("D4_NUMLOTE")
+Local c381CtlAnt := CriaVar("D4_LOTECTL")
+Local i       := 0
+Local nSaldoCol  := 0 
+Local nPosAlias  := 0
+
+If l381 .And. Altera
+	dbSelectArea("SD4")
+	dbGoTo(aCols[n,Len(aHeader)])
+	c381LotAnt := SD4->D4_NUMLOTE	
+	c381CtlAnt := SD4->D4_LOTECTL
+EndIf
+
+If !Rastro(cCod)
+	Help(" ",1,"NAORASTRO")
+	lRet:=.F.
+EndIf
+If lRet
+	If cVar == "M->D4_LOTECTL" .And. !Empty(cConteudo)
+		If Rastro(cCod,"S")
+			If !Empty(cLote) .And. cLote != If(l380,cLoteAnt,c381LotAnt)
+				lAtu:=.T.
+				dbSelectArea("SB8")
+				dbSetOrder(2)
+				cSeek:=xFilial("SB8")+cLote+cConteudo+cCod+cLocEmp
+				If dbSeek(cSeek)
+					If cConteudo != SB8->B8_LOTECTL
+						Help(" ",1,"A240LOTCTL")
+						lRet:=.F.
+					Else
+						If SB8Saldo(Nil,lConsVenc,Nil,Nil,Nil,lEmpPrev) < nQtdSD4
+							Help(" ",1,"MA380SALDO")
+							lRet:=.F.
+						EndIf
+					EndIf
+				Else
+					Help(" ",1,"A240LOTERR")
+					lRet:=.F.
+				EndIf
+			EndIf
+		ElseIf Rastro(cCod,"L") .And. cLoteCtl != If(l380,cLotCtlAnt,c381CtlAnt)
+			If nQtdSD4 < nQtdOri
+				Aviso(STR0014,STR0039,{"OK"})
+				lRet := .F.
+			EndIf
+			
+			If lRet
+				dbSelectArea("SB8")
+				dbSetOrder(3)
+				cSeek:=xFilial("SB8")+cCod+cLocEmp+cConteudo
+				If dbSeek(cSeek)
+					lAtu:=.T.
+					nSaldo:=SaldoLote(cCod,cLocEmp,cConteudo,Nil,Nil,lConsVenc,,dDataBase)
+					
+					If !l380
+						For i:=1 to Len(aHeader)
+							If aHeader[i,1] == "WT alias"
+								nPosAlias:=i
+							EndIf
+						Next i
+					EndIf
+					
+					If !l380 .And. nPosAlias > 0
+						nSaldoCol:=0
+						nSaldoColD:=0
+						For i:=1 to Len(aCols)
+							// calcula quantidade válida em aCols, desconsiderando o que já estava em banco
+							If aCols[i,nPosCod] == cCod .And. aCols[i,nPosLocal] == cLocEmp .And.;
+							   (aCols[i,nPosLotCtl] == cConteudo .Or.;
+							   (aCols[i,nPosLotCtl] == CriaVar("M->D4_LOTECTL") .And. M->D4_LOTECTL == cConteudo));
+							   .And. aCols[i,Len(aHeader)+1] == .F. ;
+							   .And. aCols[i,nPosAlias] != "SD4"
+								nSaldoCol+=aCols[i,nPosQtdOri]
+							EndIf
+							
+							// verifica se sd4 foi apagada em tela e soma saldo disponivel
+							If aCols[i,nPosCod] == cCod .And. aCols[i,nPosLocal] == cLocEmp .And. aCols[i,nPosLotCtl] == cConteudo;
+							   .And. aCols[i,Len(aHeader)+1] == .T. ;
+							   .And. aCols[i,nPosAlias] == "SD4"
+							    If len(aColsOri) >= i
+							   		nSaldo+=aColsOri[i,nPosQtdOri]
+							    EndIf
+							EndIf
+						Next i
+					Else
+						nSaldoCol:=nQtdSD4
+					EndIf
+					
+					If nSaldo < nQtdSD4 .Or. nSaldo < nSaldoCol
+						Help(" ",1,"MA380SALDO")
+						lRet:=.F.
+					EndIf
+				Else
+					Help(" ",1,"A240LOTERR")
+					lRet:=.F.
+				EndIf
+			EndIf
+		EndIf
+	ElseIf cVar == "M->D4_NUMLOTE" .And. !Empty(cConteudo)
+		If Rastro(cCod,"S")
+			If !Empty(cConteudo) .And. cConteudo != If(l380,cLoteAnt,c381LotAnt)
+				dbSelectArea("SB8")
+				dbSetOrder(2)
+				If dbSeek(xFilial("SB8")+cConteudo+cLoteCtl+cCod+cLocEmp)
+					lAtu:=.T.
+					If SB8Saldo(Nil,lConsVenc,Nil,Nil,Nil,lEmpPrev) - nQtdSD4 < 0
+						Help(" ",1,"MA380SALDO")
+						lRet:=.F.
+					EndIf
+				EndIf
+			EndIf
+		Else
+			M->D4_NUMLOTE:=CriaVar("D4_NUMLOTE")
+			If l380 .And. Valtype(aRotAuto) # "A"
+				nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_NUMLOTE" } )
+				If nEndereco > 0
+					aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := M->D4_NUMLOTE
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+	If lRet .And. lAtu
+		If Rastro(cCod,"S")
+			If l380
+				M->D4_NUMLOTE:=SB8->B8_NUMLOTE
+			ElseIf l381
+				aCols[n,nPosLote] := SB8->B8_NUMLOTE
+			EndIf
+			If l380 .And. Valtype(aRotAuto) # "A"
+				nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_NUMLOTE" } )
+				If nEndereco > 0
+					aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := SB8->B8_NUMLOTE
+				EndIf
+			EndIf
+		EndIf
+		If l380
+			M->D4_LOTECTL:=SB8->B8_LOTECTL
+		ElseIf l381
+			aCols[n,nPosLotCtl] := SB8->B8_LOTECTL
+		EndIf
+		If l380 .And. Valtype(aRotAuto) # "A"
+			nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_LOTECTL" } )
+			If nEndereco > 0
+				aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := SB8->B8_LOTECTL
+			EndIf
+		EndIf
+		If l380
+			M->D4_DTVALID:=SB8->B8_DTVALID
+		ElseIf l381
+			aCols[n,nPosDValid] := SB8->B8_DTVALID
+		EndIf
+		If l380 .And. Valtype(aRotAuto) # "A"
+			nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_DTVALID" } )
+			If nEndereco > 0
+				aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := DTOC(SB8->B8_DTVALID)
+			EndIf
+		EndIf
+		If l380
+			M->D4_POTENCI:=SB8->B8_POTENCI
+		ElseIf l381
+			aCols[n,nPosPotenc] := SB8->B8_POTENCI
+		EndIf
+		If l380 .And. Valtype(aRotAuto) # "A"
+			nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_POTENCI" } )
+			If nEndereco > 0
+				aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := SB8->B8_POTENCI
+			EndIf
+		EndIf
+	EndIf	
+EndIf
+
+If Empty(cConteudo) .Or. !lRet
+	If cVar == "M->D4_LOTECTL"
+		If l381
+			aCols[n,nPosLote]   := CriaVar("D4_NUMLOTE")
+			aCols[n,nPosDValid] := CriaVar("D4_DTVALID")
+			aCols[n,nPosPotenc] := CriaVar("D4_POTENCI")
+		ElseIf l380
+			M->D4_NUMLOTE := CriaVar("D4_NUMLOTE")
+			M->D4_DTVALID := CriaVar("D4_DTVALID")
+			M->D4_POTENCI := CriaVar("D4_POTENCI")
+		EndIf
+	ElseIf cVar == "M->D4_NUMLOTE" .And. Rastro(cCod,"S")
+		If l381
+			aCols[n,nPosDValid] := CriaVar("D4_DTVALID")
+			aCols[n,nPosPotenc] := CriaVar("D4_POTENCI")
+		ElseIf l380
+			M->D4_DTVALID := CriaVar("D4_DTVALID")
+			M->D4_POTENCI := CriaVar("D4_POTENCI")
+		EndIf							
+	EndIf
+EndIf
+
+RestArea(aArea)
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380ValLoc³ Autor ³Rodrigo de A. Sartorio ³ Data ³ 14/02/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Se a Op ja teve producao, impede a mudanca de Local        ³±±
+±±³          ³ e valida se o local nao e' invalido                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380ValLoc()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380,MATA381                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380ValLoc()
+Local aArea := GetArea()
+Local cLocNew :=""
+Local lRet:=.T.
+Local c381LocD4 := "",cOPOrig := "",cOPEmp := "",cProd := ""
+Local nQtde := 0
+
+If l380
+	cLocNew := &(ReadVar())
+	cOPOrig := M->D4_OPORIG
+	cOPEmp  := M->D4_OP
+	cProd	:= M->D4_COD
+	nQtde	:= M->D4_QUANT
+ElseIf l381
+	cLocNew := If(SubStr(ReadVar(),4,8)=='D4_LOCAL',M->D4_LOCAL,If(!Empty(nPosLocal),aCols[n,nPosLocal],UserException('D4_LOCAL')))
+	If !Empty(aCols[n,Len(aHeader)]) //alteracao
+		dbSelectArea("SD4")
+		dbGoTo(aCols[n,Len(aHeader)])
+		c381LocD4 := SD4->D4_LOCAL	
+		cOPOrig := SD4->D4_OPORIG
+	EndIf
+	cOPEmp  := cOP
+	cProd 	:= aCols[n,nPosCod]
+	nQtde	:= aCols[n,nPosQuant]
+EndIf
+
+If !ExistCpo("SB2",cProd+cLocNew)
+	lRet := .F.
+EndIf
+
+// verifica Local de processo
+If lRet
+	ValLocProc(cProd)
+EndIf
+
+If cLocNew == GetMvNNR('MV_CQ','98')
+	lRet:=.F.
+EndIf
+
+If lRet .And. cLocNew != If(l380,cLocal,c381LocD4) .And. If(l380,cLocal,c381LocD4) != CriaVar("D4_LOCAL")
+	If !Empty(cOPOrig)
+		dbSelectArea("SC2")
+		If dbSeek(xFilial("SC2")+cOPOrig) .And. C2_QUJE > 0
+			Help(" ",1,"A380OPPROD")
+			lRet:=.F.
+		EndIf
+	Else
+		dbSelectArea("SC1")
+		dbSetOrder(4)
+		If dbSeek(xFilial("SC1")+cOPEmp)
+			Do While !Eof() .And. C1_FILIAL+C1_OP == xFilial("SC1")+cOPEmp
+				If C1_PRODUTO == cProd .And. C1_QUANT == nQtde .And. C1_QUJE > 0
+					Help(" ",1,"A380SCCOMP")
+					lRet:=.F.
+					Exit
+				EndIf
+				dbSkip()
+			EndDo
+		EndIf
+	EndIf
+EndIf
+
+RestArea(aArea)
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ SHOWF4   ³ Autor ³ Cesar Eduardo Valadao ³ Data ³25/11/1999³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Chamada da funcao F4LOTE                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ShowF4(a,b,c)
+If ReadVar() == "M->DC_LOCALIZ"
+	F4Localiz(,,,   "A380", SD4->D4_COD, SD4->D4_LOCAL,, ReadVar())
+ElseIf ReadVar() == "M->D4_NUMLOTE" .Or. ReadVar() == "M->D4_LOTECTL"
+	F4Lote(,,,   "A380",M->D4_COD,M->D4_LOCAL)
+ElseIf ReadVar() == "M->D4_COD"
+	MaViewSB2(M->D4_COD)
+EndIf
+Return Nil
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A380PriUm ³ Autor ³ Marcelo Pimentel      ³ Data ³          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Rotina que calcula a 2a unidade medida quanto exitir       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380PriUm()
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A380QtSeg ³ Autor ³ Marcelo Pimentel      ³ Data ³          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Rotina que calcula a primeira unidade de medida.           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380QtSeg()
+Local nQtSegUm := M->D4_QTSEGUM
+If Empty(nQtSegUm)
+	Return .T.
+EndIf
+If l380
+	M->D4_QUANT := ConvUm(M->D4_COD,M->D4_QUANT,nQtSegUm,1)
+Else
+	aCols[n,nPosQuant] := ConvUm(aCols[n,nPosCod],aCols[n,nPosQuant],nQtSegUm,1)
+EndIf
+If l380 .And. Valtype(aRotAuto) # "A"
+	nEndereco := Ascan(aGets,{ |x| Subs(x,9,10) == "D4_QUANT" })
+	If nEndereco > 0
+		aTela[Val(Subs(aGets[nEndereco],1,2))][Val(Subs(aGets[nEndereco],3,1))*2] := Transform(M->D4_QUANT,PesqPictQT("D4_QUANT"))
+	EndIf
+EndIf
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380NumLot³ Autor ³ Fernando Joly Siquini ³ Data ³ 26/08/99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Apaga o D4_NUMLOTE caso o controle de Rastro seja "L".     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function a380NumLot()
+If Rastro(SD4->D4_COD, 'L') .And. !Empty(SD4->D4_NUMLOTE)
+	Replace SD4->D4_NUMLOTE With Space(Len(SD4->D4_NUMLOTE))
+EndIf
+Return Nil
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380DigLoc³ Autor ³Rodrigo de A. Sartorio ³ Data ³ 08/10/99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Programa para digitacao das localizacoes dos empenhos      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ A380DigLoc(aRet)                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpA1 = Array com acols das informacoes de localizacoes    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function A380DigLoc(aRet)
+Local oDlg2
+Local cTitulo
+Local oGet
+Local nOpca:=0
+Local nX
+Local aBackRotina:=ACLONE(aRotina)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Montagem do AHeader com posicoes fixas.                      ³
+//³ 1a Posicao - Quantidade                                      ³
+//³ 2a Posicao - Localizacao Fisica                              ³
+//³ 3a Posicao - Numero de Serie                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+PRIVATE aCols  := ACLONE(aRet)
+PRIVATE aHeader := {}
+
+aRotina   := { { "" , "        ", 0 , 3}}
+aTam:=TamSX3("D4_QUANT")
+Aadd(aHeader,{STR0010,"D4_QUANT",PesqPict("SD4","D4_QUANT",atam[1]),aTam[1],aTam[2],"M->D4_QUANT # 0 .And. A380SegUm()",USADO, "N" ,"SD4"," " })	//"Quantidade Empenho"
+aTam:=TamSX3("DC_LOCALIZ")
+Aadd(aHeader,{STR0011,"DC_LOCALIZ",PesqPict("SDC","DC_LOCALIZ" ,atam[1]),aTam[1],aTam[2],"NaoVazio() .And. ExistCpo('SBE',SD4->D4_LOCAL+M->DC_LOCALIZ) .And. A380VldEnd(SD4->D4_LOCAL,M->DC_LOCALIZ)",USADO, "C" ,"SBE"," " })	//"Localizacao"
+aTam:=TamSX3("DC_NUMSERI")
+Aadd(aHeader,{STR0012,"DC_NUMSERI",PesqPict("SDC","DC_NUMSERI" ,atam[1]),aTam[1],aTam[2],"",USADO, "C" ,""," " })	//"Num de Serie"
+aTam:=TamSX3("DC_QTSEGUM")
+Aadd(aHeader,{STR0026,"DC_QTSEGUM",PesqPict("SDC","DC_QTSEGUM",atam[1]),aTam[1],aTam[2],"A380Um()",USADO, "N" ,"SDC"," " })	//"Qtd. 2a. Unidade"
+
+PRIVATE aTELA[0,0],aGETS[0]
+PRIVATE nUsado := 5
+nPosAtu:=0
+nPosAnt:=9999
+nColAnt:=9999
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica de ha' um MOUSE instalado o sistema.                         ³
+//³Adiciona as  HOTAREAS  do mouse, Funcoes especificas em MOUSE.LIB     ³
+//³Os valores serao multiplicados por 8 por proporcao de modo grafico    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Valtype(aRotAuto) # "A"
+	cTitulo:=STR0013+Alltrim(SD4->D4_COD)+" "+Alltrim(SD4->D4_LOCAL)+" "+Alltrim(SD4->D4_LOTECTL)+IF(!Empty(SD4->D4_NUMLOTE),Alltrim(SD4->D4_NUMLOTE),"") //"Localizacao do Empenho "
+	DEFINE MSDIALOG oDlg2 TITLE ctitulo From 12,13 To 30,87 OF oMainWnd STYLE DS_MODALFRAME
+	
+	oSize := FWDefSize():New(.T.,,,oDlg2)
+	oSize:AddObject("Panel", 100, 100, .T., .T. ) 
+	
+	oSize:lProp := .T. //permite redimencionar as telas de acordo com a proporção do AddObject
+	oSize:Process() //executa os calculos
+	
+	oPanel := TPanel():New(oSize:GetDimension("Panel","LININI"),;
+	                       oSize:GetDimension("Panel","COLINI"),,oDlg2,,,,,,;
+	                       oSize:GetDimension("Panel","XSIZE"),;
+	                       oSize:GetDimension("Panel","YSIZE"))
+	
+	oDlg2:lMaximized:=.F.
+	
+	oGet := MSGetDados():New(05,05,87,285,1,"A380LinOk","A380GetTOk","",.T.,/*10*/,/*11*/,/*12*/,/*13*/,/*14*/,/*15*/,/*16*/,/*17*/,oPanel)
+	
+	ACTIVATE MSDIALOG oDlg2 ON INIT EnchoiceBar(oDlg2,{||nOpca:=1,If(oGet:TudoOk(),oDlg2:End(),)},{||nOpca:=2,If(A380Canc(aRet),oDlg2:End(),)})
+Else // Se entrar aqui e porque e rotina automatica
+	PRIVATE N:= 0
+	nOpca:= 1
+	For nX:= 1 to Len(aCols)
+		N:= nX
+		If ! A380LinOK()
+			AutoGRLog(STR0029+" "+Dtoc(MsDate())+" "+Time()) //"Tabela SDC"
+			AutoGRLog(STR0030+" - A380LinOK - "+STR0031+" "+StrZero(N,2)) //"Inconsistencia na Linha de Itens"##"Linha "
+			AutoGRLog(Replicate("-",80))
+			nOpca:= 0
+			Exit
+		EndIf
+	Next
+	If nOpca == 1
+		If ! A380GetTOk()
+			AutoGRLog(STR0029+" "+Dtoc(MsDate())+" "+Time()) //"Tabela SDC"
+			AutoGRLog(STR0030+" - A380GetTOk") //"Inconsistencia na Linha de Itens"
+			AutoGRLog(Replicate("-",80))
+			nOpca:= 0
+		EndIf
+	EndIf
+EndIf
+
+If nOpca == 1
+	aRet:=ACLONE(aCols)
+Else
+	aRet:={}
+EndIf
+
+// Volta o aRotina ORIGINAL
+aRotina:=ACLONE(aBackRotina)
+RETURN Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380LinOk ³ Autor ³ Rodrigo de A. Sartorio ³ Data ³ 08/10/99³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida a Linha da Getdados                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380LinOk()
+Local nAcumulado:=0,i:=0
+Local lRet:=.T.
+Local lSaldoEnd:=0
+
+IF lRet .And. !aCols[n,Len(aCols[n])]
+	If Empty(aCols[n,2]) .AND. Empty(aCols[n,3]) 
+		Help(" ",1,"NVAZIO")
+		lRet := .F.
+	Else
+		If !Empty(aCols[n,2])
+	  		lRet := ExistCpo('SBE',SD4->D4_LOCAL+aCols[n,2])    
+	 	EndIf
+	EndIf
+Endif
+
+If lRet
+	For i:=1 to Len(aCols)
+		If !aCols[i,Len(aCols[i])] .And. aCols[i,2]+aCols[i,3] == aCols[n,2]+aCols[n,3]
+			nAcumulado+=aCols[i,1]
+		EndIf
+	Next i
+	If lWmsNew .And. IntWms(SD4->D4_COD)
+		lSaldoEnd := WmsSldD14(SD4->D4_LOCAL,aCols[n,2],SD4->D4_COD,aCols[n,3],SD4->D4_LOTECTL,SD4->D4_NUMLOTE)
+	Else
+		lSaldoEnd := SaldoSBF(SD4->D4_LOCAL,aCols[n,2],SD4->D4_COD,aCols[n,3],SD4->D4_LOTECTL,SD4->D4_NUMLOTE)
+	EndIf
+	If nAcumulado > lSaldoEnd
+		Help(" ",1,"SALDOLOCLZ")
+		lRet:=.F.
+	EndIf
+Endif	
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380GetTOk³ Autor ³ Rodrigo de A. Sartorio ³ Data ³ 13/10/99³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida a Getdados                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380GetTOk()
+Local nAcumulado:=0,i:=0
+Local lRet:=.T.
+
+For i:=1 to Len(aCols)
+	If !aCols[i,Len(aCols[i])]
+		nAcumulado+=aCols[i,1]
+		If Empty(aCols[i,2]) .AND. Empty(aCols[n,3])
+			Help(" ",1,"NVAZIO")
+			lRet := .F.
+		Else
+			If !Empty(aCols[n,2])
+		  		lRet := ExistCpo('SBE',SD4->D4_LOCAL+aCols[n,2])
+		 	EndIf
+		EndIf
+	EndIf
+Next i
+If nAcumulado != SD4->D4_QUANT
+	Help(" ",1,"A380QTDLOC")
+	If nAcumulado > SD4->D4_QUANT
+		lRet:=.F.
+	EndIf
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ponto de Entrada M380LEMP para validacao dos enderecos dos empenhos ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lRet .And. ExistBlock('M380LEMP')
+	lRet := ExecBlock('M380LEMP', .F., .F.,{1})
+	If ValType(lRet)<>"L"
+		lRet := .T.
+	EndIf
+EndIf
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MTA380PERG³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 13/10/99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada da funcao PERGUNTE                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function MTA380PERG()
+Pergunte("MTA380",.T.)
+Return NIL
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Grava ³ Autor ³ Patricia A. Salomao    ³ Data ³ 29/12/00³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Atualiza os Empenhos                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpN1 = Quantidade                                         ³±±
+±±³          ³ ExpC1 = Numero do Sub-Lote                                 ³±±
+±±³          ³ ExpC2 = Numero do Lote                                     ³±±
+±±³          ³ ExpC3 = Almoxarifado                                       ³±±
+±±³          ³ ExpN2 = Quantidade na segunda unidade de medida            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Grava(nQtdAnt,cLoteAnt,cLotCtlAnt,cLocal,nQtdAnt2UM,a381Emps)
+Local aTravas    :={}
+Local aEmpenhos  :={}
+Local aOldArea   :={}
+Local lConsVenc  :=GetMV('MV_LOTVENC')=='S'
+Local lLocaliza  :=Localiza(SD4->D4_COD,.T.)
+Local nSomaSD4   :=0
+Local nSomaSD42UM:=0
+Local nFor       :=0
+Local nQtdNewEmp :=0
+Local nPotencia	 :=0
+Local nQtdBxEmp  :=0
+Local cTpOp      :="F"
+Local cSeek      :=""
+Local cCompara   :=""
+Local cProduto	 :=""
+Local cLocalD4	 :=""
+Local cOp		 :=""
+Local cTrt		 :=""
+Local cOpOrig	 :=""
+Local cLoteCtl	 :=""
+Local cNumLote	 :=""
+Local lZerou   := Type("lZeraEmp")== "L" .And. lZeraEmp
+Local dData
+local latusbf    := .T.
+
+DEFAULT nQtdAnt2UM := 0
+DEFAULT a381Emps := {}
+
+Begin Transaction
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta o array com as localizacoes utilizadas no empenho ³
+	//³ original.                                               ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lLocaliza
+		dbSelectArea("SDC")
+		aOldArea:=GetArea()
+		dbSetOrder(2)
+		// Procura por empenho sem lotes
+		If !(Rastro(SD4->D4_COD)) .Or. (Rastro(SD4->D4_COD) .And. Empty(cLotCtlAnt))
+			// Usar cLotCtlAnt Porque Tem Que Procurar o SD4 Sem LOTECTL
+			cSeek:=xFilial("SDC")+SD4->D4_COD+cLocal+SD4->D4_OP+SD4->D4_TRT+cLotCtlAnt
+			cCompara:="DC_FILIAL+DC_PRODUTO+DC_LOCAL+DC_OP+DC_TRT+DC_LOTECTL"
+		Else
+			If Rastro(SD4->D4_COD,"L")
+				// Procura por empenho com lote
+				cSeek:=xFilial("SDC")+SD4->D4_COD+cLocal+SD4->D4_OP+SD4->D4_TRT+cLotCtlAnt
+				cCompara:="DC_FILIAL+DC_PRODUTO+DC_LOCAL+DC_OP+DC_TRT+DC_LOTECTL"
+			Else
+				// Procura por empenho com lote+sub-lote
+				cSeek:=xFilial("SDC")+SD4->D4_COD+cLocal+SD4->D4_OP+SD4->D4_TRT+cLotCtlAnt+cLoteAnt
+				cCompara:="DC_FILIAL+DC_PRODUTO+DC_LOCAL+DC_OP+DC_TRT+DC_LOTECTL+DC_NUMLOTE"
+			EndIf
+		EndIf
+		dbSeek(cSeeK)
+		While !Eof() .And. cSeek == &cCompara
+			AADD(aEmpenhos,{SDC->DC_QUANT,SDC->DC_LOCALIZ,SDC->DC_NUMSERI,SDC->DC_QTSEGUM,.F.})
+			dbSkip()
+		End
+		RestArea(aOldArea)
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se Nao Existe Empenho, Gera um aEmpenhos P/ Estornar SB2/SB8/SBF  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Empty(aEmpenhos)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Array com quantidade, Localizacao e Numero de Serie               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		AADD(aEmpenhos,{nQtdAnt,CriaVar("DC_LOCALIZ"),CriaVar("DC_NUMSERI"),nQtdAnt2UM,.F.})
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Soma quantidade empenhada p/ empenhar diferenca caso necessario   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nSomaSD4    :=0
+	nSomaSD42UM :=0
+	For nFor:=1 to Len(aEmpenhos)
+		If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+			nSomaSD4    += aEmpenhos[nFor,1]
+			nSomaSD42UM += aEmpenhos[nFor,4]
+		EndIf
+	Next nFor
+	If QtdComp(nSomaSD4) < QtdComp(nQtdAnt)
+		AADD(aEmpenhos,{nQtdAnt-nSomaSD4,CriaVar("DC_LOCALIZ"),CriaVar("DC_NUMSERI"),nQtdAnt2UM-nSomaSD42UM,.F.})
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Remove Todos os Empenhos Anteriores                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	For nFor:=1 to Len(aEmpenhos)
+		GravaEmp(SD4->D4_COD,;
+				cLocal,;
+				aEmpenhos[nFor,1],;
+				ConvUM(SD4->D4_COD,aEmpenhos[nFor,1],aEmpenhos[nFor,4],2),;
+				cLotCtlAnt,;
+				cLoteAnt,;
+				NIL,;
+				NIL,;
+				SD4->D4_OP,;
+				SD4->D4_TRT,;
+				NIL,;
+				NIL,;
+				"SC2",;
+				NIL,;
+				SD4->D4_DATA,;
+				@aTravas,;
+				.T.,;
+				NIL,;
+				.T.,;
+				.T.,;
+				lConsVenc,;
+				!Empty(cLotCtlAnt+cLoteAnt).Or.(lLocaliza.And.Len(aEmpenhos)>0),;
+				/*If(l380,*/!Empty(cLotCtlAnt+cLoteAnt).Or.(lLocaliza.And.Len(aEmpenhos)>0)/*,If(Localiza(SD4->D4_COD),!Empty(a381Emps),.T.))*/)
+		// Deve gravar o empenho no novo WMS quado for o caso - lWmsNew
+		If lWmsNew .And. lLocaliza .And. IntWms(SD4->D4_COD)
+			WmsEmpReq("SC2",;
+						 SD4->D4_COD,;
+						 SD4->D4_LOCAL,;
+						 aEmpenhos[nFor,1],;
+						 aEmpenhos[nFor,2],;
+						 cLotCtlAnt,;
+						 cLoteAnt,;
+						 aEmpenhos[nFor,3],;
+						 SD4->D4_OP,;
+						 SD4->D4_TRT,;
+						 SD4->D4_IDDCF,;
+						 /*cIdUnitiz*/,;
+						 .T.,; // lEstorno
+						 .T.,; // lCriaSDC
+						 .T.)  // lEmpD14
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Remove travas dos registros utilizados                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		MaDesTrava(aTravas);aTravas:={}
+	Next nFor
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ lZerou - Variavel utilizada para verificar se devera   ³
+	//³          zerar o empenho conforme selecionado no botao.³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lZerou
+		RecLock("SD4",.F.)
+		Replace D4_QUANT With 0
+		Replace D4_QTSEGUM With 0
+		MsUnLock()
+	EndIf            
+	
+	nSomaSD4    :=0
+	nSomaSD42UM :=0
+	If lLocaliza .And. Rastro(SD4->D4_COD)
+		If Empty(SD4->D4_LOTECTL)
+			lLocaliza := .F.
+		EndIf
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Digita localizacao utilizada no empenho                           ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lLocaliza .And. mv_par01 == 1
+		If Valtype(aRotAuto) == "A"	
+			aEmpenhos:= aEmpAuto
+		EndIf
+		A380DigLoc(@aEmpenhos)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Soma quantidade empenhada p/ empenhar diferenca caso necessario   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nFor:=1 to Len(aEmpenhos)
+			If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+				nSomaSD4    += aEmpenhos[nFor,1]
+				nSomaSD42UM += aEmpenhos[nFor,4]
+			EndIf
+		Next nFor
+	Else
+		If l381 .And. !lZerou
+			aEmpenhos := aClone(a381Emps)
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Soma quantidade empenhada p/ empenhar diferenca caso necessario   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			For nFor:=1 to Len(aEmpenhos)
+				If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+					nSomaSD4    += aEmpenhos[nFor,1]
+					nSomaSD42UM += aEmpenhos[nFor,4]
+				EndIf
+			Next nFor
+		Else
+			aEmpenhos:={}
+		EndIf
+	EndIf
+	If QtdComp(nSomaSD4) < QtdComp(SD4->D4_QUANT)
+		AADD(aEmpenhos,{SD4->D4_QUANT-nSomaSD4,CriaVar("DC_LOCALIZ"),CriaVar("DC_NUMSERI"),SD4->D4_QTSEGUM-nSomaSD42UM,.F.})
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Inclui o novo empenho                                   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	For nFor:=1 to Len(aEmpenhos)
+		If !(aEmpenhos[nFor,Len(aEmpenhos[nFor])])
+			lLocaliza:=lLocaliza .And. !Empty(aEmpenhos[nFor,2]+aEmpenhos[nFor,3])
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Atualiza arq. de saldos  B2_QEMP                                  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If( !Empty(SD4->D4_LOTECTL+SD4->D4_NUMLOTE).Or.lLocaliza )
+			   lAtuSB8 := .T.
+			Else
+			   lAtuSB8 := .F.
+			EndIf
+
+			If Type("aEnderecos") == "A"
+				If !Empty(aEnderecos) .And. nfor <= Len(aEnderecos)
+			   		if aEnderecos[nfor,7] == .T. .And. (Trim(aEnderecos[nfor,2]) == Trim(aEmpenhos[nfor,2]) .OR. empty(aEmpenhos[nfor,2])) 
+			      		latusbf := .F.  //não atualiza na inclusão, porque já foi estornado anteriormente
+			   		EndIf
+				EndIf
+			EndIf
+
+			GravaEmp(SD4->D4_COD,;
+					SD4->D4_LOCAL,;
+					aEmpenhos[nFor,1],;
+					ConvUM(SD4->D4_COD,aEmpenhos[nFor,1],aEmpenhos[nFor,4],2),;
+					SD4->D4_LOTECTL,;
+					SD4->D4_NUMLOTE,;
+					aEmpenhos[nFor,2],;
+					aEmpenhos[nFor,3],;
+					SD4->D4_OP,;
+					SD4->D4_TRT,;
+					NIL,;
+					NIL,;
+					"SC2",;
+					NIL,;
+					SD4->D4_DATA,;
+					@aTravas,;
+					.F.,;
+					NIL,;
+   						.T.,;
+					.F.,;
+					lConsVenc,;
+					lAtuSB8,;
+					If(l380,!Empty(SD4->D4_LOTECTL+SD4->D4_NUMLOTE).Or.lLocaliza,!Empty(a381Emps).And.(lLocaliza.Or.!Empty(SD4->D4_LOTECTL+SD4->D4_NUMLOTE))),;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					Nil,;
+					aSDC,;
+					latusbf )
+			// Deve gravar o empenho no novo WMS quado for o caso - lWmsNew
+			If lWmsNew .And. lLocaliza .And. IntWms(SD4->D4_COD)
+				WmsEmpReq("SC2",;
+							 SD4->D4_COD,;
+							 SD4->D4_LOCAL,;
+							 aEmpenhos[nFor,1],;
+							 aEmpenhos[nFor,2],;
+							 SD4->D4_LOTECTL,;
+							 SD4->D4_NUMLOTE,;
+							 aEmpenhos[nFor,3],;
+							 SD4->D4_OP,;
+							 SD4->D4_TRT,;
+							 SD4->D4_IDDCF,;
+							 /*cIdUnitiz*/,;
+							 .F.,; // lEstorno
+							 .T.,; // lCriaSDC
+							 .T.)  // lEmpD14
+			EndIf
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Remove travas dos registros utilizados                  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			MaDesTrava(aTravas)
+		EndIf
+	Next nFor
+
+	If FindFunction("A381AtuNec")
+		A381AtuNec(SD4->D4_OP,SC2->C2_QUANT)
+	EndIf
+
+End Transaction	
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³a380GraSdc  ³ Autor ³Michele Girardi       ³ Data ³ 26/12/16³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Gravar bkp da SDC antes da atualização dos empenhos        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+ Function a380GraSdc(cD4_FILIAL, cD4_OP,cD4_COD,cD4_LOCAL)
+ 
+ Local nFor 
+ 
+ aAreaSDC1 := SDC->(GetArea())
+ 
+ cSeek := (cD4_FILIAL+cD4_COD+cD4_LOCAL+cD4_OP)
+ 
+ For nFor:=1 to Len(aSDC)
+  	If 	aSDC[nFor,3] == cD4_COD  .And. aSDC[nFor,4] == cD4_LOCAL
+  		Return Nil 
+  	EndIf
+ Next nFor
+  
+dbSelectArea('SDC')
+dbSetOrder(2) 
+
+If dbSeek(cSeek)
+	While !Eof() .And. cSeek == DC_FILIAL+DC_PRODUTO+DC_LOCAL+DC_OP
+		AADD(aSDC, {SDC->DC_FILIAL, SDC->DC_ORIGEM, SDC->DC_PRODUTO, SDC->DC_LOCAL, SDC->DC_LOCALIZ, SDC->DC_NUMSERI, SDC->DC_LOTECTL,;
+					SDC->DC_NUMLOTE, SDC->DC_QUANT, SDC->DC_OP, SDC->DC_TRT, SDC->DC_PEDIDO, SDC->DC_ITEM, SDC->DC_QTDORIG, SDC->DC_SEQ,;
+					SDC->DC_QTSEGUM, SDC->DC_ESTFIS, SDC->DC_IDDCF})
+		dbSkip()
+	End
+EndIf
+  
+RestArea(aAreaSDC1)
+ 
+Return Nil 
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380Canc  ³ Autor ³Rodrigo de A. Sartorio  ³ Data ³ 21/09/01³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida o cancelamento da digitacao das localizacoes        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpA1 = Array com acols das informacoes de localizacoes    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Canc(aRet)
+Local nSomaSD4:=0,nFor:=0
+Local lRet:=.T.
+
+For nFor:=1 to Len(aRet)
+	If !(aRet[nFor,Len(aRet[nFor])])
+		nSomaSD4    += aRet[nFor,1]
+	EndIf
+Next nFor
+If nSomaSD4 > SD4->D4_QUANT
+	Help(" ",1,"A380QTDLOC")
+	lRet:=.F.
+EndIf
+If lRet .And. ExistBlock('M380LEMP')
+	lRet := ExecBlock('M380LEMP', .F., .F.,{2})
+	If ValType(lRet)<>"L"
+		lRet := .T.
+	EndIf
+EndIf
+RETURN lRet
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380ZEmp  ³ Autor ³Erike Yuri da Silva     ³ Data ³ 24/10/05³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Zera empenhos, encerrando o empenho do produto indicado    ³±±
+±±³          ³ deve tambem atualizar os lotes caso exista (bops 87301)    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380ZEmp()
+Local lContinua := .T.
+
+If ExistBlock("M380ZEMP")
+	lContinua := ExecBlock("M380ZEMP", .F., .F.)
+	If ValType(lContinua) # "L"
+		lContinua := .T. // por padrao sempre executa a rotina
+	EndIf
+EndIf
+If lContinua
+	lZeraEmp := !lZeraEmp
+	If !lZeraEmp
+		Aviso(STR0017,STR0018,{STR0025}) //"Aviso"###"Desativando a opcao para zerar o saldo empenhado"
+	ElseIf (Aviso(STR0017,STR0019,{STR0020,STR0021})==2) //"Aviso"###"Deseja ativar a opcao para zerar o saldo empenhado para este produto"###"Sim"###"Nao"
+		lZeraEmp := .F.
+	EndIf
+EndIf
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380SegUm ³ Autor ³Felipe Nunes Toledo     ³ Data ³ 14/08/06³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Calcula e inicializa campo da segunda unidade de medida.   ³±±
+±±³          ³ (utilizado na geracao de empenhos por endereco - SDC)      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380SegUm(cProduto)
+Default cProduto = SD4->D4_COD
+
+aCols[n][4] := ConvUm(cProduto,If(ReadVar()=="M->D4_QUANT",M->D4_QUANT,aCols[n,1]),aCols[n][4],2)
+
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380PriUm ³ Autor ³Felipe Nunes Toledo     ³ Data ³ 14/08/06³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Calcula e inicializa campo da primeira unidade de medida.  ³±±
+±±³          ³ (utilizado na geracao de empenhos por endereco - SDC)      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380Um(cProduto)
+Default cProduto := SD4->D4_COD
+
+aCols[n][4] := ConvUm(cProduto,aCols[n,3],If(ReadVar()=="M->DC_QTSEGUM",M->DC_QTSEGUM,aCols[n,4]),2)
+
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A380TipDec³ Autor ³ Nereu Humberto Junior ³ Data ³ 24/08/06 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Ajusta a quantidade digitada do material de acordo com o   ³±±
+±±³          ³ campo B1_TIPODEC                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Codigo do Produto                                  ³±±
+±±³          ³ ExpN1 = Quantidade do Empenho                              ³±±
+±±³          ³ ExpN2 = Saldo do Empenho                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATA380                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Function A380TipDec(cProduto,nQuant,nSaldo,nTipo)
+
+Local aArea  := GetArea()
+Local lAviso := .F.
+
+Default nTipo := 1
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Caso necessario posiciona produto               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SB1->(dbSeek(xFilial("SB1")+IIf(nTipo==1, cProduto , aCols[n,1]) ))
+	If SB1->B1_TIPODEC == "A"
+		nQuant := Round( nQuant,0 )
+		nSaldo := Round( nSaldo,0 )
+	ElseIf SB1->B1_TIPODEC == "I"
+		nQuant := Int(nQuant)+If(((nQuant-Int(nQuant)) > 0),1,0)
+		nSaldo := Int(nSaldo)+If(((nSaldo-Int(nSaldo)) > 0),1,0)
+	ElseIf SB1->B1_TIPODEC == "T"
+		nQuant := Int(nQuant)
+		nSaldo := Int(nSaldo)
+	EndIf
+
+	If nTipo == 1 .And. QtdComp(nQuant) <> If(l380.Or.ReadVar()=="M->D4_QTDEORI",M->D4_QTDEORI,aCols[n,nPosQtdOri])
+		If nTipo == 1
+			If l380
+				M->D4_QTDEORI := nQuant
+			ElseIf l381
+				aCols[n,nPosQtdOri] := nQuant
+			EndIf
+		EndIf	
+		lAviso := .T.
+	EndIf
+
+	If type("l380") != "U"
+		If QtdComp(nSaldo) <> IIf(nTipo==1 , If(l380.Or.ReadVar()=="M->D4_QUANT",M->D4_QUANT,aCols[n,nPosQuant]) , aCols[n,2] )
+			If nTipo == 1
+				If l380
+					M->D4_QUANT := nSaldo
+				ElseIf l381
+					aCols[n,nPosQuant] := nSaldo
+				EndIf
+			Else 
+				aCols[n,2] := nQuant
+			EndIf	
+			lAviso := .T.
+		EndIf
+	EndIf
+	If lAviso
+		Aviso(STR0017,STR0028,{STR0025}) //"Aviso" ###"As quantidades foram reajustadas em função do campo Tipo Dec.OP (B1_TIPODEC) estar definido para não permitir decimais."###OK'
+	EndIf
+EndIf
+
+RestArea(aArea)
+
+Return .T.
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Fabio Alves Silva     ³ Data ³04/10/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±
+±±³          ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Array com opcoes da rotina.                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³    1 - Pesquisa e Posiciona em um Banco de Dados           ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function MenuDef()
+Private aRotina	:= {	{STR0001,"AxPesqui"  , 0 , 1,0,.F.},;	//"Pesquisar"
+						{STR0002,"A380Visual", 0 , 2,0,nil},;	//"Visualizar"
+						{STR0003,"A380Inclui", 0 , 3,0,nil},;	//"Incluir"
+						{STR0004,"A380Altera", 0 , 4,37,nil},;	//"Alterar"
+						{STR0005,"A380Exclui", 0 , 5,0,nil} }	//"Excluir"
+Private aRotinaAux := aRotina					
+						
+If ExistBlock ("MTA380MNU")
+	aRotina := ExecBlock('MTA380MNU',.F.,.F.,aRotina)
+	If aRotina == Nil
+		aRotina := aRotinaAux
+	EndIf
+EndIf
+Return (aRotina)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MATA380   ºAutor  ³Aecio Ferreira Gomes º Data ³  11/04/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Valida a exclusão.								   	  	   º±±
+±±º          ³                                                             º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MATA380                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380DelOK(nOpc)
+Local aArea :=  GetArea()
+Local lRet	:= .T.
+Local lIntSFC := IntegraSFC() .And. !IsInCallStack("DPRA340INT")
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Este ponto de entrada tem a finalidade de confirmar a exclusao. ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock('MT380EXC')
+	lRet := ExecBlock('MT380EXC', .F., .F.)
+EndIf         
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Chama rotina para integracao com SFC(Chao de Fabrica) ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lIntSFC
+	lRet := A380IntSFC(nOpc)	
+EndIf
+
+RestArea(aArea) 
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MATA380   ºAutor  ³Aecio Ferreira Gomes º Data ³  11/04/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Atualiza arquivo de saldos(B2_QEMP) quando exclusão.    	   º±±
+±±º          ³                                                             º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MATA380                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380DelAtu()
+Local aTravas	:= {}
+Local aArea		:= Getarea()
+Local lConsVenc := GetMV('MV_LOTVENC')=='S'
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Atualiza arq. de saldos  B2_QEMP                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+GravaEmp(SD4->D4_COD,;
+		SD4->D4_LOCAL,;
+		SD4->D4_QUANT,;
+		SD4->D4_QTSEGUM,;
+		SD4->D4_LOTECTL,;
+		SD4->D4_NUMLOTE,;
+		NIL,;
+		NIL,;
+		SD4->D4_OP,;
+		SD4->D4_TRT,;
+		NIL,;
+		NIL,;
+		"SC2",;
+		NIL,;
+		SD4->D4_DATA,;
+		@aTravas,;
+		.T.,;
+		NIL,;
+		.T.,;
+		.T.,;
+		lConsVenc)
+
+If lWmsNew .And. IntWms(SD4->D4_COD)
+	WmsEmpReq("SC2",;
+				 SD4->D4_COD,;
+				 SD4->D4_LOCAL,;
+				 SD4->D4_QUANT,;
+				 /*cEndereco*/,;
+				 SD4->D4_LOTECTL,;
+				 SD4->D4_NUMLOTE,;
+				 /*cNumSerie*/,;
+				 SD4->D4_OP,;
+				 SD4->D4_TRT,;
+				 SD4->D4_IDDCF,;
+				 /*cIdUnitiz*/,;
+				 .T.,; // lEstorno
+				 .T.,; // lCriaSDC
+				 .T.)  // lEmpD14
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Remove travas dos registros utilizados                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+MaDesTrava(aTravas)
+
+If FindFunction("A381GrvAgr")
+	//Grava os dados do SIGAAGR (Dados existentes somente quando utilizado a integração com o PIMS)
+	A381GrvAgr(.T.,SD4->D4_COD, SD4->D4_LOCAL, SD4->D4_OP, SD4->D4_TRT, SD4->D4_LOTECTL, SD4->D4_NUMLOTE)
+EndIf
+
+DbSelectArea("SD4")
+If ( ExistBlock("MTA380E") )
+	ExecBlock("MTA380E",.F.,.F.)
+EndIf
+
+RestArea(aArea)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao    ³A380IntSFC ³ Autor ³ Aecio Ferreira Gomes    ³ Data ³30/04/11 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³Atualiza tabelas do SFC conforme modelagem dos dados(MVC)     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³A380IntSFC(ExpN1)                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpN1 = Rotina a ser processada(3-Inc, 4-Alt, 5-Exc)          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³MATA770                                                       ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/             
+Static Function A380IntSFC(nOpc) 
+Local aArea      := GetArea()
+Local lRet       := .T.
+Local aCampos    := {}
+Local aAux       := {}
+Local nX    	 := 0
+Local lIntegra   := .F.         
+Local lAchou     := .F.
+Local oModel	 := NIL
+Local cCod		 :=	If(nOpc==4, M->D4_COD, SD4->D4_COD)
+Local cTRT		 :=	If(nOpc==4, M->D4_TRT, SD4->D4_TRT)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Valida se a OP foi integrada ao SFC ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+CYQ->(dbSetOrder(1))	
+lIntegra := CYQ->(dbSeek(xFilial('CYQ')+If(nOpc == 5,SD4->D4_OP,M->D4_OP)))  
+
+If lIntegra .And. nOpc # 5
+	If nOpc == 3
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Posicionma na OP para busca codigo do produto pai³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		SC2->(dbSetOrder(1))
+		SC2->(dbSeek(xFilial("SC2")+M->D4_OP))
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Posiciona na ultima operacao   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		SHY->(dbSetOrder(1))
+		SHY->(dbSeek(xFilial("SHY")+M->D4_OP))
+		If !SHY->(dbSeek(xFilial("SHY")+SHY->(HY_OP+HY_ROTEIRO)+Replicate("z",TamSX3("G2_OPERAC")[1]),.T.))
+			SHY->(dbSkip(-1))
+		EndIf
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Busca Oper X Comp da OP ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		SGF->(dbSetOrder(2))  
+		SGF->(dbSeek(xFilial("SGF")+SC2->C2_PRODUTO+SHY->HY_ROTEIRO+M->D4_COD))
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta array com dados do Componente para atualizacao no SFC ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ	
+		aAdd(aCampos,{"CYP_NRORPO",M->D4_OP})
+		aAdd(aCampos,{"CYP_CDMT",M->D4_COD})
+		aAdd(aCampos,{"CYP_NRSQMT",M->D4_TRT})
+		aAdd(aCampos,{"CYP_CDACPI",SC2->C2_PRODUTO})
+		aAdd(aCampos,{"CYP_DTMT",M->D4_DATA})
+		aAdd(aCampos,{"CYP_CDUN",Posicione("SB1",1,xFilial("SB1")+M->D4_COD,"B1_UM")})
+		aAdd(aCampos,{"CYP_CDRT",SHY->HY_ROTEIRO})
+		aAdd(aCampos,{"CYP_CDAT",If(Found(),SGF->GF_OPERAC,SHY->HY_OPERAC)})
+	EndIf
+	aAdd(aCampos,{"CYP_CDDP",M->D4_LOCAL})
+	aAdd(aCampos,{"CYP_CDLO",M->D4_LOTECTL})
+	aAdd(aCampos,{"CYP_QTMT",M->D4_QUANT})
+	aAdd(aCampos,{"CYP_TPST","1"})
+EndIf
+
+If lIntegra
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Instancia modelo de dados(Model) do cadastro de Ordem de Producao - SFC ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oModel := FWLoadModel("SFCA100")
+	oModel:SetOperation(4)
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ativa o modelo de dados ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lIntegra .And. (lRet := oModel:Activate())
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Instancia modelo de dados(Model) da Reseva da OP  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aAux := oModel:GetModel("CYPDETAIL"):GetStruct():GetFields()
+	
+	If nOpc <> 3
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Posiciona na linha do Grid ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nX := 1 To oModel:GetModel("CYPDETAIL"):GetQtdLine()
+			oModel:GetModel("CYPDETAIL"):GoLine(nX)
+			If AllTrim(cCod) == AllTrim(oModel:GetValue("CYPDETAIL","CYP_CDMT")) .And.;
+					 AllTrim(cTRT) == AllTrim(oModel:GetValue("CYPDETAIL","CYP_NRSQMT"))
+				lAchou := .T.
+				Exit
+			EndIf
+		Next nX
+	EndIf
+	
+	If (nOpc == 3 .And. !Empty(oModel:GetValue("CYPDETAIL","CYP_CDMT"))) .Or. !lAchou
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Adiciona linha no modelo ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		oModel:GetModel("CYPDETAIL"):AddLine()
+	EndIf
+
+	If nOpc # 5   
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Loop para validacao e atribuicao de dados dos campos do Model ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nX := 1 To Len(aCampos)
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Valida os campos existentes na estrutura do Model ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If aScan(aAux,{|x| AllTrim(x[3]) ==  AllTrim(aCampos[nX,1])}) > 0
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Atribui os valores aos campos do Model caso passem pela validacao do formulario ³
+				//³referente a tipos de dados, tamanho ou outras incompatibilidades estruturais.   ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If !(oModel:SetValue("CYPDETAIL",aCampos[nX,1],aCampos[nX,2]))
+					lRet := .F.
+					Exit
+				EndIf
+			EndIf
+		Next
+    Else
+		oModel:GetModel("CYPDETAIL"):DeleteLine()
+	EndIf
+Endif
+
+If lRet .And. lIntegra
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Valida os dados e integridade conforme dicionario do Model ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (lRet := oModel:VldData())	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Efetiva gravacao dos dados na tabela ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    	lRet :=	 oModel:CommitData()
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Gera log de erro caso nao tenha passado pela validacao ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !lRet .And. lIntegra
+	aErro := oModel:GetErrorMessage()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Estrutura do vetor com erro ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//[1] Id do formulário de origem
+	//[2] Id do campo de origem
+	//[3] Id do formulário de erro
+	//[4] Id do campo de erro
+	//[5] Id do erro
+	//[6] mensagem do erro
+	//[7] mensagem da solução
+	//[8] Valor atribuido
+	//[9] Valor anterior
+
+	AutoGrLog( "Id do formulário de origem:" + ' [' + AllToChar( aErro[1]  ) + ']' )
+	AutoGrLog( "Id do campo de origem:     " + ' [' + AllToChar( aErro[2]  ) + ']' )
+	AutoGrLog( "Id do formulário de erro:  " + ' [' + AllToChar( aErro[3]  ) + ']' )
+	AutoGrLog( "Id do campo de erro:       " + ' [' + AllToChar( aErro[4]  ) + ']' )
+	AutoGrLog( "Id do erro:                " + ' [' + AllToChar( aErro[5]  ) + ']' )
+	AutoGrLog( "Mensagem do erro:          " + ' [' + AllToChar( aErro[6]  ) + ']' )
+	AutoGrLog( "Mensagem da solução:       " + ' [' + AllToChar( aErro[7]  ) + ']' )
+	AutoGrLog( "Valor atribuido:           " + ' [' + AllToChar( aErro[8]  ) + ']' )
+	AutoGrLog( "Valor anterior:            " + ' [' + AllToChar( aErro[9]  ) + ']' )
+
+	MostraErro()
+EndIf
+
+If lIntegra
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Desativa o Model ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oModel:DeActivate()
+	   
+EndIf
+
+RestArea(aArea)
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³A380ValCodºAutor  ³ Andre Anjos		 º Data ³  26/02/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Valida codigo do produto digitado como componente da OP.   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MATA380/MATA381                                            º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380ValCod()
+Local lRet := .T.
+
+lRet := ExistCpo("SB1")
+
+If lRet .And. IsProdProt(M->D4_COD) .And. !IsInCallStack("DPRA340INT")
+	Aviso(STR0014,STR0032,{"OK"}) //-- Protótipos podem ser manipulados somente através do módulo Desenvolvedor de Produtos (DPR).
+	lRet := .F.
+EndIf
+
+Return lRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} A380VldEnd()
+Efetua a validação do código do endereço quando informado empenho por endereço
+
+@param cLocal - Local (Armazém) em que se deseja validar o endereço
+@param cLocaliz - Localização que se deseja validar
+
+@author  Jackson Patrick Werka
+@version P12
+@since   24/07/2017
+@return  lRet
+/*/
+Function A380VldEnd(cLocal,cLocaliz)
+Local lRet := .T.
+	// Valida o código do endereço informado quando integrado com o WMS
+	If lWmsNew .And. IntWms(M->D4_COD)
+		lRet := Wms650End(cLocal,cLocaliz)
+	EndIf
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³A380IntDCFºAutor  ³ Andre Anjos		 	º Data ³  18/05/14   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Valida integracao com WMS para alteracao e exclusao.	   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MATA380/MATA381                                            º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A380IntDCF()
+Local lRet := .T.
+
+	If IntWms(SD4->D4_COD)
+		lRet := WmsAvalSD4("1",SD4->(Recno()))
+	EndIf
+Return lRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} IntegPPI()
+Realiza a integração com o PCFactory, atualizando os empenhos alterados.
+
+@param lExclusao - Indica se está sendo chamado na operação de Exclusao
+
+@author  Lucas Konrad França
+@version P12
+@since   18/09/2015
+@return  lRet
+/*/
+//-------------------------------------------------------------------
+Static Function IntegPPI(lExclusao)
+   Local lRet       := .T.
+   Local aArea      := GetArea()
+   Local lAlteraBkp := Altera
+   Local lIncluiBkp := Inclui
+   Local cMsg       := ""
+
+   Local cD4Op      := ""
+   Private aIntegPPI := {}
+
+   Altera := .T.
+   Inclui := .F.
+   cD4Op  := SD4->D4_OP
+   dbSelectArea("SC2")
+   SC2->(dbSetOrder(1))
+   If SC2->(dbSeek(xFilial("SC2")+AllTrim(cD4Op)))
+      mata650PPI(, , .T., .T., .F.)
+   EndIf
+
+   If Len(aIntegPPI) > 0
+      cMsg := STR0035 + AllTrim(cD4Op) + ; //"Não foi possível realizar a integração com o TOTVS MES para a ordem de produção '"
+              STR0036 + CHR(10)      + ; //"'. Foi gerada uma pendência de integração para esta ordem de produção."
+              STR0037 + AllTrim(aIntegPPI[1,2]) //"Erro: " 
+      Help( ,, 'Help',, cMsg, 1, 0 )
+   EndIf
+
+   Altera := lAlteraBkp
+   Inclui := lIncluiBkp
+   RestArea(aArea)
+Return lRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} A380AltQtd
+Função para verificar se é permitido alterar quantidade do empenho
+
+@param 
+@return lRet
+
+@author  Michele Girardi
+@version P12
+@since   10/05/2018
+/*/
+//-------------------------------------------------------------------
+ Static Function A380AltQtd()
+ Local lRet      := .T.
+ Local lReqNec   := (SUPERGETMV("MV_REQNEC", .F., "N") == "S")
+ Local aAreaSB1  := GetArea()
+ Local nAchouAlt := 0
+ 
+ If Type("aAltQtd") == "U"
+ 	Return lRet  
+ EndIf
+ 
+ aAltQtd := {}
+ 
+ If lReqNec 
+ 	If SB1->(dbSeek(xFilial("SB1")+SD4->D4_COD))
+ 		If SB1->B1_TIPODEC == "I" 			 				
+ 			If (SD4->D4_QTDEORI > SD4->D4_QUANT) .And.;
+ 			 	(SD4->D4_QTDEORI != M->D4_QTDEORI .Or. SD4->D4_QUANT != M->D4_QUANT)
+ 				lRet := .F.
+ 				Help(" ",1,"MA380ALTQTREQ") // Não é permitido alterar a quantidade do empenho para componente que possui requisição por quantidade necessária e que possui apontamento. 				 
+ 			Else
+ 				If (SD4->D4_QTDEORI != M->D4_QTDEORI .Or. SD4->D4_QUANT != M->D4_QUANT)
+ 					nAchouAlt := ASCAN(aAltQtd,{ |x| x[1] == SD4->D4_COD .And. x[2] == SD4->D4_TRT  }) //componente teve alteração de quantidade
+ 					If nAchouAlt == 0
+ 						AADD (aAltQtd, {SD4->D4_COD, SD4->D4_TRT})
+ 					EndIf
+ 				EndIf
+ 			EndIf 			
+ 		EndIF
+ 	EndIf 
+ EndIf
+ 
+ RestArea(aAreaSB1)
+ 
+ Return lRet
