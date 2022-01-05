@@ -159,7 +159,7 @@
             "name": "DAXIA__PROD_INTERNO",
             "serverVersion": "191205P",
             "smartClientPath": "C:\\SMARTCLIENT_TESTE\\",
-            "environment": "rodolfo",
+            "environment": "dev",
             "includeList": "C:\\include\\",
             "server": "192.168.0.22",
             "port": "8027",

@@ -28,15 +28,6 @@ Local cFile  := ''
 Local cProd := PARAMIXB[2]
 Local cRev  := PARAMIXB[3]
 
-If MsgYesNo('Houve uma alteração na especificação e será disparado um e-mail com a nova especificação para os clientes.' + CRLF + 'Deseja continuar?', 'Envio de especificação tecnica')
-    If !MsgYesNo('Confirma o envio?', 'Envio de especificação tecnica')
-        RestArea(aArea)
-        Return    
-    EndIf
-Else
-    RestArea(aArea)
-    Return
-EndIf
 
 SB1->(DbSetOrder(1))
 SB1->(DbSeek(xFilial('SB1')  + cProd))
@@ -46,6 +37,13 @@ SB5->(DbSeek(xFilial('SB5')  + cProd))
 
 SB8->(DbSetOrder(6))
 SB8->(DbSeek(xFilial('SB8')  + PADR(QEK->QEK_LOTE,TAMSX3('B8_LOTECTL')[1])))
+
+If SB1->B1_MSBLQL == '1' .Or. !MsgYesNo('Houve uma alteração na especificação e será gerado um novo pdf que sera enviado ao fluig.' + CRLF + 'Deseja continuar?', 'Envio de especificação tecnica')
+    RestArea(aArea)
+    Return
+EndIf
+
+
 
 Aadd(aEspec, Alltrim(QE6->QE6_XCODET) + '-REV-' + Alltrim(cRev))                         //1 cEspec criar na QE6 e QP6
 Aadd(aEspec,cRev)                           //2 cRev
@@ -75,11 +73,13 @@ Aadd(aEspec,SB5->B5_XMICRO)       //25 MICROBIOLOGICAS
 Aadd(aEspec,SB5->B5_XNUTRI)       //26 info nutricional
 Aadd(aEspec,IIF(SB5->B5_XOGM == 'S',SB5->B5_XOOGM,'Não Aplicavel'))       //27 Origem OGM
 Aadd(aEspec,SB5->B5_XMANIP)       //28 Manipulacao 
+Aadd(aEspec,SB5->B5_MICRMAC)       //29 Micro Macro
+Aadd(aEspec,SB5->B5_CONTAMI)       //30 Contamina
 
 oSay:SetText("Gerando PDF...")
 cFile := U_DXESPEC(aEspec,1)
 oSay:SetText("Enviando dados para o FLUIG...")
-U_DXWSTART(cFile, alltrim(SB1->B1_DESC) + '.PDF',QEK->QEK_PRODUT,1)
+U_DXWSTART(cFile, alltrim(SB1->B1_COD) + '-' +alltrim(SB1->B1_DESC) + '-REV-' + Alltrim(cRev) + '.PDF',cProd,1)
 
 
     

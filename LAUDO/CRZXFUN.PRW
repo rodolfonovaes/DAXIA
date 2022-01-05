@@ -694,7 +694,8 @@ BEGINSQL ALIAS cALIAS
 								Z01.%NotDel%
     WHERE               SD2.%NotDel%                    
                     %exp:cFFilial% 	AND SD2.%NotDel%  
-					AND SD2.D2_LOTECTL <> ''                 
+					AND SD2.D2_LOTECTL <> ''  
+                    AND SD2.D2_TIPO = 'N'               
 					AND Z01.Z01_ITEM IS NULL
     GROUP BY	SD2.D2_FILIAL , SD2.D2_DOC    , SD2.D2_SERIE , SD2.D2_EMISSAO , 
                 SD2.D2_LOTECTL  , SA1.A1_COD , SA1.A1_LOJA   , SA1.A1_XMAILLD , Z01.Z01_DTENVI                        

@@ -5848,7 +5848,8 @@ Local aDesc := {}
 	
 For nX := 1 To nLenDet
 	Aadd(aProd, {oDet[nX]:_Prod:_cProd:TEXT})
-	Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
+	//Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
+	Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto
 Next
 
 If nLenOdet == 1

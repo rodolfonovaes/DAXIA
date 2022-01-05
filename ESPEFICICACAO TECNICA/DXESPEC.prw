@@ -45,7 +45,7 @@ cArqModel := cStartpath + 'MODELOS\'+ cModel + '.dotm'
 // ---------------------------------------
 If !File(cArqModel)
     lContinua := .F.
-    Aviso('ATENÇÃO', 'O arquivo ' + cArqModel + ' não existe! Entre em contato com o Administrador do sistema.', {'OK'}, 2)
+    Aviso('ATENÇÂO', 'O arquivo ' + cArqModel + ' não existe! Entre em contato com o Administrador do sistema.', {'OK'}, 2)
 EndIf
 
 
@@ -54,10 +54,12 @@ EndIf
 // ------------------------------------------------
 If lContinua
     cArqTemp := AllTrim(GetTempPath()) + If(Right(AllTrim(GetTempPath()), 1) == '\', '', '\')
-    If !CpyS2T(cArqModel, cArqTemp, .F.)
+    If !CpyS2T(cArqModel,  cArqTemp , .F.)
         lContinua := .F.
         Aviso('ATENÇÃO',;
-                'Não foi possível transferir o modelo Word do Servidor para sua estação de trabalho! Tente reiniciar o computador. Caso o problema persista, entre em contato com o Administrador do sistema', {'OK'}, 2)
+                'Não foi possível transferir o modelo Word do Servidor para sua estação de trabalho! Tente reiniciar o computador. Caso o problema persista, entre em contato com o Administrador do sistema' + CRLF + ;
+                'Pasta destino : ' + CRLF + cArqTemp + " Codigo do erro " + Str(Ferror()) ;
+                , {'OK'}, 2)
     Else
 //		If MV_PAR17 == 1
 //			cArqTemp := cArqTemp + 'GPPMSR01.dot'
@@ -67,36 +69,36 @@ If lContinua
     EndIf
 EndIf
 
-aCabec := { ''                      , ; // 01 - Nota Fiscal de Saída
-            ''                      , ; // 02 - Série da Nota Fiscal de Saida
+aCabec := { ''                      , ; // 01 - Nota Fiscal de Saï¿½da
+            ''                      , ; // 02 - Sï¿½rie da Nota Fiscal de Saida
             ''                      , ; // 03 - Cliente/Fornecedor
             ''                      , ; // 04 - Loja
             ''                      , ; // 05 - Nome Cliente
-            IIF(ISINCALLSTACK('QIEA010'),QE6->QE6_PRODUT,QPK->QPK_PRODUT)         , ; // 06 - Código do Produto
+            IIF(ISINCALLSTACK('QIEA010'),QE6->QE6_PRODUT,QPK->QPK_PRODUT)         , ; // 06 - Cï¿½digo do Produto
             SB1->B1_DESC            , ; // 07 - Nome do Produto
             SB8->B8_LOTECTL         , ; // 08 - Lote 
             0                       , ; // 09 - Quantidade
             IIF(ISINCALLSTACK('QIEA010'),QE6->QE6_DTCAD,QPK->QPK_DTPROD)        , ; // 10 - Emissao
             SB1->B1_TIPO             , ; // 11 - Tipo ME (QIE) / PA (QIP)
-            SB8->B8_DFABRIC         , ; // 12 - Data de Fabricação
+            SB8->B8_DFABRIC         , ; // 12 - Data de Fabricaçãoo
             SB8->B8_DTVALID         , ; // 13 - Data de Validade
-            SB8->B8_LOTEFOR         , ; // 14 - Lote Fornecedor (Só Entradas)
+            SB8->B8_LOTEFOR         , ; // 14 - Lote Fornecedor (Sï¿½ Entradas)
             IIF(ISINCALLSTACK('QIEA010'),.F.,.T.)  } // 15 - Manufaturado (.T.) / Revenda (.F.) //AJUSTAR
 
 //IF !U_MTDADLAU(aCabec[15], aCabec, @aLaudo, @cLaudo, .F.)
  //   lContinua := .F.
- //   Alert('Não foram encontrado dados das propriedades fisico quimicas/microbiologicas')
+ //   Alert('Nï¿½o foram encontrado dados das propriedades fisico quimicas/microbiologicas')
 //EndIF
 
 If lContinua
-    //cPathDest  := Alltrim(cGetFile ('Arquivo' + cExtension + '|' + cExtension +'|' , 'Selecione a pasta para gravação.', 1, '', .T., GETF_LOCALHARD+GETF_RETDIRECTORY,.F.))
-    cFileName := If(Right(cPathDest, 1) == '\', '', '\') + alltrim(SB1->B1_COD) + StrTran(cExtension, '*', '')
+    //cPathDest  := Alltrim(cGetFile ('Arquivo' + cExtension + '|' + cExtension +'|' , 'Selecione a pasta para gravaçãoo.', 1, '', .T., GETF_LOCALHARD+GETF_RETDIRECTORY,.F.))
+    cFileName := If(Right(cPathDest, 1) == '\', '', '\') + alltrim(SB1->B1_COD) + Alltrim(aEspec[1])+ StrTran(cExtension, '*', '')
     cNewFile := cPathDest + cFileName
     // ESTABELECE COMUNICACAO COM O MS WORD
     // --------------------------------------
     oWord := OLE_CreateLink()
     OLE_SetProperty(oWord, oleWdVisible, .F.)
-    if oWord == "-1" //Se retornar -1 no debug , apontar o remote do smartclient pro mesmo endereço do ambiente
+    if oWord == "-1" //Se retornar -1 no debug , apontar o remote do smartclient pro mesmo endereï¿½o do ambiente
         Aviso('ATENÇÃO', 'Não foi possível estabelecer a conexao com o MS-Word!', {'OK'}, 2)
     Else
         // -----------------------------------
@@ -133,6 +135,8 @@ If lContinua
         OLE_SetDocumentVar(oWord, 'cInfNutricional'     , aEspec[26])
         OLE_SetDocumentVar(oWord, 'cOgm'                , aEspec[27])
         OLE_SetDocumentVar(oWord, 'cPreparacao'         , aEspec[28])
+        OLE_SetDocumentVar(oWord, 'cMicroMacro'         , aEspec[29])
+        OLE_SetDocumentVar(oWord, 'cContamina'         , aEspec[30])
           
 
 
@@ -204,7 +208,7 @@ If lContinua
                     IF ALLTRIM(QP7->QP7_MINMAX) == "1"
                         cEspec := QP7->QP7_LIE+" á "+QP7->QP7_LSE
                     ELSEIF  ALLTRIM(QP7->QP7_MINMAX) ==  "2" // CONTRIOLA  MINIMO
-                        cEspec := " Acima/Igual á  "+QP7->QP7_LIE 
+                        cEspec := " Acima/Igual á "+QP7->QP7_LIE 
                     ELSEIF  ALLTRIM(QP7->QP7_MINMAX) ==  "3" // CONTRIOLA  MAXIMO 
                         cEspec := " Abaixo/Igual á "+QP7->QP7_LSE
                     ENDIF
@@ -235,7 +239,7 @@ If lContinua
             
             If ZZH->(DbSeek(xFilial('ZZH') + aEspec[4]))
                 
-                If ZZH->&('ZZH_SENS'+cContador) <> 'N' 
+                If ZZH->&('ZZH_SENS'+cContador) <> 'N' .And. !empty(ZZH->&('ZZH_SENS'+cContador))
                     aAdd(aAlerg,{})
                     Aadd(aAlerg[Len(aAlerg)],SX3->X3_TITULO)
                     //C=Contem;N=Nao Contem;P=Pode Conter;D=Contem Derivados 
@@ -247,7 +251,9 @@ If lContinua
                         Case  ZZH->&('ZZH_SENS'+cContador) == 'P'                                                                        
                             Aadd(aAlerg[Len(aAlerg)],'Pode Conter')
                         Case  ZZH->&('ZZH_SENS'+cContador) == 'D'                                                                        
-                            Aadd(aAlerg[Len(aAlerg)],'Contem Derivados')                                               
+                            Aadd(aAlerg[Len(aAlerg)],'Contem Derivados')    
+                        OTHERWISE
+                            Aadd(aAlerg[Len(aAlerg)],'N/A')                                                                            
                     EndCase
                     Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AORI'+cContador)) //Origem
                     Aadd(aAlerg[Len(aAlerg)],ZZH->&('ZZH_AOBS'+cContador)) //Observacoes     
