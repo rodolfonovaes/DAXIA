@@ -13,9 +13,9 @@
 #DEFINE SAYHSPACE 008
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
-#DEFINE MAXITEM   015 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 049        
-#DEFINE MAXITEMP2F 048                                               // pagina 2 em diante sem informação complementar
+#DEFINE MAXITEM   014 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
+#DEFINE MAXITEMP2 042        
+#DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  057                                                // Máxima de caracteres por linha de produtos/serviços
 
@@ -34,7 +34,7 @@ DAXIA FIM - AJUSTE PARA NÃO ESTOURAR A LINHA - REDUZIDO DE 130 PARA 120 - CICERO
 #DEFINE MAXBOXV   600
 #DEFINE INIBOXH   -10
 #DEFINE MAXMENL   080                                                // Máximo de caracteres por linha de dados adicionais
-#DEFINE MAXVALORC 012                                                // Máximo de caracteres por linha de valores numéricos
+#DEFINE MAXVALORC 013                                                // Máximo de caracteres por linha de valores numéricos
 #DEFINE MAXCODPRD 040                                                // Máximo de caracteres do codigo de produtos/servicos
 #DEFINE MAXITEMP4 010
 /*/
@@ -3398,11 +3398,12 @@ For nY := 1 To nLenItens
 		EndIf
 		lLenOdet := .T.
 	Else
-		 
+		 /* RODOLFO - MUDEI ESSE TRECHO PRA BAIXO para a colunas sem ser a descrição do produto ficar no começo
 		 If lLenOdet .Or. nP == 0 .Or. nXFolha < nFolhas
 		 	//QUANDO CAI AQUI IMPRIME A DESCIRCAO DO PRODUTO
 		 	nLenOdet++
 		  	nxlin:=0
+			
 			ImpProd(oDet,oDanfe,aColProd,nLenOdet,@cProd,@nxlin)
 		  	nXFolha := nFolhas 
 		  	//Imprime o Número do Lote abaixo da descrição do produto e FCI quando houver.
@@ -3459,10 +3460,11 @@ For nY := 1 To nLenItens
 						EndIf				
 					EndIf
 				EndIf
-
+				
 		  	lLenOdet := .F.
 		  	nP++
 		 EndIf
+		*/
 		//oDanfe:Say(nLinha-20, aColProd[1][1] + 2, aAux[1][1][nY], oFont07:oFont)
 		//oDanfe:Say(nLinha-20, aColProd[2][1] + 2, aAux[1][2][nY], oFont07:oFont)
 		
@@ -3505,6 +3507,73 @@ For nY := 1 To nLenItens
 		
 		nAuxH2 := len(aAux[1][19][nY]) + (aColProd[14][1] + ((aColProd[14][2] - aColProd[14][1]) - RetTamTex(aAux[1][19][nY], oFont07:oFont, oDanfe))) //ALIQ IPI
 		oDanfe:Say(nLinha-20, nAuxH2-2, aAux[1][19][nY], oFont07:oFont)
+
+
+		 If lLenOdet .Or. nP == 0 .Or. nXFolha < nFolhas
+		 	//QUANDO CAI AQUI IMPRIME A DESCIRCAO DO PRODUTO
+		 	nLenOdet++
+		  	nxlin:=0
+			
+			ImpProd(oDet,oDanfe,aColProd,nLenOdet,@cProd,@nxlin)
+		  	nXFolha := nFolhas 
+		  	//Imprime o Número do Lote abaixo da descrição do produto e FCI quando houver.
+			If MV_PAR04 == 2
+		  			DbSelectArea("SD2")
+		  			dbSetOrder(3)	
+					lLote := .T.
+					If MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]))		
+						If Type("oDet["+Alltrim(STR(nLenOdet))+"]:_PROD:_RASTRO") <> 'U'
+							If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT)	<>  Alltrim(SD2->D2_LOTECTL)
+								While xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA+PADR(cProd,TAMSX3("D2_COD")[1]) == SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA + D2_COD)
+									If Alltrim(oDet[nLenOdet]:_PROD:_RASTRO:_NLOTE:TEXT) ==  Alltrim(SD2->D2_LOTECTL)
+										lLote := .T.
+										Exit
+									Else
+										lLote := .F.
+									EndIf
+
+									SD2->(DbSkip())
+								EndDo
+							Else
+								lLote := .T.
+							EndIf
+						EndIf
+						If lLote
+							If nLenOdet == 1
+								nAjuste	:= 0
+							Else
+								nAjuste := 8
+							EndIf
+							Lotectl := SD2->D2_LOTECTL
+							cFCI := SD2->D2_FCICOD
+							cMsgPad := "Resolucao do Senado Federal nº 13/12, Numero da FCI "
+							
+							If !Empty(cFCI)
+								If nxlin == 0
+									oDanfe:Say(nLinha-nAjustaPro - 16 - nAjuste , aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro - 7 -nAjuste , aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 0 -nAjuste , aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								Else							
+									oDanfe:Say(nLinha-nAjustaPro-7 - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 2 - nAjuste , aColProd[2][1] + 2,cMsgPad, oFont07:oFont)
+									oDanfe:Say(nLinha+nAjustaPro + 11 - nAjuste, aColProd[2][1] + 2, cFCI, oFont07:oFont)
+								EndIf
+							Else
+								If !Empty(Lotectl)
+									If nxlin == 0
+										oDanfe:Say(nLinha-15 - nAjuste, aColProd[2][1] + 2 , "Lote: "+Lotectl, oFont07:oFont)
+									Else
+										oDanfe:Say(nLinha-9  - nAjuste, aColProd[2][1] + 2, "Lote: "+Lotectl, oFont07:oFont)
+									EndIf
+								EndIf
+							EndIf		
+						EndIf				
+					EndIf
+				EndIf
+				
+		  	lLenOdet := .F.
+		  	nP++
+		 EndIf		
 	EndIf	
 
 	If aAux[1][1][nY] == "-"
@@ -3514,7 +3583,11 @@ For nY := 1 To nLenItens
 			If !Empty(cFCI)
 				nLinha := nLinha + 9
 			Else
-				nLinha := nLinha + 9
+				If !empty(Lotectl)
+					nLinha := nLinha + 7
+				Else
+					nLinha := nLinha + 4
+				EndIf
 			EndIf
 		else 
 			If !Empty(cFCI)
@@ -5184,6 +5257,7 @@ Função para imprimir apenas o produto e a descrição sem que as informações sejam
 //--------------------------------------------------------------------------------------------
 Static Function ImpProd(oDet,oDanfe,aColProd,nLenOdet,cProd,nxlin)
 Local nX := 0
+Local nTamanho := 0
 Local nLenDet := Len(oDet)
 Local aProd := {}
 Local aDesc := {}
@@ -5194,20 +5268,30 @@ For nX := 1 To nLenDet
 	Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto
 Next
 
+
+
 If nLenOdet == 1
-	oDanfe:Say(nLinha-20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
-	oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
-	if len(aDesc[nLenOdet][1])>MAXITEMC
-		oDanfe:Say(nLinha-13, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
-		nxlin := 7
-	endif
+	//nLinha -= 20
+	While nTamanho < Len(Alltrim(aDesc[nLenOdet][1]))
+		
+		If nTamanho == 0
+			oDanfe:Say(nLinha - 20, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+		EndIf
+		oDanfe:Say(nLinha - 20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],nTamanho + 1,MAXITEMC), oFont07:oFont)
+		nTamanho += MAXITEMC
+		nLinha += 7
+	EndDo
 Else
-	oDanfe:Say(nLinha-27, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
-	oDanfe:Say(nLinha-27, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],1,MAXITEMC), oFont07:oFont)
-	if len(aDesc[nLenOdet][1])>MAXITEMC
-		oDanfe:Say(nLinha-20, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],MAXITEMC+1,MAXITEMC*2), oFont07:oFont)
-		nxlin := 7
-	endif
+	//nLinha -= 27
+	While nTamanho < Len(Alltrim(aDesc[nLenOdet][1]))
+		
+		If nTamanho == 0
+			oDanfe:Say(nLinha - 27, aColProd[1][1] + 2,aProd[nLenOdet][1], oFont07:oFont)
+		EndIf
+		oDanfe:Say(nLinha - 27, aColProd[2][1] + 2, substr(aDesc[nLenOdet][1],nTamanho + 1,MAXITEMC), oFont07:oFont)
+		nTamanho += MAXITEMC
+		nLinha += 7
+	EndDo
 EndIf
 cProd := aProd[nLenOdet][1]
 Return

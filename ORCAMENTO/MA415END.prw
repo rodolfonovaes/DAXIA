@@ -1,3 +1,5 @@
+#INCLUDE "FWMVCDEF.CH"
+#INCLUDE "PROTHEUS.CH"
 User Function MA415END()
 Local nTipo   := PARAMIXB[1]
 Local nOper   := PARAMIXB[2]
@@ -9,4 +11,8 @@ If nTipo == 1 .And. nOper == 1 .And. Isincallstack('A415COPIA')
     SCJ->CJ_XTIME := TIME()
     MsUnLock()
 EndIF
+
+SetKey(VK_F7,{||U_RntOrcDx()})
+SetKey(VK_F8,{||U_OrcRntIt()})    
+
 Return  

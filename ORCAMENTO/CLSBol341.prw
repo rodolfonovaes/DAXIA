@@ -34,7 +34,7 @@ User Function CLSBol341()
 	Local aLog        := {}
 	Local aItens      := {}
 	Local i
-	Local nTipoCart   := 2 //109 - Com Registro
+	Local nTipoCart   := 2 //109 - Com Registro 
 	//Local cAGeCta     := GetMV("MV_X_BO341")
 
 	Private cPerg := padr("BOL341",Len(SX1->X1_GRUPO))
@@ -101,9 +101,11 @@ User Function CLSBol341()
 	cSql += " AND SE1.E1_SERIE = '" + cSerie + "' "
 
 	If nImpresso == 1 //Sim
-		cSql += "                               AND SE1.E1_IMPBOL = 'S' "
+//		cSql += "                               AND SE1.E1_IMPBOL = 'S' "
+		cSql += "                               AND SE1.E1_PORTADO <> '   ' "
 	ElseIf nImpresso == 2 //Nao
 		cSql += "                               AND SE1.E1_IMPBOL IN ('N', ' ') "
+		cSql += "                               AND SE1.E1_PORTADO = '   ' "
 	EndIf
 
 	If !Empty( cNotaAte )
@@ -122,7 +124,8 @@ User Function CLSBol341()
 	If FunName() == "SPEDNFE"
 		
 		cSql += " AND SA1.A1_YBOLETO = 'S' "
-		
+		cSql += " AND ( SA1.A1_BCO1 = '341' OR SA1.A1_BCO2 = '341' ) "
+		cSql += " AND SA1.A1_BCO1 <> '   ' "
 		If nConsidera == 1
 			cSQL += " AND F2_FIMP = 'S' "
 		Endif
@@ -158,6 +161,17 @@ User Function CLSBol341()
 
 	cMsg := ""
 	While !TMPSE1->( Eof() )
+
+		//Verifica se a condição de pagamento não é ANT (Antecipado)
+		If Posicione("SF2",1,xFilial("SF2")+TMPSE1->E1_NUM+TMPSE1->E1_PREFIXO+TMPSE1->A1_COD+TMPSE1->A1_LOJA,"F2_COND") == "ANT"
+		//	Alert("Titulo " + SE1->E1_NUM + " prefixo " + SE1->E1_PREFIXO + " não gerará boleto por ser condição de pagamento Antecipado")
+		//	dbSelectArea("SE1")
+			TMPSE1->( DbSkip() )
+			Loop 
+		Endif
+
+
+
 		If !Empty(TMPSE1->E1_BARRA) .And. SUBSTR(TMPSE1->E1_BARRA, 1, 3) <> cBanco
 			cMsg += IIF(!Empty(cMSg), "  **  ", "") + TMPSE1->E1_PREFIXO + "-" + TMPSE1->E1_NUM + "-" + TMPSE1->E1_PARCELA
 		Else

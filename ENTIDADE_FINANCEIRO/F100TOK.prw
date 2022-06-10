@@ -1,13 +1,14 @@
+#INCLUDE "PROTHEUS.CH"
 
 /*
-F100TOK - Validações Específicas de Usuário
-Descrição:	O ponto se encontra no final da função e deve ser utilizado para validações especificas do usuario onde será controlada pelo 
-retorno do ponto de entrada o qual se for .F. o processo será interrompido e se .T. será validado.
-Daxia:	Validar na digitação da movimentação bancária os seguintes dados: 
-        Centro de Custo e/ou Item Contábil validando o cadastro da conta contábil da natureza, se existe a obrigação do ccusto/item (plano de contas).
-@author 	Rossana Barbosa
-@since		14/05/2021
-@version 	1.0
+  F100TOK - Validações Específicas de Usuário
+  Descrição:	O ponto se encontra no final da função e deve ser utilizado para validações especificas do usuario onde será controlada pelo 
+  retorno do ponto de entrada o qual se for .F. o processo será interrompido e se .T. será validado.
+  Daxia:	Validar na digitação da movimentação bancária os seguintes dados: 
+         Centro de Custo e/ou Item Contábil validando o cadastro da conta contábil da natureza, se existe a obrigação do ccusto/item (plano de contas).
+  @author 	Rossana Barbosa
+  @since		14/05/2021
+  @version 	1.0
 */
 
 User Function F100TOK()
@@ -32,7 +33,8 @@ cClvl   := M->E5_CLVLDB
 
 If !lF100Auto
 
-/*	If Empty(cCtaD)
+/*
+	If Empty(cCtaD)
 		Help('', 1, 'F100TOK01',, 'Favor informar a Conta Cont�bil no cadastro da Natureza.', 1, 0)
 		lRet := .F.
 	Else
@@ -45,7 +47,8 @@ If !lF100Auto
 				lRet := .F.
 			Endif
 		Endif
-	Endif*/
+	Endif
+*/
 
 	IF !EMPTY(cCtaD)
 
@@ -176,8 +179,6 @@ If !lF100Auto
 	EndIf	
    	
 Endif
-
-
 
 RestArea(aArea)
 

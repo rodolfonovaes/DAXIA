@@ -67,8 +67,8 @@ Aadd(aEspec,SB1->B1_XLEGISL)    //16cLegislacao
 Aadd(aEspec,SB1->B1_XFUNCIO)    //17cFuncionalidade  
 Aadd(aEspec,SB5->B5_XAPLICA)    //18cAplicacoes   ALTERAR PARA B5!!!!  
 Aadd(aEspec,SB1->B1_XOBSERV)    //19cObservacoes    
-Aadd(aEspec,IIF(SB1->B1_GRUPO == '0002',SB5->B5_XINCNAM,'Não Aplicavel'))    //20 INC NAME
-Aadd(aEspec,IIF(SB1->B1_GRUPO == '0002',SB5->B5_XCAS,'Não Aplicavel'))       //21 CAS
+Aadd(aEspec,SB5->B5_XINCNAM)    //20 INC NAME
+Aadd(aEspec,SB5->B5_XCAS)       //21 CAS
 Aadd(aEspec,SB5->B5_XCOMPOS)       //22 COMPOSICAO
 Aadd(aEspec,U_zCmbDesc(SB1->B1_XORIG,'B1_XORIG'))       //23 ORIGEM
 Aadd(aEspec,SB1->B1_XPAIS)       //24 PAIS

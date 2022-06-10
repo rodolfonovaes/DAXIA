@@ -15,6 +15,7 @@ User Function FA050GRV
 	Local 	a_AreaATU   := GetArea()
 	Local 	a_AreaSE2   := SE2->(GetArea())
 	Local 	c_UpdQuery  := ""
+	Local 	cOrigem		:= SE2->E2_ORIGEM
 	Private c_Hist      := ""
 	Private c_Prefixo   := ""
 	Private c_Num       := ""
@@ -22,6 +23,14 @@ User Function FA050GRV
 	Private c_Tipo      := ""
 	Private c_Fornece   := ""
 	Private c_Loja      := ""
+
+
+	If Alltrim(cOrigem) == 'TOTVSGFE'
+		RecLock('SE2', .F.)
+		SE2->E2_PREFIXO := 'GFE'	
+		MsUnlock()
+
+	EndIf
 
 	c_Hist := SE2->E2_HIST  		//Agregando o conteudo do campo posicionado E2_CC do titulo principal(pai) para a variavel _cCC
 
@@ -46,7 +55,7 @@ User Function FA050GRV
 	c_UpdQuery += " AND E2_TITPAI = '" + c_Chave + "'"
 
 	TcSqlExec(c_UpdQuery)
-	
+
 	RestArea(a_AreaATU)                
 	RestArea(a_AreaSE2)
 

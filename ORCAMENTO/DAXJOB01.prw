@@ -86,6 +86,9 @@ Local cCondPag  := '001'
 Local n         := 0
 Local dDataDe   := Posicione('DA0',1,xFilial('DA0') + cCodTab,'DA0_DATDE')
 Local aArea	:= GetArea()
+Local nVlrOri   := 0
+Local cProd     := ''
+Local nCusto    := 0
 PRIVATE lMsErroAuto := .F.
 /*
 GETMV('ES_DTDA0')
@@ -97,7 +100,7 @@ Conout('DAXTAB - Inicio do processo - ' + time())
 //Atualizo MP e PI
 UpdPA(aRet)
 
-cQuery := "	SELECT DISTINCT BZ_COD, BZ_CUSTD ,BZ_MARKUP, B1_XMOEDVE ,ROW_NUMBER() OVER(ORDER BY BZ_COD) AS QTD " 
+cQuery := "	SELECT DISTINCT BZ_COD, BZ_CUSTD ,BZ_MARKUP, B1_XMOEDVE ,B1_TIPO ,ROW_NUMBER() OVER(ORDER BY BZ_COD) AS QTD ,SBZ.R_E_C_N_O_ AS REC " 
 cQuery += " FROM " + RetSqlName( "SBZ" ) + " SBZ "
 cQuery += " INNER JOIN " + RetSqlName( "SB1" ) + " SB1 "
 cQuery += " ON SB1.B1_COD = SBZ.BZ_COD AND SB1.D_E_L_E_T_ = ' ' AND B1_FILIAL = '" + xFilial('SB1') + "' "
@@ -109,7 +112,7 @@ cQuery += "     SBZ.BZ_COD <=  '" + aRet[2] + "'	AND "
 cQuery += "     (SB1.B1_TIPO = 'ME' OR  "	  		
 cQuery += "     SB1.B1_TIPO = 'PA'  OR  SB1.B1_TIPO = 'PI') AND "
 cQuery += "     SB1.B1_MSBLQL = '2'   "		  		
-cQuery += "     GROUP BY BZ_COD,BZ_CUSTD,BZ_MARKUP,B1_XMOEDVE "
+cQuery += "     GROUP BY BZ_COD,BZ_CUSTD,BZ_MARKUP,B1_XMOEDVE , B1_TIPO ,SBZ.R_E_C_N_O_ "
 
 If Select(cAliasQry) > 0
     (cAliasQry)->(DbCloseArea())
@@ -171,6 +174,35 @@ If !(cAliasQry)->(Eof())
                 aadd(aItensNovo,aItemNovo)			
             EndIf
         EndIf
+
+		If xFilial('SBZ') == '0103' .And. Alltrim((cAliasQry)->B1_TIPO) == 'PA'
+			SBZ->(DbGoTo((cAliasQry)->REC))
+			nVlrOri := SBZ->BZ_CUSTD
+			cProd   := SBZ->BZ_COD
+
+			SBZ->(DbSetOrder(1))
+			If SBZ->(DbSeek('0102'+cProd))
+				If SBZ->BZ_MCUSTD  == '1'
+					nCusto := nVlrOri + SuperGetMV('ES_CUSADDR',.F.,0.23,'0102')
+				Else
+					nCusto := nVlrOri + SuperGetMV('ES_CUSADDD',.F.,0.05,'0102')
+				EndIF
+				RecLock('SBZ', .F.)
+				SBZ->BZ_CUSTD := nCusto
+				MsUnlock()
+			EndIf
+
+			If SBZ->(DbSeek('0104'+cProd))
+				If SBZ->BZ_MCUSTD  == '1'
+					nCusto := nVlrOri + SuperGetMV('ES_CUSADDR',.F.,0.40,'0104')
+				Else
+					nCusto := nVlrOri + SuperGetMV('ES_CUSADDD',.F.,0.08,'0104')
+				EndIF
+				RecLock('SBZ', .F.)
+				SBZ->BZ_CUSTD := nCusto
+				MsUnlock()
+			EndIf    			
+		EndIf
         (cAliasQry)->(DbSkip())   
     EndDo
 
@@ -374,7 +406,7 @@ IF SE4->(DbSeek(xFilial('SE4') + cCondPag))
 		nParc	:= Len(Separa(cParc,'+'))
 	EndIf
 
-	If &cParc == 0
+	If &cParc == 0 .Or. Empty(cParc)
 		nRet	:= 0
 	Else
 		nRet := ((nPrcFin / 30) * Round(((&cParc)/nParc),0)) 

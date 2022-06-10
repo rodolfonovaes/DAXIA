@@ -10,7 +10,7 @@
     (examples)
     @see (links_or_references)
     /*/
-User Function MTA455P()
+ZUser Function MTA455P()
 Local lRet := .T.
 Public  _cLibCred := '  '
 _cLibCred := SC9->C9_BLCRED

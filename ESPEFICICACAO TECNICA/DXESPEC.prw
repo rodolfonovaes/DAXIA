@@ -145,13 +145,19 @@ If lContinua
             IF QE8->(DbSeek(xFilial('QE8') + aEspec[4] + aEspec[2]))
                 While xFilial('QE8') + aEspec[4] + aEspec[2] == QE8->(QE8_FILIAL + QE8_PRODUT + QE8_REVI) 
                     If QE8->QE8_LABOR == 'ORGANO'
-                        aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        If aScan(aOrgano,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        EndIf
                     EndIf
                     If ALLTRIM(QE8->QE8_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        If aScan(aMicro,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        EndIf
                     EndIf
                     If ALLTRIM(QE8->QE8_LABOR) == 'FISQUI'
-                        aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE8->QE8_ENSAIO,'QE1_DESCPO'),QE8->QE8_TEXTO})
+                        EndIf
                     EndIf                    
                     QE8->(DbSkip())
                 EndDo
@@ -173,12 +179,25 @@ If lContinua
                         cEspec := " Abaixo/Igual á "+QE7->QE7_LSE
                     ENDIF
 
+                    If !empty(QE7->QE7_UNIMED)
+                        SAH->(DbSetOrder(1))
+                        If SAH->(DbSeek(xFilial('SAH') + QE7->QE7_UNIMED))
+                            cEspec += ' ' + SAH->AH_UMRES
+                        EndIf
+                    EndIf
+                    
                     If ALLTRIM(QE7->QE7_LABOR) == 'FISQUI'
-                        aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aFisico,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        EndIf
                     ElseIF ALLTRIM(QE7->QE7_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        If aScan(aMicro,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aMicro,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})
+                        EndIf
                     ElseIf ALLTRIM(QE7->QE7_LABOR) == 'ORGANO'
-                        aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})                        
+                        If aScan(aOrgano,{|x| AllTrim(x[1])==Alltrim(Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'))}) == 0
+                            aadd(aOrgano,{Posicione('QE1',1,xFilial('QE1') + QE7->QE7_ENSAIO,'QE1_DESCPO'),cEspec})                        
+                        EndIf
                     EndIf
                     QE7->(DbSkip())
                 EndDo
@@ -188,10 +207,14 @@ If lContinua
             IF QP8->(DbSeek(xFilial('QE8') + aEspec[4] + aEspec[2]))
                 While xFilial('QP8') + aEspec[4] + aEspec[2] == QP8->(QP8_FILIAL + QP8_PRODUT + QP8_REVI)
                     If QP8->QP8_LABOR == 'ORGANO'
-                        aadd(aOrgano,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
+                        If aScan(aOrgano,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aOrgano,{Alltrim(Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO')),QP8->QP8_TEXTO})
+                        EndIf
                     EndIf
                     If ALLTRIM(QP8->QP8_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
+                        If aScan(aMicro,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'),QP8->QP8_TEXTO})
+                        EndIf
                     EndIf    
                     If ALLTRIM(QP8->QP8_LABOR) == 'FISQUI'
                         If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP8->QP8_ENSAIO,'QP1_DESCPO'))}) == 0
@@ -213,14 +236,25 @@ If lContinua
                         cEspec := " Abaixo/Igual á "+QP7->QP7_LSE
                     ENDIF
 
+                    If !empty(QP7->QP7_UNIMED)
+                        SAH->(DbSetOrder(1))
+                        If SAH->(DbSeek(xFilial('SAH') + QP7->QP7_UNIMED))
+                            cEspec += ' ' + SAH->AH_UMRES
+                        EndIf
+                    EndIf
+
                     If ALLTRIM(QP7->QP7_LABOR) == 'FISQUI'
                         If aScan(aFisico,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'))}) == 0
                             aadd(aFisico,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})
                         EndIf
                     ElseIF ALLTRIM(QP7->QP7_LABOR) == 'MICRO'
-                        aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})
+                        If aScan(aMicro,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aMicro,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})
+                        EndIf
                     ElseIf ALLTRIM(QP7->QP7_LABOR) == 'ORGANO'
-                        aadd(aOrgano,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})                                                
+                        If aScan(aOrgano,{|x| AllTrim(x[1])==Alltrim(Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'))}) == 0
+                            aadd(aOrgano,{Posicione('QP1',1,xFilial('QP1') + QP7->QP7_ENSAIO,'QP1_DESCPO'),cEspec})                                                
+                        EndIf
                     EndIf
                     QP7->(DbSkip())
                 EndDo
@@ -317,3 +351,58 @@ EndIf
 Return cNewFile
 
 
+/*/{Protheus.doc} zCmbDesc
+Função que retorna a descrição da opção do Combo selecionada
+@type function
+@author Atilio
+@since 28/08/2016
+@version 1.0
+	@param cChave, character, Chave de pesquisa dentro do combo
+	@param cCampo, character, Campo do tipo combo
+	@param cConteudo, character, Conteúdo no formato de combo
+	@return cDescri, Descrição da opção do combo
+	@example
+	u_zCmbDesc("D", "C5_TIPO", "") //Utilizando por Campo
+	u_zCmbDesc("S", "", "S=Sim;N=Não;A=Ambos;") //Utilizando por Conteúdo
+/*/
+User Function zCmbDesc(cChave, cCampo, cConteudo)
+	Local aArea       := GetArea()
+	Local aCombo      := {}
+	Local nAtual      := 1
+	Local cDescri     := ""
+	Default cChave    := ""
+	Default cCampo    := ""
+	Default cConteudo := ""
+	
+	//Se o campo e o conteúdo estiverem em branco, ou a chave estiver em branco, não há descrição a retornar
+	If (Empty(cCampo) .And. Empty(cConteudo)) .Or. Empty(cChave)
+		cDescri := ""
+	Else
+		//Se tiver campo
+		If !Empty(cCampo)
+			aCombo := RetSX3Box(GetSX3Cache(cCampo, "X3_CBOX"),,,1)
+			
+			//Percorre as posiçÃµes do combo
+			For nAtual := 1 To Len(aCombo)
+				//Se for a mesma chave, seta a descrição
+				If cChave == aCombo[nAtual][2]
+					cDescri := aCombo[nAtual][3]
+				EndIf
+			Next
+			
+		//Se tiver conteúdo
+		ElseIf !Empty(cConteudo)
+			aCombo := StrTokArr(cConteudo, ';')
+			
+			//Percorre as posiçÃµes do combo
+			For nAtual := 1 To Len(aCombo)
+				//Se for a mesma chave, seta a descrição
+				If cChave == SubStr(aCombo[nAtual], 1, At('=', aCombo[nAtual])-1)
+					cDescri := SubStr(aCombo[nAtual], At('=', aCombo[nAtual])+1, Len(aCombo[nAtual]))
+				EndIf
+			Next
+		EndIf
+	EndIf
+	
+	RestArea(aArea)
+Return cDescri

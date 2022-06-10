@@ -224,7 +224,7 @@ ENDIF
 
 
 U_UpdTotal() //Chamo essa função apenas para atualizar o valor do rodapé na moeda REAL
-U_RetFrete() // no caso de deletar a linha eu recalculo o frete
+//U_RetFrete() // no caso de deletar a linha eu recalculo o frete 
 
 
 TMP1->(DbGoTo(nLinha))

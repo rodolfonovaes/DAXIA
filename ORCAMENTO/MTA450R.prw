@@ -12,6 +12,7 @@
     @see (links_or_references)
     /*/
 User Function  MTA450R()
+Local aArea := GetArea()
 
 Reclock("SC9",.F.)
 // Log de Atualização
@@ -27,4 +28,14 @@ SC5->C5_BLEST   := SC9->C9_BLEST
 SC5->C5_BLCRED  := SC9->C9_BLCRED
 SC5->C5_XLOGCRE := UsrRetName( retcodusr() ) + ";" + DTOC(dDataBase) + ";" + Time()  + ";" + FUNNAME() + ";" + SC9->C9_BLCRED
 MsUnlock()
+
+SA1->(DbSetOrder(1))
+If SA1->(DbSeek(xFilial('SA1') + SC5->(C5_CLIENTE + C5_LOJACLI)))
+    RecLock('SA1', .F.)
+    SA1->A1_SALPEDL := SC5->C5_XVLTOT
+    MsUnlock()
+EndIf
+
+
+RestArea(aArea)
 Return 

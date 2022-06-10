@@ -184,16 +184,17 @@ Do While SCK->( .not. EoF() ) .and. SCK->CK_FILIAL + SCK->CK_NUM == SCJ->CJ_FILI
            cMoeda := "UFIR"
    EndCase
 
-   oPrn:Say( nLin, 0065, SCK->CK_DESCRI, oFont10 ) // Produto
+   oPrn:Say( nLin, 0065, SUBSTR(SCK->CK_DESCRI,1,40), oFont10 ) // Produto
    oPrn:Say( nLin, 0680, Left( SCK->CK_XPROCED, 15 ), oFont10 ) // Origem Produto
    oPrn:Say( nLin, 1000, Transform( SCK->CK_QTDVEN, "@E 9,999,999.99" ), oFontC10 ) // Quantidade
    oPrn:Say( nLin, 1220, SCK->CK_UM, oFont10 ) // Unid. Medida
    oPrn:Say( nLin, 1350, cMoeda, oFont10 ) // Moeda Produto
    oPrn:Say( nLin, 1635, Transform( SCK->CK_PRCVEN, "@E 9,999,999.99" ), oFontC10 ) // Preco de Venda
-   oPrn:Say( nLin, 1880, Transform( SCK->CK_XVLIPI, "@E 99,999,999.9" ), oFontC10 ) // % IPI
-   oPrn:Say( nLin, 2100, Transform( SCK->CK_XVLICM, "@E 99,999,999.9" ), oFontC10 ) // % ICMS
+   oPrn:Say( nLin, 1880, Transform( SCK->CK_XVLIPI, "@E 99,999,999.99" ), oFontC10 ) // % IPI
+   oPrn:Say( nLin, 2100, Transform( SCK->CK_XVLICM, "@E 99,999,999.99" ), oFontC10 ) // % ICMS
    oPrn:Say( nLin, 2400, Transform( nVlrTot,        "@E 9,999,999.99" ), oFontC10 ) // Valor total do IPI
-   oPrn:Say( nLin, 2800, DtoC( SCK->CK_ENTREG ), oFont10 ) // Data de Entrega
+   oPrn:Say( nLin, 2750, DtoC( SCK->CK_ENTREG ), oFont10 ) // Data de Entrega
+   oPrn:Say( nLin, 3000, Transform( SCK->CK_XVLFRET, "@E 99,999,999.99" ), oFont10 ) // Data de Entrega
    nLin += 15
 
    oPrn:Say( nLin, 0065, Replicate( "_", 525 ), oFont06 )
@@ -339,7 +340,11 @@ EndCase
 
 oPrn:Say( 0567, 1820, Upper( cFraseFrete ), oFont12 )
 oPrn:Say( 0567, 2400, AllTrim( SCJ->CJ_XCONTAT ), oFont12 )
-oPrn:Say( 0623, 1820, "Destino", oFont14N )
+
+oPrn:Say( 0623, 1820, "Valor Frete:", oFont14N )
+oPrn:Say( 0623, 2000, Transform( SCJ->CJ_XVLFRET, "@E 9,999,999.99" ), oFont12 )
+
+oPrn:Say( 0679, 1820, "Destino", oFont14N )
 
 cRespTipcli := ""
 Do Case
@@ -355,11 +360,11 @@ Do Case
         cRespTipcli := "Importacao/Importacao"
 EndCase
 
-oPrn:Say( 0660, 1820, Upper( cRespTipcli ), oFont12 )
-oPrn:Say( 0623, 2400, "Vendedor", oFont14N )
-oPrn:Say( 0660, 2400, AllTrim( SCJ->CJ_XNOMEV ), oFont12 )
-oPrn:Say( 0716, 1820, "Validade da Proposta:", oFont14N )
-oPrn:Say( 0716, 2200, DtoC( SCJ->CJ_VALIDA ), oFont12 )
+oPrn:Say( 0716, 1820, Upper( cRespTipcli ), oFont12 )
+oPrn:Say( 0679, 2400, "Vendedor", oFont14N )
+oPrn:Say( 0716, 2400, AllTrim( SCJ->CJ_XNOMEV ), oFont12 )
+oPrn:Say( 0772, 1820, "Validade da Proposta:", oFont14N )
+oPrn:Say( 0772, 2200, DtoC( SCJ->CJ_VALIDA ), oFont12 )
 
 /*------------------------------------+
 | Cabeçalho dos Itens                 |
@@ -369,7 +374,8 @@ oPrn:Say( 0840, 1680, "PREÇO",              oFont12N )
 oPrn:Say( 0840, 2000, "%",                  oFont12N )
 oPrn:Say( 0840, 2200, "%",                  oFont12N )
 oPrn:Say( 0840, 2400, "TOTAL",              oFont12N )
-oPrn:Say( 0840, 2800, "DATA P/",            oFont12N )
+oPrn:Say( 0840, 2750, "DATA P/",            oFont12N )
+oPrn:Say( 0840, 3000, "VALOR",              oFont12N )
 oPrn:Say( 0880, 0065, "PRODUTO",            oFont12N )
 oPrn:Say( 0880, 0680, "PROCEDÊNCIA",        oFont12N )
 oPrn:Say( 0880, 1090, "QTDE",               oFont12N )
@@ -379,7 +385,8 @@ oPrn:Say( 0880, 1680, "UNITÁRIO",           oFont12N )
 oPrn:Say( 0880, 2000, "IPI",                oFont12N )
 oPrn:Say( 0880, 2200, "ICMS",               oFont12N )
 oPrn:Say( 0880, 2400, "DO ITEM C/IPI",      oFont12N )
-oPrn:Say( 0880, 2800, "ENTREGA",            oFont12N )
+oPrn:Say( 0880, 2750, "ENTREGA",            oFont12N )
+oPrn:Say( 0880, 3000, "FRETE",              oFont12N )
 
 nLin := 940
 nPagina++ // Incremento de pagina

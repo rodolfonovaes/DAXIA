@@ -200,6 +200,7 @@ Descrição:		Instrucão da linha 4
 User Function PDFBOL341(aItens, aLog, nTipoCart)
 	Local nLen := Len( aItens )
 	Local i
+	Local lFirst := .T.
 
 	Private oPrn
 	Private cPathServG := "\bol_gerados"
@@ -214,45 +215,55 @@ User Function PDFBOL341(aItens, aLog, nTipoCart)
 		DbSetOrder(1) // E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
 		DbSeek( aItens[i, 5] + aItens[i, 6] + aItens[i, 7] + aItens[i, 8] + aItens[i, 9] )
 
-		//Nome: BOL104_NUMERO_PARCELA+_CLIENTE+LOJA
-		cNomArq := "bol341_" + ;
-		AllTrim(SE1->E1_NUM) + "_" + ;
-		AllTrim(IIF(Empty(SE1->E1_PARCELA), "U", SE1->E1_PARCELA)) + "_" +;
-		AllTrim(SE1->E1_CLIENTE) + AllTrim(SE1->E1_LOJA) + ".pdf"
+		// Verifica se o título pertence ao banco Itaú
+		If SE1->E1_PORTADO == "341" .or. Empty(SE1->E1_PORTADO)
 
-		oPrn   := FWMSPrinter():New(cNomArq, IMP_SPOOL, .F.,         , .T.)
+			//Nome: BOL104_NUMERO_PARCELA+_CLIENTE+LOJA
+			cNomArq := "bol341_" + ;
+			AllTrim(SE1->E1_NUM) + "_" + ;
+			AllTrim(IIF(Empty(SE1->E1_PARCELA), "U", SE1->E1_PARCELA)) + "_" +;
+			AllTrim(SE1->E1_CLIENTE) + AllTrim(SE1->E1_LOJA) + ".pdf"
 
-		oPrn:SetResolution(78) //Tamanho estipulado para a Danfe
-		oPrn:SetPortrait()
-		oPrn:SetPaperSize(DMPAPER_A4)
-		oPrn:SetMargin(60,60,60,60)
-		oPrn:nDevice := IMP_PDF
-		// ----------------------------------------------
-		// Define para salvar o PDF
-		// ----------------------------------------------
-		oPrn:cPathPDF := cPathTemp
+			oPrn   := FWMSPrinter():New(cNomArq, IMP_SPOOL, .F.,         , .T.)
 
-		oPrn:Setup()
+			oPrn:SetResolution(78) //Tamanho estipulado para a Danfe
+			oPrn:SetPortrait()
+			oPrn:SetPaperSize(DMPAPER_A4)
+			oPrn:SetMargin(60,60,60,60)
+			oPrn:nDevice := IMP_PDF
+			// ----------------------------------------------
+			// Define para salvar o PDF
+			// ----------------------------------------------
+			oPrn:cPathPDF := cPathTemp
+//			If lFirst
+//				oPrn:Setup()
+//				lFirst := .F.
+//			Endif
 
-		ProcBol(aItens[i], @aLog, nTipoCart)
+//			If oPrn:lSERVER == .F.
+//				Exit
+//			Endif
 
-		//Deleta se ja existir no TEMP
-		FErase(oPrn:cPathPDF+cNomArq)
+			ProcBol(aItens[i], @aLog, nTipoCart)
 
-		//oPrn:Preview()//Visualiza antes de imprimir
-		oPrn:Print()
+			//Deleta se ja existir no TEMP
+			FErase(oPrn:cPathPDF+cNomArq)
 
-		If !File(cPathServG)
-			MAKEDIR(cPathServG)
-		EndIf
+			//oPrn:Preview()//Visualiza antes de imprimir
+			oPrn:Print()
 
-		//Deleta se ja existir no Servidor
-		FErase(cPathServG+"\"+cNomArq)
-		//Copia PDF - TEMP para o Server (pasta Gerados)
-		CpyT2S(oPrn:cPathPDF + cNomArq, cPathServG)
+			If !File(cPathServG)
+				MAKEDIR(cPathServG)
+			EndIf
 
-		FreeObj(oPrn)
-		oPrn := Nil
+			//Deleta se ja existir no Servidor
+			FErase(cPathServG+"\"+cNomArq)
+			//Copia PDF - TEMP para o Server (pasta Gerados)
+			CpyT2S(oPrn:cPathPDF + cNomArq, cPathServG)
+
+			FreeObj(oPrn)
+			oPrn := Nil
+		Endif
 	Next
 
 Return Len(aLog) > 0
@@ -392,8 +403,7 @@ Static Function GetBolDado(aItens, aLog, nTipoCart)
 	// Carregando dados do Documento
 	DbSelectArea("SE1")
 	DbSetOrder(1) // E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
-	SE1->(DbGoTo(aItens[11]))
-	If aItens[11]  <> SE1->(RECNO())
+	If !DbSeek( aItens[5] + aItens[6] + aItens[7] + aItens[8] + aItens[9] )
 		AAdd( aLog, "Erro Título " + aItens[6] + "-" + aItens[7] + ". Título não encontrado. Filial: " + aItens[5] + ", Prefíxo: " + aItens[6] + ", Numero: " + aItens[7] + ", Parcela: " + aItens[8] )
 		Return .F.
 	EndIf
@@ -815,9 +825,6 @@ STATIC Function PDFPrinter()
 	Private oFont8     := TFont():New( "Arial"          , 09, 09, , .F., , , , ,.F. ) //Dados do Cliente
 	Private oFont9     := TFont():New( "Times New Roman", 09, 14, , .T., , , , ,.F. ) //Linha Digitavel
 	
-	If oPrn == Nil
-		Return
-	EndIf
 	oPrn:startpage()
 
 	// parte 1

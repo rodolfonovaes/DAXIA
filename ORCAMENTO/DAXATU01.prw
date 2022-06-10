@@ -14,6 +14,7 @@
     @see (links_or_references)
    /*/
 User Function DAXATU01()
+Local nX                := 0
 Private nMilissegundos    := supergetmv('ES_TMPTELA',.T.,60000)
 Private cUsers            := SupergetMV('ES_USRCSHOM',.T.,'totvs.rnovaes')
 Private aHeader         := {}
@@ -257,6 +258,7 @@ return
 Static Function Confirma()
 Local nCusto    := 0
 Local nCMedio   := 0
+Local nI        := 0
 
 If VldBranco() .And. MsgYesNo('Confirma a ação?')
 
@@ -278,7 +280,7 @@ If VldBranco() .And. MsgYesNo('Confirma a ação?')
             SD1->(DbGoTo(aRegD1[nI,1]))
 
 
-            UpdHist('C',nCusto,nCMedio)
+            UpdHist('C',nCusto,nCMedio,nI)
 
             If RecLock('SD1',.F.)
                 SD1->D1_XHOMOL := 'S'
@@ -292,34 +294,6 @@ If VldBranco() .And. MsgYesNo('Confirma a ação?')
 
 
             U_UpdDA1()
-
-            If SD1->D1_FILIAL == '0103'
-                //ajuste para as filiais 0102 e 0104
-                SBZ->(DbSetOrder(1))
-                If SBZ->(DBSeek('0102' + SD1->D1_COD))
-                    If SBZ->BZ_MCUSTD == '1'
-                        RecLock('SBZ', .F.)
-                        SBZ->BZ_CUSTD := nCusto + 0.13
-                        MsUnlock()
-                    Else
-                        RecLock('SBZ', .F.)
-                        SBZ->BZ_CUSTD := nCusto + xMoeda(0.13,2,1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
-                        MsUnlock()                
-                    EndIF
-                EndIF
-
-                If SBZ->(DBSeek('0104' + SD1->D1_COD))
-                    If SBZ->BZ_MCUSTD == '1'
-                        RecLock('SBZ', .F.)
-                        SBZ->BZ_CUSTD := nCusto + 0.30
-                        MsUnlock()
-                    Else
-                        RecLock('SBZ', .F.)
-                        SBZ->BZ_CUSTD := nCusto + xMoeda(0.30,2,1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
-                        MsUnlock()                
-                    EndIF
-                EndIF
-            EndIf
         EndIf
     Next
     MsgInfo('Registros Atualizados!')
@@ -341,7 +315,7 @@ If MsgYesNo('Confirma a ação?')
 
             SD1->(DbGoTo(aRegD1[nI,1]))
 
-            UpdHist('D',0)
+            UpdHist('D',0,0,nI)
             If RecLock('SD1',.F.)
                 SD1->D1_XDESCAR := 'S'
                 MsUnlock()
@@ -354,7 +328,7 @@ EndIf
 
 Return
 
-Static Function UpdHist(cTipo,nCusto,nCMedio)
+Static Function UpdHist(cTipo,nCusto,nCMedio,nI)
 Reclock('SZ4',.T.)
 SZ4->Z4_FILIAL  := SD1->D1_FILIAL
 SZ4->Z4_DATA    := dDataBase
@@ -469,3 +443,4 @@ For n := 1 to Len(oMSNewGe1:aCOLS)
     EndIf
 Next
 Return lRet
+

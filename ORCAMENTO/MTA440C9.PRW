@@ -171,6 +171,13 @@ User Function MTA440C9()
             ENDIF
     	ENDIF
  //   ENDIF
+
+    If SA1->(DbSeek(xFilial('SA1') + SC5->(C5_CLIENTE + C5_LOJACLI)))
+        RecLock('SA1', .F.)
+        SA1->A1_SALPEDL := SC5->C5_XVLTOT
+        MsUnlock()
+    EndIf
+
     SC9->(DbGoTo(nPosSC9))
     RestArea(aAreaSC5)
     RestArea(aAreaSC9)

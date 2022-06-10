@@ -16,7 +16,7 @@
 User Function MAVALMMAIL() 
 Local lRet   := .T.
 Local aDados := ParamIxb[2]
-
+Local aArea  := GetArea()
 conout("EMAIL PONTO DE PEDIDO")
 conout(Ctod(date())+time())
 conout(paramixb[1])
@@ -28,6 +28,8 @@ if ParamIxb[1] == '001'
     	lRet := .F.
     Endif
 endif
+
+RestArea(aArea)
  
 Return lRet
 

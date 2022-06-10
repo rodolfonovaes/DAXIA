@@ -1,0 +1,1638 @@
+#INCLUDE "MATA440.CH"
+#INCLUDE "PROTHEUS.CH" 
+#INCLUDE "FWLIBVERSION.CH"
+
+Static lFWSX1Util := Nil
+Static __lMetric  := Nil
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ Mata440  ³ Rev.  ³ Eduardo Riera           ³ Data ³ 29.12.01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa de Liberacao de Pedidos de Venda                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ Void Mata440(void)                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³              ³        ³      ³                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function Mata440()
+
+Local aCores := {{"Empty(C5_LIBEROK).And.Empty(C5_NOTA) .And. Empty(C5_BLQ)",'ENABLE' },;		//Pedido em Aberto
+				{ "!Empty(C5_NOTA).Or.C5_LIBEROK=='E' .And. Empty(C5_BLQ)" ,'DISABLE'},;		   	//Pedido Encerrado
+				{ "!Empty(C5_LIBEROK).And.Empty(C5_NOTA).And. Empty(C5_BLQ)",'BR_AMARELO'},;
+				{ "C5_BLQ == '1'",'BR_AZUL'},;	//Pedido Bloquedo por regra
+				{ "C5_BLQ == '2'",'BR_LARANJA'}}	//Pedido Bloquedo por verba
+			
+Local cFiltraSC5 := ""
+
+PRIVATE aRotina := MenuDef()
+PRIVATE cCadastro := OemToAnsi(STR0005) //"Libera‡„o de Pedidos de Venda"
+PRIVATE aArrayAE:={}
+PRIVATE bFiltraBrw := {|| Nil}
+
+If cPaisLoc <> "BRA"
+	Aadd(aCores,{})
+	Ains(aCores,1)
+	aCores[1] := {"AllTrim(C5_NOTA)=='REMITO'",'BR_CINZA'}
+Endif        
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionada                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Pergunte("MTA440",.F.)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Transfere locais para a liberacao                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE lTransf:=MV_PAR01==1
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Libera Parcial pedidos de vendas                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE lLiber :=MV_PAR02==1
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Sugere quantidade liberada                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE lSugere:=MV_PAR03==1
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ativa tecla F12 para alterar parametro                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SetKey(VK_F12,{||Pergunte("MTA440",.T.),;
+                 lTransf:=MV_PAR01==1,;
+                 lLiber :=MV_PAR02==1,;
+                 lSugere:=MV_PAR03==1})
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Garante abertura de tabelas                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("DAK")
+dbSelectArea("DAI")
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de Entrada para alterar cores do Browse do Cadastro    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("MA440COR")
+	aCores := ExecBlock("MA440COR",.F.,.F.,aCores)
+Endif	
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa o filtro de usuario utilizando a funcao FilBrowse           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SC5")
+dbSetOrder(1)
+If ExistTemplate( "M440FIL" )
+	cFiltraSC5	:= ExecTemplate( "M440FIL", .F., .F. )
+EndIf 	
+If ExistBlock( "M440FIL" )
+	cFiltraSC5	:= ExecBlock( "M440FIL", .F., .F. )
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Endereca a funcao de BROWSE                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Realiza a filtragem somente na função de browse para permitir o usuário ³
+//³incluir filtros customizados na rotina                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+mBrowse( 6, 1,22,75,"SC5",,,,,,aCores,,,,,,,,,,,,cFiltraSC5)//,,"C5_LIBEROK"
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Restaura a condicao de Entrada                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SC5")
+dbSetOrder(1)
+dbClearFilter()
+SetKey(VK_F12,)
+
+Return(.T.)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³A440Libera³ Rev.  ³Eduardo Riera          ³ Data ³ 06.03.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Programa de Liberacao individual de Pedido de Venda         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: Alias do Arquivo                                     ³±±
+±±³          ³ExpN2: Numero do Registro                                   ³±±
+±±³          ³ExpN3: Opcao                                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A440Libera(cAlias,nReg,nOpc,lAutomato)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Arrays de controle dos campos que deverao ser alterados  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aArea     := GetArea()
+Local aPosObj   := {}
+Local aObjects  := {}
+Local aSize     := {}
+Local aPosGet   := {}
+Local aCpos1    := {"C5_TRANSP ",;
+                    "C5_REDESP ",;
+                    "C5_FRETE  ",;
+                    "C5_VOLUME1",;
+                    "C5_VOLUME2",;
+                    "C5_VOLUME3",;
+                    "C5_VOLUME4",;
+                    "C5_ESPECI1",;
+                    "C5_ESPECI2",;
+                    "C5_ESPECI3",;
+                    "C5_ESPECI4",;
+                    "C5_PESOL  ",;
+                    "C5_PBRUTO ",;
+                    "C5_MENNOTA",;
+                    "C5_MENPAD ",;
+                    "C5_DESPESA",;
+                    "C5_SEGURO ",;
+                    "C5_FRETAUT",;
+                    "C5_RECFAUT",;	
+                    "C5_TPFRETE"}
+Local aCpos2    := {}
+Local aAddCpo   := {}
+Local aInfo     := {}
+Local bSetKey   := SetKey(VK_F12,Nil)
+Local nCntFor   := 0
+Local lContinua := .T.
+Local lBloqueio := .T.
+Local lGrade    := MaGrade()
+Local lNaoFatur := .F.
+Local lFreeze   := (SuperGetMv("MV_PEDFREZ",.F.,0) <> 0)
+Local nOpcA     := 0
+Local nLinGet   := 0
+Local nColFreeze:= SuperGetMv("MV_PEDFREZ",.F.,0)
+Local cArqQry   := "SC6"
+Local cQuery    := ""              
+Local oDlg
+Local oSay1
+Local oSay2
+Local oSay3
+Local oSay4
+Local oGetD
+
+Local bCond     := {|| .T. }
+Local bAction1  := {|| Mta440Lib(cArqQry,@lBloqueio,@lNaoFatur,lGrade) }	
+Local bAction2  := {|| .T. }
+Local cSeek     := ""
+Local aNoFields := {"C6_NUM","C6_QTDEMP","C6_QTDENT"}		// Campos que nao devem entrar no aHeader e aCols
+Local bWhile    := {|| }  
+Local nNumDec   := TamSX3("C6_VALOR")[2]
+Local lPvBlq  	:= .F. // Utilizada somente para estado do Alagoas
+
+Local lRet 		:= .F.
+
+DEFAULT lAutomato := .F.
+
+PRIVATE aCols     := {}
+PRIVATE aHeader   := {}
+PRIVATE aTELA[0][0]
+PRIVATE aGETS[0]
+
+If !ctbValiDt( Nil, dDataBase, .T., Nil, Nil, { "FAT002" }, Nil )
+	Return nOpcA
+EndIf
+
+//-- Validação referente ao contrato em aprovação
+lRet := CN300CAprv(SC5->C5_MDCONTR, .F.)
+
+If !lRet
+	Help('',1,'CNTA300APR',,"Este pedido não poderá ser liberado pois o contrato que o originou encontra-se em processo de revisão, fazendo-se necessária sua aprovação ou cancelamento para realização deste procedimento",4)
+Else	
+	//Valida a data da LIB para utilização na Telemetria
+	If FatLibMetric()
+		//Telemetria - Pedidos que utilizam liberação por item ou por Pedido
+		FwCustomMetrics():setUniqueMetric("MATA440","faturamento-protheus_tipo-liberacao-pedido-vendas_total", SC5->C5_TIPLIB, /*dDateSend*/, /*nLapTime*/,"MATA440")
+	EndIf
+
+	// TDF - 01/11/11 - Verifica se EEC esta integrado com FAT e valida a liberação do pedido.
+	If !Empty(SC5->C5_PEDEXP) .AND. FindFunction("AvChkStDesp") .AND. !AvChkStDesp(SC5->C5_NUM)
+		lContinua:= .F.
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Acrescenta os campos nao editaveis de Portugal³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If cPaisLoc == "PTG"
+		aAdd(aCpos1,"C5_DESNTRB")
+		aAdd(aCpos1,"C5_TARA")
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Cria Ambiente/Objeto para tratamento de grade        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ        
+	If FindFunction("MsMatGrade") .And. IsAtNewGrd()
+		//MsMatGrade():New(nModelo,cProdRef,cCpo,cTudoOk,cVldCpoGrd,aSetKey,aCposCtrlGrd,lShowGrd)
+		PRIVATE oGrade	  := MsMatGrade():New('oGrade',,"C6_QTDLIB",,"a410GValid()",;
+								{ 	{VK_F4,{|| A440Saldo(.T.,oGrade:aColsAux[oGrade:nPosLinO][aScan(oGrade:aHeadAux,{|x| AllTrim(x[2])=="C6_LOCAL"})])}} },;
+		  						{ 	{"C6_QTDVEN",NIL,NIL},;
+		  							{"C6_QTDLIB",NIL,NIL},;   //Verificar com o Edu porque nao tem validacao
+		  							{"C6_QTDENT",NIL,NIL},;
+		  							{"C6_ITEM"	,NIL,NIL},;
+		  							{"C6_UNSVEN",NIL,NIL},;
+		  							{"C6_OPC",NIL,NIL},;
+		  							{"C6_BLQ",NIL,NIL}}) 
+	Else   
+		PRIVATE aHeadGrade:= {}
+		PRIVATE aColsGrade:= {}
+	EndIf	
+	
+	//-- Tratamento para grade multicampo
+	If Type("oGrade") == "O" .And. "MATA410" $ SuperGetMV("MV_GRDMULT",.F.,"")
+		aAdd(oGrade:aCposCtrlGrd,{"C6_PRCVEN",NIL,NIL})
+		aAdd(oGrade:aCposCtrlGrd,{"C6_VALOR",NIL,NIL})
+		aAdd(oGrade:aCposCtrlGrd,{"C6_VALDESC",NIL,NIL})
+		aAdd(oGrade:aCposCtrlGrd,{"C6_DESCRI",NIL,NIL})
+		aAdd(oGrade:aCposCtrlGrd,{"C6_PRUNIT",NIL,NIL})
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Indica as rotinas abaixo que se trata de alteracao                         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	ALTERA := .T.
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Arrays de controle dos campos que deverao ser alterados                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aCpos2 := {"C6_QTDLIB ","C6_QTDLIB2","C6_NUMLOTE","C6_LOTECTL","C6_LOCALIZ","C6_NUMSERI"}
+	If ( ExistBlock("MTA440AC") )
+		aAddCpo := ExecBlock("MTA440AC",.F.,.F.)
+		For nCntFor:= 1 To Len(aAddCpo)
+			AADD(aCpos2,aAddCpo[nCntFor])
+		Next nCntFor
+	EndIf
+
+	aAddCpo := {}
+	
+	If ( ExistBlock("MTA440C5") )
+		aAddCpo := ExecBlock("MTA440C5",.F.,.F.)
+		For nCntFor:= 1 To Len(aAddCpo)
+			AADD(aCpos1,aAddCpo[nCntFor])
+		Next nCntFor
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Inicializa desta forma para criar uma nova instancia de variaveis private ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	RegToMemory( "SC5", .F., .F. )
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Verifica se o pedido de venda pode ser liberado - PE                       ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lContinua .AND. ExistBlock("MT440AT")
+		lContinua := ExecBlock("MT440AT",.F.,.F.)
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Trava os Registros                                                         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If ( !SoftLock(cAlias) )
+		lContinua := .F.
+	EndIf                
+	
+	If lContinua
+		lContinua := If(lGrade.And.MatOrigGrd()=="SB4",If(FindFunction("VldDocGrd"),VldDocGrd(1,SC5->C5_NUM),.T.),.T.)
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Montagem do aCols                                                          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If ( lContinua )
+		dbSelectArea("SC6")
+		dbSetOrder(1)
+
+		If TcSrvType()<>"AS/400" .And. !InTransact() .And. Ascan(aHeader,{|x| x[8] == "M"}) == 0
+			cQuery := "SELECT SC6.*,SC6.R_E_C_N_O_ SC6RECNO "
+			cQuery += "FROM "+RetSqlName("SC6")+" SC6 "
+			cQuery += "WHERE SC6.C6_FILIAL='"+xFilial("SC6")+"' AND "
+			cQuery += "SC6.C6_NUM='"+SC5->C5_NUM+"' AND "
+			cQuery += "SC6.D_E_L_E_T_<>'*' "
+			cQuery += "ORDER BY "+SqlOrder(SC6->(IndexKey()))
+
+			dbSelectArea("SC6")
+			dbCloseArea()
+
+		EndIf
+
+		cSeek  := xFilial("SC6")+SC5->C5_NUM
+		bWhile := {|| C6_FILIAL+C6_NUM }
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Montagem do aHeader e aCols                           ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³FillGetDados( nOpcx, cAlias, nOrder, cSeekKey, bSeekWhile, uSeekFor, aNoFields, aYesFields, lOnlyYes,       ³
+		//³				  cQuery, bMountFile, lInclui )                                                                ³
+		//³nOpcx			- Opcao (inclusao, exclusao, etc).                                                         ³
+		//³cAlias		- Alias da tabela referente aos itens                                                          ³
+		//³nOrder		- Ordem do SINDEX                                                                              ³
+		//³cSeekKey		- Chave de pesquisa                                                                            ³
+		//³bSeekWhile	- Loop na tabela cAlias                                                                        ³
+		//³uSeekFor		- Valida cada registro da tabela cAlias (retornar .T. para considerar e .F. para desconsiderar ³
+		//³				  o registro)                                                                                  ³
+		//³aNoFields	- Array com nome dos campos que serao excluidos na montagem do aHeader                         ³
+		//³aYesFields	- Array com nome dos campos que serao incluidos na montagem do aHeader                         ³
+		//³lOnlyYes		- Flag indicando se considera somente os campos declarados no aYesFields + campos do usuario   ³
+		//³cQuery		- Query para filtro da tabela cAlias (se for TOP e cQuery estiver preenchido, desconsidera     ³
+		//³	           parametros cSeekKey e bSeekWhiele)                                                              ³
+		//³bMountFile	- Preenchimento do aCols pelo usuario (aHeader e aCols ja estarao criados)                     ³
+		//³lInclui		- Se inclusao passar .T. para qua aCols seja incializada com 1 linha em branco                 ³
+		//³aHeaderAux	-                                                                                              ³
+		//³aColsAux		-                                                                                              ³
+		//³bAfterCols	- Bloco executado apos inclusao de cada linha no aCols                                         ³
+		//³bBeforeCols	- Bloco executado antes da inclusao de cada linha no aCols                                     ³
+		//³bAfterHeader -                                                                                              ³
+		//³cAliasQry	- Alias para a Query                                                                           ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		FillGetDados(4,"SC6",1,cSeek,bWhile,{{bCond,bAction1,bAction2}},aNoFields,/*aYesFields*/,/*lOnlyYes*/,cQuery,/*bMontCols*/,Inclui,/*aHeaderAux*/,/*aColsAux*/,{|| AfterCols(cArqQry) },/*bBeforeCols*/,/*bAfterHeader*/,"SC6")
+		
+		If "MATA410" $ SuperGetMV("MV_GRDMULT",.F.,"")
+			aCols := aColsGrade(oGrade,aCols,aHeader,"C6_PRODUTO","C6_ITEM","C6_ITEMGRD",aScan(aHeader,{|x| AllTrim(x[2]) == "C6_DESCRI"}))
+		EndIf
+		
+		DbSelectArea(cArqQry)
+		DbCloseArea()
+		ChkFile("SC6",.F.)
+		DbSelectArea("SC6")
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Valida os itens do aCols                                                   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ( Len(aCols) == 0 )
+			HELP(" ",1,"A440S/ITEM")
+			lContinua := .F.
+		EndIf
+		If ( lBloqueio )
+			Help(" ",1,"A410ELIM")
+			lContinua := .F.
+		EndIf
+		
+		If (!(SuperGetMv("MV_ALTPED")=="S") .And. !lNaoFatur .And. !(SC5->C5_TIPO $ "CIP") ) .And. !(!Empty(SC5->C5_PEDEXP) .And. SuperGetMv("MV_EECFAT") .And. FindFunction("AVINTEMB") .And. AvIntEmb())
+			Help(" ",1,"A410PEDFAT")
+			lContinua := .F.
+		EndIf
+	
+	EndIf
+	//(30/04/19): Initialization arrays of MatXFis
+	If (cPaisLoc == "RUS")
+		RU05XFN007(aHeader, @aCols)
+	Endif
+
+	If  ( lContinua )
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializa a gravacao dos lancamentos do SIGAPCO          ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		PcoIniLan("000103")
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Calculo das dimensoes da Janela                                            ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		aSize    := MsAdvSize()
+		aObjects := {}
+		AAdd( aObjects, { 100, 100, .T., .T. } )
+		AAdd( aObjects, { 100, 100, .T., .T. } )
+		AAdd( aObjects, { 100, 015, .T., .F. } )
+	
+		aInfo   := { aSize[ 1 ],aSize[ 2 ],aSize[ 3 ],aSize[ 4 ],03,03 }
+		aPosObj := MsObjSize( aInfo, aObjects )
+		aPosGet := MsObjGetPos(aSize[3]-aSize[1],315,{{003,157,189,236,268}})
+		If !lAutomato
+			DEFINE MSDIALOG oDlg TITLE cCadastro From aSize[7],0 to aSize[6],aSize[5] of oMainWnd PIXEL
+		
+			EnChoice( cAlias, nReg, nOpc, , , , , aPosObj[1], aCPos1, 3 )
+			SetKey(VK_F4,{|| A440Stok(NIL,"A440") })
+		
+			oGetd   :=  MsGetDados():New(aPosObj[2,1],aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],nOpc,"A440LinOk","A440TudOk","",,aCPos2,nColFreeze,,,,,,,,lFreeze)	
+		
+			nLinGet := aPosObj[3,1]
+		
+			@ nLinGet,aPosGet[1,1] SAY oSAY1 VAR Space(40)               SIZE 120,09 PICTURE "@!"	OF oDlg PIXEL
+			@ nLinGet,aPosGet[1,2] SAY OemToAnsi(STR0018)                SIZE 020,09 OF oDlg	PIXEL  //"Total :"
+			@ nLinGet,aPosGet[1,3] SAY oSAY2 VAR 0 PICTURE IIf(cPaisloc=="CHI",Nil,TM(0,16,nNumDec)) SIZE 040,09 OF oDlg PIXEL
+			@ nLinGet,aPosGet[1,4] SAY OemToAnsi(STR0019)                SIZE 020,09 OF oDlg PIXEL 	//"Desc. :"
+			@ nLinGet,aPosGet[1,5] SAY oSAY3 VAR 0 PICTURE IIf(cPaisloc=="CHI",Nil,TM(0,16,nNumDec)) SIZE 040,09 OF oDlg PIXEL
+			@ nLinGet + 10,aPosGet[1,4] SAY OemToAnsi("=")               SIZE 020,09 OF oDlg PIXEL
+			@ nLinGet + 10,aPosGet[1,5] SAY oSAY4 VAR 0                  SIZE 040,09 PICTURE IIf(cPaisloc=="CHI",Nil,TM(0,16,nNumDec)) 	OF oDlg PIXEL
+			oDlg:Cargo := {|c1,n2,n3,n4|  oSay1:SetText(c1),;
+				oSay2:SetText(n2),;
+				oSay3:SetText(n3),;
+				oSay4:SetText(n4) }
+			Ma410Rodap(oGetD)
+			ACTIVATE MSDIALOG oDlg ON INIT A440Bar(oDlg,{||nOpca:=1,IIf(oGetd:TudoOk() .And. Obrigatorio(aGets,aTela),oDlg:End(),nOpca := 0)},{||oDlg:End()})
+			SetKey(VK_F4,)
+		Else
+			nOpcA := 1
+		EndIf
+		If ExistBlock("MT440GR")
+			nOpcA := If(ExecBlock("MT440GR",.f.,.f.,{nOpcA}),nOpca,2)
+		EndIf
+		If ( nOpcA == 1 )
+			If ( A410Trava() )
+				If ( cPaisLoc $ "ARG|POR|EUA" )
+					A440AE()
+				EndIf
+	
+				If AllTrim(SuperGetMv("MV_ESTADO")) == "AL" //Legislação somente para alagoas
+		   			lPvBlq := VldRegAl()
+		   		EndIf
+		   	
+				If !lPvBlq
+					A440Grava(lLiber,lTransf)
+				EndIf 
+
+				// Integrado ao wms devera avaliar as regras para convocação do serviço
+				// e disponibilizar os registros de atividades do WMS para convocação
+				If IntWms()
+					WmsAvalExe()
+				EndIf
+
+				EvalTrigger()
+				
+				If ( (ExistBlock("M440STTS") ) )
+					ExecBlock("M440STTS",.f.,.f.)			
+				Endif
+			EndIf
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Finaliza a gravacao dos lancamentos do SIGAPCO            ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		PcoFinLan("000103")
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Destravamento dos Registros                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	SetKey(VK_F12,bSetKey)
+	MsUnLockAll()
+	RestArea(aArea)
+EndIf	
+Return(nOpcA)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³A440Automa³ Rev.  ³Eduardo Riera          ³ Data ³18.03.99  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Liberacao Automatica de Pedidos ( Tela )                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpN1: Opcao Selecionada                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: Alias                                                ³±±
+±±³          ³ExpN2: Registro                                             ³±±
+±±³          ³ExpN3: nOpc                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A440Automa(cAlias,nReg,nOpc)
+
+Local aArea     := GetArea()
+Local aAreaSC6  := SC6->(GetArea())
+Local nOpcA     := 0
+
+If !ctbValiDt( Nil, dDataBase, .T., Nil, Nil, { "FAT002" }, Nil )
+	Return nOpcA
+EndIf
+
+If ( Pergunte("MTALIB",.T.) )
+	FormBatch(cCadastro,{;
+		OemToAnsi(STR0006),;    //"  Este programa  tem  como  objetivo  gerar automaticamente as libera‡”es     "
+		OemToAnsi(STR0007),;    //"  de pedidos, tomando-se como base o cr‚dito do cliente e a existencia        "
+		OemToAnsi(STR0008) },;  //"  dos produtos em estoque e a data de entrega do item do pedido.              "
+		{ { 5,.F.,{|o| o:oWnd:End()}},;
+		{ 1,.T.,{|o| nOpcA := 1, o:oWnd:End()}},;
+		{ 2,.T.,{|o| o:oWnd:End()}}})
+	If ( nOpcA == 1 )
+		Processa({|lEnd| a440Proces(cAlias,nReg,nOpc,@lEnd)},,,.T.)
+	EndIf
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta novamente o filtro                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaSC6)
+Eval(bFiltraBrw)
+RestArea(aArea)
+Return(nOpcA)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³a440Proces³ Rev.  ³Eduardo Riera          ³ Data ³24.03.99  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Processamento da Liberacao automatica de Pedidos de Venda   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: Alias                                                ³±±
+±±³          ³ExpN2: Recno                                                ³±±
+±±³          ³ExpN3: Opcao                                                ³±±
+±±³          ³ExpL4: Flag de encerramento por solicitacao do usuario      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function a440Proces(cAlias,nReg,nOpc,lEnd)
+
+Local aArea       := GetArea()
+Local aAreaSX1    := SX1->(GetArea())
+Local aRegistros  := {}
+Local cQuery      := ""
+Local cAliasSC6   := "SC6"
+Local cPedido     := ""
+Local cIndSC6     := CriaTrab(,.F.)
+Local cFiltro     := ""
+Local cMensagem   := RetTitle("C6_NUM")
+Local nFolga      := GetMV("MV_FOLGAPV")
+Local nQtdLib     := 0
+Local lMt440Fil   := ExistBlock("MT440FIL")
+Local lMt440Lib   := ExistBlock("MT440LIB")
+Local lMta410TT   := ExistTemplate("MTA410T")
+Local lMta410T    := ExistBlock("MTA410T")
+Local lFiltro     := .F.
+Local lValido     := .T.
+Local nTamSX1     := 0
+Local lPerg 	  := .F.
+Local aPergMTALIB := {}
+Local nPosOrd09   := 0
+Local oObjSX1Utl  := Nil
+
+Private nValItPed	:= 0
+
+If !Empty(SC5->(dbFilter()))
+	SC5->(dbClearFilter())
+	lFiltro := .T.
+Endif	
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ mv_par01 Ordem Processmento ?  Ped.+Item /Dt.Entrega+Ped.+Item         ³
+//³ mv_par02 Pedido de          ?                                          ³
+//³ mv_par03 Pedido ate         ?                                          ³
+//³ mv_par04 Cliente de         ?                                          ³
+//³ mv_par05 Cliente ate        ?                                          ³
+//³ mv_par06 Dta Entrega de     ?                                          ³
+//³ mv_par07 Dta Entrega ate    ?                                          ³
+//³ mv_par08 Liberar            ? Credito/Estoque Credito                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Aqui e montada a query de trabalho.                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("MT440VLD")
+	lValido := ExecBlock("MT440VLD",.F.,.F.)
+EndIf
+If lValido
+
+	If lFWSX1Util == NIL
+		M440VrfSQ()
+	EndIf
+
+	If lFWSX1Util
+		oObjSX1Utl  := FWSX1Util():New()
+		oObjSX1Utl:AddGroup("MTALIB")
+		oObjSX1Utl:SearchGroup()
+		aPergMTALIB := oObjSX1Utl:GetGroup("MTALIB")
+		If Len(aPergMTALIB) >= 2
+			nPosOrd09 := aScan(aPergMTALIB[2], {|oPergunte| oPergunte:CX1_ORDEM == "09"})
+		EndIf
+		FreeObj(aPergMTALIB)
+		FreeObj(oObjSX1Utl)
+		If !Empty(nPosOrd09)
+			lPerg := .T.
+		EndIf
+	Else
+		nTamSX1 := Len(SX1->(FieldGet(FieldPos("X1_GRUPO"))))
+		dbSelectArea("SX1")
+		dbSetOrder(1)
+		If dbSeek(PADR("MTALIB",nTamSX1)+"09")
+			lPerg := .T.
+		EndIf 
+	EndIf
+
+	ProcRegua(SC6->(LastRec()))
+	dbSelectArea("SC6")
+	dbSetOrder(If(MV_PAR01==2, 3, 1))
+	cAliasSC6 := "QUERYSC6"
+	cQuery := "SELECT SC6.R_E_C_N_O_ C6RECNO,SC5.R_E_C_N_O_ C5RECNO,"
+	cQuery += "SC6.C6_FILIAL,SC6.C6_NUM,SC6.C6_ITEM,SC6.C6_QTDVEN,SC6.C6_QTDEMP,SC6.C6_QTDENT,"
+	cQuery += "SC6.C6_ENTREG,SC6.C6_BLQ,SC6.C6_BLOQUEI,SC6.C6_LOJA "
+	cQuery += " FROM "+RetSqlName("SC6")+" SC6,"
+	cQuery += RetSqlName("SC5")+" SC5 "
+	cQuery += " WHERE SC6.C6_FILIAL = '"+xFilial('SC6')+"' AND "
+	cQuery += " SC6.C6_NUM >='"+MV_PAR02+"' AND "
+	cQuery += " SC6.C6_NUM <='"+MV_PAR03+"' AND "
+	cQuery += " SC6.C6_CLI >='"+MV_PAR04+"' AND "
+	cQuery += " SC6.C6_CLI <='"+MV_PAR05+"' AND "         
+	If lPerg
+		cQuery += "SC6.C6_LOJA >='"+MV_PAR09+"' AND "
+		cQuery += "SC6.C6_LOJA <='"+MV_PAR10+"' AND "
+	Endif
+	cQuery += " SC6.C6_ENTREG >='"+Dtos(MV_PAR06)+"' AND "
+	cQuery += " SC6.C6_ENTREG <='"+Dtos(MV_PAR07)+"' AND "
+	cQuery += " SC6.C6_ENTREG < '"+Dtos(dDataBase+nFolga)+"' AND "
+	cQuery += " SC6.C6_BLQ NOT IN ('S ','R ') AND "
+	cQuery += " (SC6.C6_QTDVEN-SC6.C6_QTDEMP-SC6.C6_QTDENT)>0 AND "
+	cQuery += " SC6.D_E_L_E_T_ = ' ' AND "
+	cQuery += " SC5.C5_FILIAL='"+xFilial("SC5")+"' AND "
+	cQuery += " SC5.C5_NUM=SC6.C6_NUM AND "
+	cQuery += " SC5.D_E_L_E_T_ = ' ' "
+	cQuery += " ORDER BY "+SqlOrder(SC6->(IndexKey()))
+	cQuery := ChangeQuery(cQuery)
+
+	dbUseArea( .T., "TOPCONN", TCGENQRY(,,cQuery),cAliasSC6, .F., .T.)
+
+	TcSetField(cAliasSC6,"C6_ENTREG","D",8,0)
+	dbSelectArea(cAliasSC6)
+	While !Eof() .And. (cAliasSC6)->C6_FILIAL == xFilial("SC6")
+	
+		cPedido    := (cAliasSC6)->C6_NUM
+		aRegistros := {}
+	
+		While !Eof() .And. (cAliasSC6)->C6_FILIAL == xFilial("SC6") .And.;
+				(cAliasSC6)->C6_NUM == cPedido
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Verifica se o item esta bloqueado e dentro do prazo de entrega          ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If !AllTrim((cAliasSC6)->C6_BLQ) $ "SR" .And. (cAliasSC6)->C6_ENTREG <= (dDataBase + nFolga) .And. Empty((cAliasSC6)->C6_BLOQUEI)
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Calcula a Quantidade Liberada                                           ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				nQtdLib := ( (cAliasSC6)->C6_QTDVEN - ( (cAliasSC6)->C6_QTDEMP + (cAliasSC6)->C6_QTDENT ) )
+				If lMt440Lib
+					SC6->(MsGoto((cAliasSC6)->C6RECNO))
+					nQtdLib := ExecBlock("MT440LIB",.F.,.F.,nQtdLib)
+				EndIf
+				If lMt440Fil
+					SC6->(MsGoto((cAliasSC6)->C6RECNO))
+					cFiltro := ExecBlock("MT440FIL",.F.,.F.)
+				EndIf
+				If nQtdLib > 0 .And. (Empty(cFiltro) .Or. &cFiltro)
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Posiciona o Pedido de Venda                                             ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					dbSelectArea("SC5")
+					MsGoto((cAliasSC6)->C5RECNO)
+					
+					//-- Validação referente ao contrato em aprovação
+					If !CN300CAprv(SC5->C5_MDCONTR, .F.)
+						Help('',1,'CNTA300APR',,"O pedido " + AllTrim(cPedido) + " não poderá ser liberado pois o contrato que o originou encontra-se em processo de revisão, fazendo-se necessária sua aprovação ou cancelamento para realização deste procedimento",4)											
+					Else 
+					
+						If RecLock("SC5")
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Posiciona item do pedido de venda                                       ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ				
+							SC6->(MsGoto((cAliasSC6)->C6RECNO))
+							
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Recalcula a Quantidade Liberada                                         ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							RecLock("SC6") //Forca a atualizacao do Buffer no Top
+							nQtdLib := ( SC6->C6_QTDVEN - ( SC6->C6_QTDEMP + SC6->C6_QTDENT ) )
+							If lMt440Lib
+								nQtdLib := ExecBlock("MT440LIB",.F.,.F.,nQtdLib)
+							EndIf
+							If nQtdLib > 0
+								//Valida a data da LIB para utilização na Telemetria
+								If FatLibMetric()
+									//Telemetria - Pedidos que utilizam liberação por item ou por Pedido
+									FwCustomMetrics():setUniqueMetric("MATA440","faturamento-protheus_tipo-liberacao-pedido-vendas_total", SC5->C5_TIPLIB, /*dDateSend*/, /*nLapTime*/,"MATA440")
+								EndIf
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Verifica o tipo de Liberacao                                            ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If ( SC5->C5_TIPLIB == "1" )
+									//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+									//³Libera por Item de Pedido                                               ³
+									//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+									Begin Transaction
+										MaLibDoFat(SC6->(RecNo()),@nQtdLib,.F.,.F.,.T.,MV_PAR08==1,lLiber,lTransf)
+									End Transaction
+								Else
+									//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+									//³Libera por Pedido                                                       ³
+									//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
+									Begin Transaction
+										RecLock("SC6")
+										SC6->C6_QTDLIB := nQtdLib
+										MsUnLock()
+										aadd(aRegistros,SC6->(RecNo()))
+									End Transaction
+								EndIf
+							EndIf
+							SC6->(MsUnLock())
+							EndIf
+						EndIf
+					EndIf						
+				EndIf
+									
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Move o cursor dos itens do pedido                                       ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ		
+				IncProc(cMensagem+"..:"+(cAliasSC6)->C6_NUM+"/"+(cAliasSC6)->C6_ITEM)
+				dbSelectArea(cAliasSC6)
+				dbSkip()
+		EndDo
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Libera por Total de Pedido                                              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ( Len(aRegistros) > 0 )
+			Begin Transaction
+				SC6->(MaAvLibPed(cPedido,lLiber,lTransf,.F.,aRegistros,Nil,Nil,Nil,MV_PAR08==1))
+			End Transaction
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Atualiza o Flag do Pedido de Venda                                      ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		Begin Transaction
+			SC6->(MaLiberOk({cPedido},.F.))
+		End Transaction
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Pontos de entrada para todos os itens do pedido.    ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ( lMta410TT )
+			ExecTemplate("MTA410T",.F.,.F.)
+		EndIf
+	    
+		If ( lMta410T )
+			ExecBlock("MTA410T",.F.,.F.)
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Controle de cancelamento por solicitacao do usuario                     ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea(cAliasSC6)
+		If lEnd
+			Exit
+		EndIf
+	EndDo
+
+	// Integrado ao wms devera avaliar as regras para convocação do serviço
+	// e disponibilizar os registros de atividades do WMS para convocação
+	If IntWms()
+		WmsAvalExe()
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Restaura as condicoes de entrada                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+EndIf
+dbSelectArea(cAliasSC6)
+dbCloseArea()
+Ferase(cIndSC6+OrdBagExt())
+dbSelectArea("SC6")
+
+If Type("bFiltraBrw") == "B" .And. lFiltro
+	Eval(bFiltraBrw)	
+Endif	
+
+RestArea(aAreaSX1)
+RestArea(aArea)
+
+Return(.T.)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A440LinOk ³ Autor ³ Claudinei M. Benzi    ³ Data ³          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Testa a integridade do linha                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ ExpN1 = A440LinOk                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpN1 = Valor devolvido pela fun‡…o                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+/*/
+Function A440LinOk()
+Local lRet     := .T.
+Local nPosQuant:= 0
+Local nPosServ := 0
+Local nPosLoc  := 0
+nPosQuant := aScan(aHeader,{ |x| Alltrim(x[2])=="C6_QTDLIB"})
+nPosServ  := aScan(aHeader,{ |x| Alltrim(x[2])=="C6_SERVIC"})
+nPosLoc   := aScan(aHeader,{ |x| Alltrim(x[2])=="C6_LOCALIZ"})
+
+lRet := A440Qtdl(aCols[n,nPosQuant])
+
+If  lRet .And. IntWms() .And. nPosServ > 0 .And. nPosLoc > 0 .And. !Empty(aCols[n][nPosServ]) .And. !Empty(aCols[n][nPosLoc])
+	lRet := WmsVldSrv("5",aCols[n,nPosServ])
+EndIf
+
+Return lRet
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³A440Stok  ³ Autor ³Eduardo Riera          ³ Data ³ 03.03.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Apresenta consulta de  estoque pressionando F4              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A440Stok(aLiberado,cProg)
+
+Local aArea     := GetArea()
+Local lGrade    := GetMv("MV_GRADE")
+Local nPProduto := aScan(aHeader,{|x| AllTrim(x[2])=="C6_PRODUTO"})
+Local nPTes     := aScan(aHeader,{|x| AllTrim(x[2])=="C6_TES"})
+Local nPLocal   := aScan(aHeader,{|x| AllTrim(x[2])=="C6_LOCAL"})
+Local cProduto  := ""
+Local cLocal    := ""
+Local cTes      := ""
+Local bSetKey   := SetKey(VK_F4,Nil)
+Local lUsaNewKey:= TamSX3("F2_SERIE")[1] == 14 // Verifica se o novo formato de gravacao do Id nos campos _SERIE esta em uso
+Local lRetorno  := .T.
+
+DEFAULT cProg:= IIf( Valtype(cProg) == "C",cProg,"A440")
+If nPProduto > 0 .And. nPLocal > 0 .And. nPTES > 0 .And. n<=Len(aCols)
+	cProduto  := aCols[n][nPProduto]
+	cLocal    := aCols[n][nPLocal]
+	cTes      := aCols[n][nPTes]
+	aQtdLib   := If(ValType(aLiberado)<>"A", {}, aLiberado)
+	
+	dbSelectArea("SF4")
+	dbSetOrder(1)
+	MsSeek(xFilial("SF4")+cTes)
+	
+	If ( lGrade )
+		MatGrdPrRf(@cProduto)
+	EndIf
+	
+	cCpoQtd := "M->C6_QTDVEN"
+	cCpoPrc := "M->C6_PRCVEN"
+	
+	Do Case
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³F4 para Rastreabilidade                                                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Case ( "C6_NUMLOTE" $ ReadVar() .Or. "C6_LOTECTL" $ ReadVar() )
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Variaveis Privates utilizadas na  funcao  F4Lote                        ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		nPosLote        := aScan(aHeader,{|x| AllTrim(x[2])=="C6_NUMLOTE"})
+		nPosLotCtl      := aScan(aHeader,{|x| AllTrim(x[2])=="C6_LOTECTL"})
+		nPosDValid      := aScan(aHeader,{|x| AllTrim(x[2])=="C6_DTVALID"})
+		nPosPotenc      := aScan(aHeader,{|x| AllTrim(x[2])=="C6_POTENCI"})
+		F4Lote(,,,"A440",cProduto,cLocal)
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³F4 para Complementos e Devolucao                                        ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Case ( "C6_NFORI" $ ReadVar() .And. M->C5_TIPO $ "DPIC" )    // Nf de Origem
+		If ( M->C5_TIPO == "D" )
+			F4NfOri(,,,M->C5_CLIENTE,M->C5_LOJACLI,cProduto,"A440")
+		Else
+			F4Compl(,,,M->C5_CLIENTE,M->C5_LOJACLI,cProduto,"A440")
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Projeto Chave Unica                                                     ³
+		//³Quando o usuario tenta fazer a devolucao por digitacao na getdados SC6  ³
+		//³eh necessario que seja obrigatoriamente pela dialog de selecao da funcao³
+		//³F4NfOri() pois como podem existir varias notas com o mesmo numero eh    ³
+		//³necessario selecionar para carregar o Id de controle para o C6_SERIORI. ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Case ( ("C6_SERIORI" $ ReadVar() .Or. "C6_ITEMORI" $ ReadVar() ).And. M->C5_TIPO $ "DPIC" .And. lUsaNewKey )    // Nf de Origem
+		If ( M->C5_TIPO == "D" )
+			lRetorno := F4NfOri(,,,M->C5_CLIENTE,M->C5_LOJACLI,cProduto,"A440")
+		Else
+			F4Compl(,,,M->C5_CLIENTE,M->C5_LOJACLI,cProduto,"A440")
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³F4 para Localizacao Fisica                                              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Case ( "C6_LOCALIZ" $ ReadVar() )
+		F4Localiz( ,,, cProg )
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³F4 para poder de Terceiro                                               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Case ( ("C6_QTDVEN" $ ReadVar().Or."C6_UNSVEN" $ ReadVar()) .And. SF4->F4_PODER3=="D" )
+		If ( M->C5_TIPO $ "BN" )
+			If cPaisLoc == "BRA"
+				F4Poder3(cProduto,cLocal,M->C5_TIPO,"S",M->C5_CLIENTE,M->C5_LOJACLI,,SF4->F4_ESTOQUE,M->C5_NUM)
+			Else
+				A440F4( "SB6",cProduto,cLocal,"B6_PRODUTO","D",M->C5_CLIENTE,M->C5_LOJACLI,Altera,.F.,,If(M->C5_TIPO=="B","F","C"))
+			EndIf
+		EndIf
+	Case ( "C6_QTDVEN" $ ReadVar() .Or. "C6_QTDLIB" $ ReadVar() )
+		If ( ExistBlock("A440STK") )
+			ExecBlock("A440STK",.f.,.f.)
+		Else
+			MaViewSB2(cProduto,,cLocal)
+		EndIf
+	EndCase
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Restaura a entrada da rotina                                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SetKey(VK_F4,bSetKey)
+RestArea(aArea)
+Return(lRetorno)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ A440Lote  ³ Autor ³ Waldemiro L. Lustosa ³ Data ³ 22.09.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida a Quantidade digitada no Lote.                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ MATA440                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A440Lote()
+Local cLote, cProduto, cLocal, nSaldo, cAlias := Alias(), cTes
+Local nPosProd := 0
+Local lGrade    := MaGrade()
+Local cLoteCtl                
+Local nX        := 0 
+Local lEmpPrev  := If(SuperGetMV("MV_QTDPREV")== "S",.T.,.F.)
+
+cLote := &(ReadVar())
+
+nPosProd := Ascan(aHeader,{ |x| Alltrim(x[2])=="C6_PRODUTO"})
+If !Rastro(aCols[n,nPosProd])
+	If !Empty(cLote)
+		Help(" ",1,"A440NAORAS")
+	EndIf
+	For nx = 1 to Len(aHeader)
+		If Trim(aHeader[nx][2]) == "C6_NUMLOTE"
+			aCols[n][nx] :=CriaVar("C6_NUMLOTE")
+			M->C6_NUMLOTE:=CriaVar("C6_NUMLOTE")
+		ElseIf Trim(aHeader[nx][2]) == "C6_LOTECTL"
+			aCols[n][nx] :=CriaVar("C6_LOTECTL")
+			M->C6_LOTECTL:=CriaVar("C6_LOTECTL")
+		ElseIf Trim(aHeader[nx][2]) == "C6_DTVALID"
+			aCols[n][nx] :=CriaVar("C6_DTVALID")
+			M->C6_DTVALID:=CriaVar("C6_DTVALID")
+		EndIf
+	Next
+	Return .T.
+EndIf
+
+If Empty(cLote)
+	Return .T.
+EndIf
+
+For nx=1 to Len(aHeader)
+	If Trim(aHeader[nX][2]) == "C6_PRODUTO"
+		cProduto := aCols[n][nx]
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica se a grade esta ativa, e se o produto digitado e'   ³
+		//³ uma referencia                                               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lGrade
+			lRet		:= MatGrdPrRf(cProduto)
+			cProduto	:= If(lRet, Alltrim(cProduto), cProduto)
+		Endif
+	Elseif Trim(aHeader[nX][2]) == "C6_LOCAL"
+		cLocal := aCols[n][nx]
+	Elseif Trim(aHeader[nX][2]) == "C6_QTDLIB"
+		nQtdLib := aCols[n][nx]
+	Elseif Trim(aHeader[nX][2]) == "C6_TES"
+		cTes := aCols[n][nx]
+	Elseif Trim(aHeader[nX][2]) == "C6_LOTECTL"
+		cLoteCtl := aCols[n][nx]
+	End
+Next nX
+
+dbSelectArea("SF4")
+MsSeek(xFilial()+cTes)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica o arquivo a ser pesquisado                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SB8")
+dbSetOrder(1)
+MsSeek(xFilial()+cProduto+cLocal)
+If !Found()
+	Help(" ",1,"A440NAOLOT")
+	For nx = 1 to Len(aHeader)
+		If Trim(aHeader[nx][2]) == "C6_NUMLOTE"
+			aCols[n][nx] :=CriaVar("C6_NUMLOTE")
+			M->C6_NUMLOTE:=CriaVar("C6_NUMLOTE")
+		ElseIf Trim(aHeader[nx][2]) == "C6_LOTECTL"
+			aCols[n][nx] :=CriaVar("C6_LOTECTL")
+			M->C6_LOTECTL:=CriaVar("C6_LOTECTL")
+		ElseIf Trim(aHeader[nx][2]) == "C6_DTVALID"
+			aCols[n][nx] :=CriaVar("C6_DTVALID")
+			M->C6_DTVALID:=CriaVar("C6_DTVALID")
+		EndIf
+	Next
+	dbSelectArea(cAlias)
+	Return .T.
+Else
+	If SF4->F4_ESTOQUE == "S" .AND. !(M->C5_TIPO $ "CIP")
+		dbSelectArea("SB8")
+
+		If Rastro( cProduto, "S" )
+			dbSetOrder( 2 )
+			MsSeek(xFilial("SB8")+cLote+If(!Empty(cLoteCtl),cLoteCtl,CriaVar("C6_LOTECTL",.F.))+cProduto+cLocal)
+		Else
+			dbSetOrder( 3 )
+			cChave := xFilial( "SB8" ) + cProduto + cLocal + cLoteCtl
+			MsSeek( cChave, .f. )
+		EndIf
+
+		If Found()
+
+			If Rastro( cProduto, "S" )
+				nSaldo := SB8SALDO(,,,,,lEmpPrev,,,.T.) - ( SB8SALDO(.T.,,,,,lEmpPrev,,,.T.) + QtdLote(SB8->B8_PRODUTO,SB8->B8_LOCAL,SB8->B8_NUMLOTE) )
+			Else
+
+				nSaldo := SaldoLote( cProduto, cLocal, cLoteCtl )
+				nSaldo -= QtdLote(SB8->B8_PRODUTO,SB8->B8_LOCAL,,,SB8->B8_LOTECTL)
+
+			EndIf
+
+			If nSaldo > 0
+				For nX := 1 To Len(aHeader)
+					If nSaldo < nQtdLib
+						If Trim(aHeader[nX][2]) == "C6_QTDLIB"
+							aCols[n][nX] := nSaldo
+						ElseIf Trim(aHeader[nX][2]) == "C6_NUMLOTE"
+							aCols[n][nX] := cLote
+							M->C6_NUMLOTE := cLote
+						ElseIf Trim(aHeader[nx][2]) == "C6_LOTECTL"
+							aCols[n][nx] :=SB8->B8_LOTECTL
+							M->C6_LOTECTL:=SB8->B8_LOTECTL
+						ElseIf Trim(aHeader[nx][2]) == "C6_DTVALID"
+							aCols[n][nx] :=SB8->B8_DTVALID
+							M->C6_DTVALID:=SB8->B8_DTVALID
+						EndIf
+					EndIf
+				Next nX
+			Else
+				Help(" ",1,"A440LOTVAZ")
+				dbSelectArea(cAlias)
+				Return .F.
+			EndIf
+		Else
+			Help(" ",1,"A440NAOLOT")
+			For nx = 1 to Len(aHeader)
+				If Trim(aHeader[nx][2]) == "C6_NUMLOTE"
+					aCols[n][nx] :=CriaVar("C6_NUMLOTE")
+					M->C6_NUMLOTE:=CriaVar("C6_NUMLOTE")
+				ElseIf Trim(aHeader[nx][2]) == "C6_LOTECTL"
+					aCols[n][nx] :=CriaVar("C6_LOTECTL")
+					M->C6_LOTECTL:=CriaVar("C6_LOTECTL")
+				ElseIf Trim(aHeader[nx][2]) == "C6_DTVALID"
+					aCols[n][nx] :=CriaVar("C6_DTVALID")
+					M->C6_DTVALID:=CriaVar("C6_DTVALID")
+				EndIf
+			Next
+			dbSelectArea(cAlias)
+			Return .T.
+		EndIf
+	EndIf
+Endif
+Return .T.
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³A440Saldo ³ Autor ³Eduardo Riera          ³ Data ³22.06.1999³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Demonstrativo do Saldo em Estoque para o modulo de Fatur.   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpL1: Indica se o produto eh uma referencia                ³±±
+±±³          ³ExpC2: Almoxarifado a ser consultado quando for grade.      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function a440Saldo(lRefer,cLocal)
+
+Local nPProduto:= 0
+Local nPLocal   := 0
+Local cProduto := CriaVar("B1_COD")
+Local nColuna  := aScan(aHeader,{|x| AllTrim(x[2]) == AllTrim(Substr(Readvar(),4))})
+Local cMascara := GetMv("MV_MASCGRD")
+Local nTamRef  := Val(Substr(cMascara,1,2))
+Local nStok    := 0
+Local oDlg  
+Local nX       := 0 
+Local lBuscaProd:= .T.
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se foi ativado atraves da Getdados normal            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( !lRefer )
+	If cPaisLoc == "BRA"
+		nPProduto:= aScan(aHeader,{|x| Alltrim(x[2])=="C6_PRODUTO"})
+		cProduto := aCols[n][nPProduto]
+		nPLocal := aScan(aHeader,{|x| Alltrim(x[2])=="C6_LOCAL"})
+		cLocal := aCols[n][nPLocal]
+	Else
+		For nX := 1 to Len(aHeader)
+			nPProduto:=	Ascan(aHeader,{|x|	Trim(X[2]) == "C6_PRODUTO" .or.;
+				Trim(X[2]) == "D2_COD" .or.;
+				Trim(X[2]) == "CN_PRODUTO" })
+			nPLocal	:=	Ascan(aHeader,{|x|	Trim(X[2]) == "C6_LOCAL" .or.;
+				Trim(X[2]) == "D2_LOCAL" .or.;
+				Trim(X[2]) == "CN_LOCAL"  }) 
+			If nPProduto > 0 .And. nPLocal >0
+				cProduto := aCols[n][nPProduto]
+				cLocal := aCols[n][nPLocal]
+			Else
+				lBuscaProd := .F.
+			Endif
+		Next
+	EndIf
+Else
+	If nColuna > 0
+		If FindFunction("MsMatGrade") .And. IsAtNewGrd()
+			If ("MATA410" $ SuperGetMV("MV_GRDMULT",.F.,""))
+				cProduto:= &(MaReadGrd()):GetNameProd(,n,Max(2,Int(nColuna/2)+1))
+			Else
+				cProduto:= &(MaReadGrd()):GetNameProd(,n,nColuna)
+			EndIf
+		Else
+			cProduto := Substr(SB4->B4_COD,1,nTamRef)+aCols[n][1]+aHeader[nColuna][1]	
+		EndIf
+	Else
+		lBuscaProd := .F.
+	Endif
+EndIf
+If lBuscaProd
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	If ( dbSeek(xFilial("SB1")+cProduto) )
+		dbSelectArea("SB2")
+		dbSetOrder(1)
+		If dbSeek(xFilial("SB2")+PADR(cProduto,LEN(SB2->B2_COD))+cLocal)
+			nStok:= SaldoSb2(,GetNewPar("MV_QEMPV",.T.)) //(SB2->B2_QATU - SB2->B2_RESERVA - SB2->B2_QACLASS - SB2->B2_QEMP)
+		EndIf
+		DEFINE MSDIALOG oDlg FROM  62,1 TO 293,365 TITLE OemToAnsi(STR0009) PIXEL                               //"POSI€AO DO ESTOQUE"
+		@ 0, 2 TO 28, 181 LABEL "" OF oDlg  PIXEL
+		@ 31, 2 TO 91, 181 LABEL "" OF oDlg  PIXEL
+		@ 8, 4 SAY OemToAnsi(STR0010) SIZE 31, 7 OF oDlg PIXEL                  //"Produto :"
+		@ 7, 39 SAY cProduto + " /" + Subs(SB1->B1_DESC,1,20) SIZE 140, 7 OF oDlg PIXEL
+		@ 16, 5 SAY OemToAnsi(STR0011) SIZE 31, 7 OF oDlg PIXEL                 //"Local    :"
+		@ 16, 39 SAY cLocal SIZE 13, 7 OF oDlg PIXEL
+		@ 37, 9 SAY OemToAnsi(STR0012) SIZE 92, 7 OF oDlg PIXEL                 //"Pedido de Vendas em Aberto"
+		@ 37, 118 SAY B2_QPEDVEN PICTURE PesqPict("SB2","B2_QPEDVEN",14,2) SIZE 53, 7 OF oDlg PIXEL
+		@ 45, 9 SAY OemToAnsi(STR0013) SIZE 88, 7 OF oDlg PIXEL                 //"Quantidade Empenhada"
+		@ 45, 118 SAY B2_QEMP PICTURE PesqPict("SB2","B2_QEMP",14,2) SIZE 53, 7 OF oDlg PIXEL
+		@ 53, 9 SAY OemToAnsi(STR0014) SIZE 88, 7 OF oDlg PIXEL                 //"Qtd.Prevista p/Entrar"
+		@ 53, 118 SAY B2_SALPEDI PICTURE PesqPict("SB2","B2_SALPEDI",14,2) SIZE 53, 7 OF oDlg PIXEL
+		@ 61, 9 SAY OemToAnsi(STR0015) SIZE 88, 7 OF oDlg PIXEL                 //"Quantidade Reservada (A)"
+		@ 61, 118 SAY B2_RESERVA PICTURE PesqPict("SB2","B2_RESERVA",14,2) SIZE 53, 7 OF oDlg PIXEL
+		@ 69, 9 SAY OemToAnsi(STR0016) SIZE 53, 7 OF oDlg PIXEL                 //"Saldo Atual (B)"
+		@ 69, 118 SAY B2_QATU PICTURE PesqPict("SB2","B2_QATU",14,2) SIZE 53, 7 OF oDlg PIXEL
+		@ 78, 9 SAY OemToAnsi(STR0017) SIZE 53, 7 OF oDlg PIXEL                 //"Dispon¡vel (B - A)"
+		@ 78, 118 SAY nStoK PICTURE PesqPict("SB2","B2_QATU",14,2) SIZE 53, 7 OF oDlg PIXEL
+		DEFINE SBUTTON FROM 98, 149 TYPE 1 ACTION (oDlg:End()) ENABLE OF oDlg
+		ACTIVATE MSDIALOG oDlg
+	Else
+		HELP(" ",1,"C6_PRODUTO")
+	EndIf
+EndIf
+
+Return
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ A440AE   ³ Autor ³ Jose Lucas            ³ Data ³          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ ListBox para solicitar o Numero da Autorizacao de Entrega. ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+/*/
+Function A440AE()
+Local oDlg, oQual, nOpcA := 0
+Local lRet := .T.
+Local lAutoEnt := If( GetMV("MV_AUTOENT")=="S",.T.,.F. )
+Local nX       := 0  
+Local nI       := 0 
+
+If ! lAutoEnt
+	Return
+EndIf
+
+aArrayAE := {}
+
+For nI := 1 To Len(aCOLS)
+	For nX := 1 To Len(aHeader)
+		If Trim(aHeader[nX][2]) == "C6_ITEM"
+			cItemAE := aCols[nI][nX]
+			AADD(aArrayAE,{ cItemAE,"      " })
+		EndIf
+	Next nX
+Next nI
+
+cCadastro := OemToAnsi("Numeraci¢n de la Aut. Entregas")
+
+DEFINE MSDIALOG oDlg TITLE cCadastro From 10,30 To 19,68 OF oMainWnd
+@ .5,.80 LISTBOX oQual VAR cVarQ Fields HEADER OemToAnsi("Item Pedido"),OemToAnsi("Aut. Entrega") SIZE 130,42 ON DBLCLICK (aArrayAE:=A440Troca(oQual:nAt,aArrayAE),oQual:Refresh()) NOSCROLL
+oQual:SetArray(aArrayAE)
+oQual:bLine := { || {aArrayAE[oQual:nAT,1],aArrayAE[oQual:nAT,2]}}
+DEFINE SBUTTON FROM 51,80               TYPE 1 ACTION (nOpcA := 1,oDlg:End()) ENABLE OF oDlg
+DEFINE SBUTTON FROM 51,107      TYPE 2 ACTION (nOpcA := 2,oDlg:End()) ENABLE OF oDlg
+ACTIVATE MSDIALOG oDlg
+
+For nI := 1 To Len(aArrayAE)
+	If Empty(aArrayAE[nI][2])
+		HELP(" ",1,"NVAZIO")
+		lRet:=.F.
+	EndIf
+Next nI
+
+If ! lRet
+	A440AE()
+EndIf
+Return(.T.)
+
+Function A440Troca(nIt,aArrayAE)
+Local cCadastro := OemToAnsi("Aut. Entrega")
+cNumero  := aArrayAE[nIt,2]
+cSerie   := aArrayAE[nIt,1]
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ativa tecla F4 para comunicacao com Autoriza‡”es de Entregas.  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock(("A440F4AE"))
+	SetKey( VK_F4, { || ExecBlock("A440F4AE",.F.,.F.,nIt) } )
+EndIf
+
+While .T.
+	DEFINE MSDIALOG oDlgGet TITLE cCadastro From 12,60 To 15,77 OF oMainWnd
+	@ .3,.8 SAY "F4-Disponible..."
+	@ .8,.8 MSGET cNumero Picture "@!" Font oDlgGet:oFont
+	ACTIVATE MSDIALOG oDlgGet
+	aArrayAE[nIt,2] := cNumero
+	If A440ValAE(cNumero)
+		Exit
+	Endif
+End
+If ExistBlock(("A440F4AE"))
+	Set Key VK_F4 To
+EndIf
+Return( aArrayAE )
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ A440ValAE³ Autor ³ Jose Lucas            ³ Data ³ 11/08/98 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Valida o numero da Autorizacao de Entrega.                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Sx5NumNota                                                 ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A440ValAE(cNumero)
+Local lRet:=.T.
+
+If Empty(cNumero)
+	HELP(" ",1,"NVAZIO")
+	lRet:=.F.
+EndIf
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A440Bar   ³ Autor ³ Kleber Dias Gomes     ³ Data ³ 06/05/04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Mostra a EnchoiceBar na tela                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³MATA440                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function A440Bar(oDlg, bOk, bCancel)
+
+Local aButtons   := {}
+Local aUsButtons := {}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Adiciona botoes do usuario na EnchoiceBar                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock( "A440BUT" ) .AND. ValType( aUsButtons := ExecBlock( "A440BUT", .F., .F. ) ) == "A"
+	AEval( aUsButtons, { |x| AAdd( aButtons, x ) } )
+EndIf
+Return (EnchoiceBar(oDlg,bOK,bcancel,,aButtons))
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Marco Bianchi         ³ Data ³01/09/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±
+±±³          ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Array com opcoes da rotina.                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³	  1 - Pesquisa e Posiciona em um Banco de Dados           ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function MenuDef()
+
+Private aRotina := {		{STR0001,"PesqBrw"		, 0 , 1 , 0 , .F.},;	// "Pesquisar"
+							{STR0002,"A410Visual"	, 0 , 2 , 0 , .T.},;	// "Visualizar"
+							{STR0003,"A440Libera"	, 0 , 4 , 0 , .T.},;	// "Liberar"
+							{STR0004,"A440Automa"	, 0 , 3 , 0 , .T.},;	// "Automático"
+							{STR0020,"A410Legend"	, 0 , 2 , 0 , .F.}}		// "Legenda"
+
+If	SuperGetMv("MV_VEBLQRG", .F., .F.) .AND. FindFunction("BlqRegBrw")
+	Aadd (	aRotina, {STR0022,"BlqRegBrw", 0 , 4 , 0 , .F.})		// "Blq. Regra"
+EndIf							
+
+If ExistBlock("MA440MNU")
+	ExecBlock("MA440MNU",.F.,.F.)
+EndIf
+Return(aRotina)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A440TudOk ³ Autor ³ Kleber Dias Gomes     ³ Data ³26/09/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Validacao GetDados.                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpN1 = Valor devolvido pela fun‡…o                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+/*/
+Function A440TudOk()
+
+Local lRet := .T.
+               
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de Entrada para validacao ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("MA440VLD")
+	lRet := ExecBlock("MA440VLD",.F.,.F.)
+Endif
+
+Return lRet
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³Mta440Lib ³ Autor ³ Marco Bianchi         ³ Data ³ 31/01/07 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Funcao executada a partir da FillGetdados para validar cada ³±±
+±±³          ³registro da tabela. Se retornar .T. FILLGETDADOS considera  ³±±
+±±³          ³o registro, se .F. despreza o registro.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³Mta440Lib()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametro ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Mta440Lib                                                  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function Mta440Lib(cArqQry,lBloqueio,lNaoFatur,lGrade)
+
+Local lRet      := .T.
+Local lCriaCols := .F.		// Nao permitir que a funcao A410Grade crie o aCols
+Local nTamaCols :=Len(aCols)
+Local nPosItem  := GDFieldPos("C6_ITEM")
+Local nPosQtd   := GDFieldPos("C6_QTDVEN")
+Local nPosQtd2  := GDFieldPos("C6_UNSVEN")
+Local nPosVlr   := GDFieldPos("C6_VALOR")
+Local nPosSld   := GDFieldPos("C6_SLDALIB")
+Local nPosDesc  := GDFieldPos("C6_VALDESC")
+Local nGrade    := GDFieldPos("C6_GRADE")
+
+If !(("R"$Alltrim((cArqQry)->C6_BLQ)).And.(GetMv("MV_RSDOFAT")=="N"))
+	lBloqueio := .F.
+EndIf
+
+If ( (cArqQry)->C6_QTDENT < (cArqQry)->C6_QTDVEN )
+	lNaoFatur := .T.
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se este item foi digitada atraves de uma    ³
+//³ grade, se for junta todos os itens da grade em uma   ³
+//³ referencia , abrindo os itens so quando teclar enter ³
+//³ na quantidade                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !("MATA410" $ SuperGetMV("MV_GRDMULT",.F.,"")) .And. ( (cArqQry)->C6_GRADE == "S" .And. lGrade )
+	a410Grade(.T.,.T.,cArqQry,,lCriaCols)
+	If ( nTamAcols==0 .Or. aCols[nTamAcols][nPosItem] <> (cArqQry)->C6_ITEM )
+		lRet := .T.	
+	Else
+		lRet := .F.	
+		aCols[nTamAcols][nPosQtd]  += (cArqQry)->C6_QTDVEN
+		aCols[nTamAcols][nPosQtd2] += (cArqQry)->C6_UNSVEN
+		If ( nPosDesc > 0 )
+			aCols[nTamAcols][nPosDesc] += (cArqQry)->C6_VALDESC
+		Endif
+		If ( nPosSld > 0 )
+			aCols[nTamAcols][nPosSld] += Ma440SaLib()
+		EndIf
+		aCols[nTamAcols][nPosVlr] += (cArqQry)->C6_VALOR
+	EndIf
+	If Len(aCols) > 0 .And. lSugere .And. aCols[nTamAcols][nGrade] == "S"
+		MaIniLiber(M->C5_NUM,(cArqQry)->C6_QTDVEN,Len(aCols))
+	EndIf	
+EndIf
+
+If lRet .And. ExistBlock("MA440SC6")
+	lRet := ExecBlock("MA440SC6",.F.,.F.,cArqQry)
+Endif
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³AfterCols ³ Autor ³ Marco Bianchi         ³ Data ³ 24/01/07 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Funcao executada apos inclusao de nova linha no aCols pela  ³±±
+±±³          ³FillgetDados.                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³AfterCols()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametro ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ MATA410                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function AfterCols(cArqQry)
+           
+Local nPosProd  := GDFieldPos("C6_PRODUTO")
+Local nPosGrade := GDFieldPos("C6_GRADE")
+Local cMascara  := SuperGetMv("MV_MASCGRD")
+Local nTamRef   := Val(Substr(cMascara,1,2))
+Local cProduto	:= (cArqQry)->C6_PRODUTO
+
+If !("MATA410" $ SuperGetMV("MV_GRDMULT",.F.,""))
+	If nPosGrade > 0 .And. aCols[Len(aCols)][nPosGrade] == "S"
+		aCols[Len(aCols)][nPosProd] := If(A093IsGrade(@cProduto), cProduto, SubStr((cArqQry)->C6_PRODUTO,1,nTamRef))
+	Else
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Mesmo nao sendo um item digitado atraves de grade e' necessa-³
+		//³ rio criar o Array referente a este item para controle da     ³
+		//³ grade                                                        ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If FindFunction("MsMatGrade") .And. IsAtNewGrd()
+			oGrade:MontaGrade(Len(aCols))
+		Else
+			MatGrdMont(Len(aCols))
+		EndIf
+	EndIf	
+EndIf
+
+If ( lSugere )
+	MaIniLiber(M->C5_NUM,(cArqQry)->C6_QTDVEN,Len(aCols))
+EndIf
+
+If ( ExistBlock("M440ACOL") )
+	ExecBlock("M440ACOL",.f.,.f.)
+EndIf
+
+Return(.T.)     
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³VldRegAl  ºAutor  ³Vendas CRM          º Data ³  05/06/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Verifica se o pedido nao ultrapassa o limite de faturamento º±±
+±±º          ³Somente para estado do Alagoas                              º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³FATA210/MATA440/FATXFUN                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function VldRegAl()
+Local aAreaSvSC6 := SC6->(GetArea())
+Local lBloqPv := .F.
+
+If M->C5_BLQ == "1"
+	lBloqPv := .T.
+Else
+	lBloqPv := BlPVLFat(M->C5_CLIENTE,M->C5_LOJACLI)
+	If lBloqPv
+		Begin Transaction
+			RecLock("SC5", .F.)
+			SC5->C5_BLQ := StrZero(1, Len(SC5->C5_BLQ))
+			SC5->(MsUnLock())
+			SC6->(dbSetOrder(1))
+		    SC6->(dbSeek(xFilial("SC6")+SC5->C5_NUM))
+			RecLock("SC6", .F.)
+		    While SC6->(!Eof()) .And. SC6->C6_NUM == SC5->C5_NUM
+				SC6->C6_BLOQUEI := StrZero(1, Len(SC6->C6_BLOQUEI))
+				SC6->(dbSkip())
+			EndDo
+			SC6->(MsUnLock())
+		End Transaction
+	EndIf
+EndIf
+
+RestArea(aAreaSvSC6)
+Return lBloqPv
+
+//-------------------------------------------------------------------------------
+/*/{Protheus.doc} M440VrfSQ()
+Funcao para verificar se os componentes indicados pelo Framework para realizar
+a leitura dos dicionários SX1 estao no ambiente.
+
+@param		Nao ha
+@author 	Squad CRM & Faturamento
+@since 		14/05/2020
+@version 	12.1.27
+@return 	Nulo
+/*/
+//-------------------------------------------------------------------------------
+Static Function M440VrfSQ()
+
+Local cVersaoLib := FWLibVersion()
+lFWSX1Util := ( cVersaoLib > "20180820" )
+Return Nil
+
+/*/{Protheus.doc} FatLibMetric
+Função utilizada para validar a data da LIB para ser utilizada na Telemetria
+@type       Function
+@author     CRM/Faturamento
+@since      Maio/2021
+@version    12.1.27
+@return     __lMetric, lógico, se a LIB pode ser utilizada para Telemetria
+/*/
+Static Function FatLibMetric()
+
+If __lMetric == Nil 
+	__lMetric := FWLibVersion() >= "20210517"
+EndIf
+
+Return __lMetric

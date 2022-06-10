@@ -22,6 +22,12 @@ If Reclock("SC2",.F.)
 
 Endif
 
+QPK->(DbSetOrder(1))
+If QPK->(DbSeek(xFilial('QPK') + SC2->(C2_NUM + C2_ITEM + C2_SEQUEN)))
+    RecLock('QPK', .F.)
+    QPK->QPK_LOTE := SC2->C2_XLOTE
+    MsUnlock()
+EndIf
 RestArea(aArea)
 
 Return

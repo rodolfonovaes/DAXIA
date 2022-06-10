@@ -1,11 +1,11 @@
 #INCLUDE "PROTHEUS.CH"
 
 /*
-FA040ALT
-Ponto de entrada na alteracao do titulo a pagar validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
+  FA040ALT
+  Ponto de entrada na alteracao do titulo a pagar validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
 
-@author 	Rodolfo Novaes
-@since		12/08/2021
+  @author 	Rodolfo Novaes
+  @since		12/08/2021
 */
 
 User Function FA050ALT()
@@ -83,6 +83,7 @@ IF !lF050Auto .and. SUBSTR(SE2->E2_ORIGEM,1,4) == 'FINA'
         lRet := .F.
         Help('', 1, 'FA050ALT03',, 'Classe de valor obrigatorio para essa conta contabil. ', 1, 0)
     EndIf     
+
 Endif
 
 RestArea(aArea)

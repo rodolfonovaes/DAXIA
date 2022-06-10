@@ -57,45 +57,47 @@ User Function DXWSTART(cFile,cFileName,cProduto,nTipo)
 
     aClientes := RetClientes(cProduto,nTipo)
 
+    cFileName := LimpaSpec(cFileName)
+    
+    //Montando mensagem de Requisiï¿½ï¿½o
+    cMsg := '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.workflow.ecm.technology.totvs.com/">' +CRLF
+    cMsg += '   <soapenv:Header/>'+CRLF
+    cMsg += '   <soapenv:Body>'+CRLF
+    cMsg += '      <ws:simpleStartProcess>'+CRLF
+    cMsg += '         <username>' + cUser + '</username>'+CRLF
+    cMsg += '         <password>' + cPass + '</password>'+CRLF
+    cMsg += '         <companyId>' + cCompId + '</companyId>'+CRLF
+    cMsg += '         <processId>NotificacaoRevisaodeEspecifTecnica</processId>'+CRLF
+    cMsg += '         <comments>Pedido recebido pelo ERP ' + DTOC(dDataBase)+'</comments>'+CRLF
+    cMsg += '         <attachments>'+CRLF
+    cMsg += '           <item>'+CRLF
+    cMsg += '               <attachmentSequence>1</attachmentSequence>'+CRLF
+    cMsg += '               <attachments>'+CRLF
+    cMsg += '                   <attach>false</attach>'+CRLF
+    cMsg += '                   <descriptor>false</descriptor>'+CRLF
+    cMsg += '                   <editing>false</editing>'+CRLF
+    cMsg += '                   <fileName>'+cFileName+'</fileName>'+CRLF
+    cMsg += '                   <fileSelected/>'+CRLF
+    cMsg += '                   <fileSize>1024</fileSize>'+CRLF
+    cMsg += '                   <filecontent>'+ cFilCont + '</filecontent>'+CRLF
+    cMsg += '                   <principal>true</principal>'+CRLF
+    cMsg += '               </attachments>'    +CRLF
+    cMsg += '               <description>'+ cFileName + '</description>'+CRLF
+    cMsg += '               <processInstanceId>1</processInstanceId>'+CRLF
+    cMsg += '               <size>1024</size>'+CRLF
+    cMsg += '               <version></version>'+CRLF
+    cMsg += '           </item>'    +CRLF
+    cMsg += '         </attachments>'    +CRLF
+    cMsg += '         <cardData>'  +CRLF
+    cMsg += '           <item>'    +CRLF
+    cMsg += '               <item>codigo_produto</item>'    +CRLF
+    cMsg += '               <item>'+cProduto+'</item>'       +CRLF
+    cMsg += '            </item>'       +CRLF
+    cMsg += '           <item>'    +CRLF
+    cMsg += '               <item>descricao_produto</item>'    +CRLF
+    cMsg += '               <item>![CDATA['+LimpaSpec(Posicione('SB1',1,xFilial('SB1') + cProduto, 'B1_DESC'))+']]</item>'       +CRLF
+    cMsg += '            </item>'           +CRLF
     If Len(aClientes) > 0
-        //Montando mensagem de Requisiï¿½ï¿½o
-        cMsg := '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.workflow.ecm.technology.totvs.com/">' +CRLF
-        cMsg += '   <soapenv:Header/>'+CRLF
-        cMsg += '   <soapenv:Body>'+CRLF
-        cMsg += '      <ws:simpleStartProcess>'+CRLF
-        cMsg += '         <username>' + cUser + '</username>'+CRLF
-        cMsg += '         <password>' + cPass + '</password>'+CRLF
-        cMsg += '         <companyId>' + cCompId + '</companyId>'+CRLF
-        cMsg += '         <processId>NotificacaoRevisaodeEspecifTecnica</processId>'+CRLF
-        cMsg += '         <comments>Pedido recebido pelo ERP ' + DTOC(dDataBase)+'</comments>'+CRLF
-        cMsg += '         <attachments>'+CRLF
-        cMsg += '           <item>'+CRLF
-        cMsg += '               <attachmentSequence>1</attachmentSequence>'+CRLF
-        cMsg += '               <attachments>'+CRLF
-        cMsg += '                   <attach>false</attach>'+CRLF
-        cMsg += '                   <descriptor>false</descriptor>'+CRLF
-        cMsg += '                   <editing>false</editing>'+CRLF
-        cMsg += '                   <fileName>'+cFileName+'</fileName>'+CRLF
-        cMsg += '                   <fileSelected/>'+CRLF
-        cMsg += '                   <fileSize>1024</fileSize>'+CRLF
-        cMsg += '                   <filecontent>'+ cFilCont + '</filecontent>'+CRLF
-        cMsg += '                   <principal>true</principal>'+CRLF
-        cMsg += '               </attachments>'    +CRLF
-        cMsg += '               <description>'+ cFileName + '</description>'+CRLF
-        cMsg += '               <processInstanceId>1</processInstanceId>'+CRLF
-        cMsg += '               <size>1024</size>'+CRLF
-        cMsg += '               <version></version>'+CRLF
-        cMsg += '           </item>'    +CRLF
-        cMsg += '         </attachments>'    +CRLF
-        cMsg += '         <cardData>'  +CRLF
-        cMsg += '           <item>'    +CRLF
-        cMsg += '               <item>codigo_produto</item>'    +CRLF
-        cMsg += '               <item>'+cProduto+'</item>'       +CRLF
-        cMsg += '            </item>'       +CRLF
-        cMsg += '           <item>'    +CRLF
-        cMsg += '               <item>descricao_produto</item>'    +CRLF
-        cMsg += '               <item>'+Posicione('SB1',1,xFilial('SB1') + cProduto, 'B1_DESC')+'</item>'       +CRLF
-        cMsg += '            </item>'           +CRLF
         For n := 1 to Len(aClientes)
             cMsg += '           <item>'    +CRLF
             cMsg += '               <item>codigo_cliente___'+ Alltrim(STR(n))+'</item>'    +CRLF
@@ -103,52 +105,64 @@ User Function DXWSTART(cFile,cFileName,cProduto,nTipo)
             cMsg += '            </item>'  +CRLF
             cMsg += '           <item>'    +CRLF
             cMsg += '               <item>nome_cliente___'+ Alltrim(STR(n))+'</item>'    +CRLF
-            cMsg += '               <item>'+ aClientes[n][2]+'</item>'       +CRLF
+            cMsg += '               <item>'+ LimpaSpec(aClientes[n][2])+'</item>'       +CRLF
             cMsg += '            </item>'       +CRLF
             cMsg += '           <item>'    +CRLF
             cMsg += '               <item>email_cliente___'+ Alltrim(STR(n))+'</item>'    +CRLF
-            cMsg += '               <item>'+ aClientes[n][3]+'</item>'       +CRLF
+            cMsg += '               <item>'+ LimpaSpec(aClientes[n][3])+'</item>'       +CRLF
             cMsg += '            </item>'                +CRLF
         Next    
-        cMsg += '         </cardData>'    +CRLF
-        cMsg += '      </ws:simpleStartProcess>'+CRLF
-        cMsg += '   </soapenv:Body>'+CRLF
-        cMsg += '</soapenv:Envelope>'+CRLF
+    Else
+        cMsg += '           <item>'    +CRLF
+        cMsg += '               <item>codigo_cliente___'+ '1' +'</item>'    +CRLF
+        cMsg += '               <item>'+ 'CODIGO'+'</item>'       +CRLF
+        cMsg += '            </item>'  +CRLF
+        cMsg += '           <item>'    +CRLF
+        cMsg += '               <item>nome_cliente___'+ '1'+'</item>'    +CRLF
+        cMsg += '               <item>'+ 'CLIENTE'+'</item>'       +CRLF
+        cMsg += '            </item>'       +CRLF
+        cMsg += '           <item>'    +CRLF
+        cMsg += '               <item>email_cliente___'+ '1' +'</item>'    +CRLF
+        cMsg += '               <item>'+ 'rodolfo.novaes@totvs.com.br' +'</item>'       +CRLF
+        cMsg += '            </item>'                +CRLF    
+    EndIf
+    cMsg += '         </cardData>'    +CRLF
+    cMsg += '      </ws:simpleStartProcess>'+CRLF
+    cMsg += '   </soapenv:Body>'+CRLF
+    cMsg += '</soapenv:Envelope>'+CRLF
 
-        //Intanciando WSDL
-        If (oWSDL == Nil)
-            oWSDL := TWSDLManager():New()
-            oWSDL:lSSLInsecure := .T.
-            If (lRetURL := oWSDL:ParseURL(cURL))
-                If (lRetURL := oWSDL:SetOperation( "simpleStartProcess" ))
-                    If (lRetURL := oWSDL:SendSoapMsg(cMsg))
-                        cResponse := oWSDL:GetParsedResponse()
-                        cRespost  := oWSDL:GetSoapResponse()
-                        oXml      := XmlParser( cRespost, "_", @cError, @cWarning )
-                    Else
-                        cError := oWSDL:cError
-                        MemoWrite('c:\temp\XMLFLUIG.XML', cMsg)
-                    EndIf
+    memowrite('C:\TEMP\' + Alltrim(cProduto) + '.txt' ,cMsg)
+    //Intanciando WSDL
+    If (oWSDL == Nil)
+        oWSDL := TWSDLManager():New()
+        oWSDL:lSSLInsecure := .T.
+        If (lRetURL := oWSDL:ParseURL(cURL))
+            If (lRetURL := oWSDL:SetOperation( "simpleStartProcess" ))
+                If (lRetURL := oWSDL:SendSoapMsg(cMsg))
+                    cResponse := oWSDL:GetParsedResponse()
+                    cRespost  := oWSDL:GetSoapResponse()
+                    oXml      := XmlParser( cRespost, "_", @cError, @cWarning )
+                Else
+                    cError := oWSDL:cError
+                    MemoWrite('c:\temp\XMLFLUIG.XML', cMsg)
                 EndIf
             EndIf
-        Else
-            If (lRetURL := oWSDL:SendSoapMsg(cMsg))
-                cResponse := oWSDL:GetParsedResponse()
-                cRespost  := oWSDL:GetSoapResponse()
-                oXml      := XmlParser( cRespost, "_", @cError, @cWarning )
-            Else
-                cError := oWSDL:cError
-            EndIf
         EndIf
-
-        If lRetURL
-            MsgInfo('Integrado com o Fluig! ' + CRLF + cResponse )
-        Else
-            Alert('Erro na integraïção com o Fluig ' + cError)
-        EndIF
     Else
-        Alert('Foi gerado o pdf porem nao foi enviado ao fluig pois não existem vendas para clientes ativos nos ultimos 90 dias.')
+        If (lRetURL := oWSDL:SendSoapMsg(cMsg))
+            cResponse := oWSDL:GetParsedResponse()
+            cRespost  := oWSDL:GetSoapResponse()
+            oXml      := XmlParser( cRespost, "_", @cError, @cWarning )
+        Else
+            cError := oWSDL:cError
+        EndIf
     EndIf
+
+    If lRetURL
+        MsgInfo('Integrado com o Fluig! ' + CRLF + cResponse )
+    Else
+        Alert('Erro na integraïção com o Fluig ' + cError)
+    EndIF
 
 	RestArea(aArea) //Restaurando a Area
 Return
@@ -195,19 +209,17 @@ Return aRet
 
 
 Static Function LimpaSpec(cConteudo)
-Local aArea       := GetArea()
-Local nTamOrig    := Len(cConteudo)
 Local cRet        := ''    
 //Retirando caracteres
 cConteudo := StrTran(cConteudo, "'", "")
 cConteudo := StrTran(cConteudo, "#", "")
-cConteudo := StrTran(cConteudo, "%", "")
+//cConteudo := StrTran(cConteudo, "%", "")
 cConteudo := StrTran(cConteudo, "*", "")
 cConteudo := StrTran(cConteudo, "&", "E")
 cConteudo := StrTran(cConteudo, ">", "")
 cConteudo := StrTran(cConteudo, "<", "")
 cConteudo := StrTran(cConteudo, "!", "")
-cConteudo := StrTran(cConteudo, "@", "")
+//cConteudo := StrTran(cConteudo, "@", "")
 cConteudo := StrTran(cConteudo, "$", "")
 cConteudo := StrTran(cConteudo, "(", "")
 cConteudo := StrTran(cConteudo, ")", "")
@@ -220,7 +232,7 @@ cConteudo := StrTran(cConteudo, "[", "")
 cConteudo := StrTran(cConteudo, "]", "")
 cConteudo := StrTran(cConteudo, "/", "")
 cConteudo := StrTran(cConteudo, "?", "")
-cConteudo := StrTran(cConteudo, ".", "")
+//cConteudo := StrTran(cConteudo, ".", "")
 cConteudo := StrTran(cConteudo, "\", "")
 cConteudo := StrTran(cConteudo, "|", "")
 cConteudo := StrTran(cConteudo, ":", "")
@@ -229,15 +241,34 @@ cConteudo := StrTran(cConteudo, '"', '')
 cConteudo := StrTran(cConteudo, 'ï¿½', '')
 cConteudo := StrTran(cConteudo, 'ï¿½', '')
 cConteudo := StrTran(cConteudo, ",", "")
-cConteudo := StrTran(cConteudo, "-", "")
-    
-//Adicionando os espaï¿½os a direita
-cConteudo := Alltrim(cConteudo)
-cConteudo += Space(nTamOrig - Len(cConteudo))
-    
+//cConteudo := StrTran(cConteudo, "-", "")
+cConteudo := StrTran(cConteudo, "Á", "A")
+cConteudo := StrTran(cConteudo, "É", "E")
+cConteudo := StrTran(cConteudo, "Í", "I")
+cConteudo := StrTran(cConteudo, "Ó", "O")
+cConteudo := StrTran(cConteudo, "Ú", "U")
+cConteudo := StrTran(cConteudo, "À", "A")
+cConteudo := StrTran(cConteudo, "È", "E")
+cConteudo := StrTran(cConteudo, "Ì", "I")
+cConteudo := StrTran(cConteudo, "Ò", "O")
+cConteudo := StrTran(cConteudo, "Ù", "U")
+cConteudo := StrTran(cConteudo, "Ã", "A")
+cConteudo := StrTran(cConteudo, "Õ", "O")
+
+cConteudo := StrTran(cConteudo, "á", "a")
+cConteudo := StrTran(cConteudo, "é", "e")
+cConteudo := StrTran(cConteudo, "í", "i")
+cConteudo := StrTran(cConteudo, "ó", "o")
+cConteudo := StrTran(cConteudo, "ú", "u")
+cConteudo := StrTran(cConteudo, "à", "a")
+cConteudo := StrTran(cConteudo, "è", "e")
+cConteudo := StrTran(cConteudo, "ì", "i")
+cConteudo := StrTran(cConteudo, "ò", "o")
+cConteudo := StrTran(cConteudo, "ù", "u")
+cConteudo := StrTran(cConteudo, "ã", "a")
+cConteudo := StrTran(cConteudo, "õ", "o")
+   
 //Definindo o conteï¿½do do campo
 cRet := cConteudo
-    
-RestArea(aArea)
 
 Return cRet

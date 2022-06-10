@@ -148,7 +148,7 @@ Static Function LoadaCols()
 
   cQuery += " INNER JOIN " + RetSQLName("SCJ") + " SCJ "
 
-  cQuery += " ON ( CK_FILIAL = CJ_FILIAL AND CK_NUM = CJ_NUM )"
+  cQuery += " ON ( CK_FILIAL = CJ_FILIAL AND CK_NUM = CJ_NUM AND SCJ.D_E_L_E_T_ = ' ' )"
 
 // FILTO DE PRODUTO
   If !Empty(cGetProd)

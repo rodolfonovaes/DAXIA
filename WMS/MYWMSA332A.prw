@@ -32,6 +32,21 @@ Local cXDProd    := ''
 Local aArea     := GetArea()
 
 If aParam[2] == 'FORMLINEPOS' 
+    If IsInCallStack('WMSA332AEN') .And. 1 > 2 //Alterar movimento
+        D14->(DbSetOrder(1))
+        If D14->(DbSeek(xFilial('D14') + oMdl:GetModel("D12MASTER"):GetValue("D12_LOCDES") + oMdl:GetModel("D12MASTER"):GetValue("D12_ENDDES") + oMdl:GetModel("D12MASTER"):GetValue("D12_PRODUT") ))
+            RecLock('D14', .F.)
+            D14->(DBDelete())
+            MsUnlock()
+        EndIf
+
+        D0G->(DbSetOrder(2))
+        If D0G->(DbSeek(xFilial('D14') + oMdl:GetModel("D12MASTER"):GetValue("D12_PRODUT") + oMdl:GetModel("D12MASTER"):GetValue("D12_LOCDES") + oMdl:GetModel("D12MASTER"):GetValue("D12_LOTECT") ))
+            RecLock('D0G', .F.)
+            D0G->(DBDelete())
+            MsUnlock()
+        EndIf        
+    EndIf
 
     SB8->(DbSetOrder(3))
     If SB8->(DbSeek(xFilial('SB8') + PADR(oMdl:GetModel("D12MASTER"):GetValue("D12_PRODUT"),TAMSX3('B8_PRODUTO')[1]) + oMdl:GetModel("D12MASTER"):GetValue("D12_LOCORI")  + PADR(oMdl:GetModel("D12MASTER"):GetValue("D12_LOTECT"),TAMSX3('B8_LOTECTL')[1]) ))

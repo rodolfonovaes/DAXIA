@@ -1,11 +1,11 @@
 #INCLUDE "PROTHEUS.CH"
 
 /*
-FA040INC
-Ponto de entrada na inclusao do titulo a receber validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
+  FA040INC
+  Ponto de entrada na inclusao do titulo a receber validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
 
-@author 	Rodolfo Novaes
-@since		12/08/2021
+  @author 	Rodolfo Novaes
+  @since		12/08/2021
 */
 
 User Function FA040INC()
@@ -69,6 +69,7 @@ IF !lF040Auto
         lRet := .F.
         Help('', 1, 'FA040INC03',, 'Classe de valor obrigatorio para essa conta contabil. ', 1, 0)
     EndIf     
+
 Endif
 
 RestArea(aArea)

@@ -49,7 +49,7 @@ CLASS DAXWMSOrdemServicoExecute FROM WMSDTCOrdemServico
 	METHOD UpdateEnd()
 	METHOD UpdEndOri(cNewEnd)
 	METHOD UpdEndDes(cNewEnd)
-	METHOD Destroy()
+	//METHOD Destroy()
 ENDCLASS
 
 //-----------------------------------------------
@@ -76,9 +76,9 @@ METHOD New() CLASS DAXWMSOrdemServicoExecute
 	Self:aRecDCF    := {}
 Return
 
-METHOD Destroy() CLASS DAXWMSOrdemServicoExecute
-	FreeObj(Self)
-Return
+//METHOD Destroy() CLASS DAXWMSOrdemServicoExecute
+//	FreeObj(Self)
+//Return
 
 //-----------------------------------------------
 /*/{Protheus.doc} GetLogUni
@@ -373,7 +373,8 @@ Local nI      := 1
 			Self:aRecDCF[nI][2] := Self:aLstUnit[nI][3]
 		Next
 	EndIf
-	oFuncao:Destroy()
+	FreeObj(oFuncao)
+	//oFuncao:Destroy()
 Return lRet
 
 //-----------------------------------------------
@@ -516,7 +517,8 @@ Local cSegSepara := SuperGetMV('ES_SERVSEP',.T.,'025',cFilAnt)
 		EndIf
 	Next
 	If oFuncao != Nil
-		oFuncao:Destroy()
+		//oFuncao:Destroy()
+		FreeObj(oFuncao)
 	EndIf
 Return lRet
 

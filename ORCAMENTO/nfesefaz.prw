@@ -7084,7 +7084,7 @@ If !Empty(aNota)
 					@cMensFis,aCsosn[Nx],aPedCom[nX],aNota,aICMSZFM[nX],aDest,cIpiCst,aFCI[nX],lIcmDevol,@nVicmsDeson,@nVIcmDif,cMunPres,;
 					aAgrPis[nX],aAgrCofins[nX],nIcmsDif,aICMUFDest[nX],@nvFCPUFDest,@nvICMSUFDest,@nvICMSUFRemet,cAmbiente,aIPIDevol[nX],;
 					@nvBCUFDest, aItemVinc[nX], @npFCPUFDest,@npICMSUFDest,@npICMSInter,@npICMSIntP,aLote[nX],@cMensDifal,;
-					@aTotICMSST,len(aProd), nX, @nValDifer,aPrcVen[nX])
+					@aTotICMSST,len(aProd), nX, @nValDifer,IIF(Len(aPrcVen) >= nX ,aPrcVen[nX],0))
 	Next nX
   	cString += NfeTotal(aTotal,aRetido,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite )
 	cString += NfeTransp(cModFrete,aTransp,aImp,aVeiculo,aReboque,aEspVol,cVerAmb,aReboqu2,cMunDest)
@@ -7125,6 +7125,7 @@ If !Empty(aNota)
 	DAXIA INICIO - MENSAGEM NA NOTA PRIMEIRA LINHA - SEMPRE COM A MESMA MENSAGEM - CICERO CRUZ
 	********************************************************************************************************************************/	
 	cMsgDax  := CRLF + "IMPORTANTE: A DAXIA nunca envia boleto por e-mail, exceto quando solicitado pelo cliente. Qualquer duvida, entrar em contato – tel.: (11) 2633.3000 – cobranca3@daxia.com.br"
+	cMsgDax  += CRLF + "Esta informação é aplicavel para PRODUTOS CONTROLADOS: Declaro que os produtos perigosos estão adequadamente classificados, embalados, identificados e estivados para suportar os riscos das operações de transporte que atendem as exigencias da regulamentação."
 	cMensBkp := cMensCli
 	cMensCli := cMensBkp + cMsgDax  // Garantir a Mensagem Daxia POR ULTIMO
 	/*******************************************************************************************************************************
@@ -7903,8 +7904,12 @@ cString += NfeTag('<EXTIPI>',ConvType(aProd[06]))
 cString += '<CFOP>'+ConvType(aProd[07])+'</CFOP>'
 cString += '<uCom>'+ConvType(aProd[08])+'</uCom>'
 cString += '<qCom>'+ConvType(aProd[09],15,4)+'</qCom>'
-//cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(aProd[10]/aProd[09],21,8))+'</vUnCom>' 
-cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(nPrcVen,21,8))+'</vUnCom>'//Rodolfo 
+//Rodolfo - tratamento para tag vuncom (problema no valor do danfe/xml difere do protheus, assumi o valor do protheus)
+If (Len(aICMSZFM) > 0 .And. Len(aCST) > 0 .And. !Empty(aICMSZFM[1])) .or. nPrcVen == 0
+	cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(aProd[10]/aProd[09],21,8))+'</vUnCom>' 
+Else
+	cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(nPrcVen,21,8))+'</vUnCom>'//Rodolfo 
+EndIf
 cString += '<vProd>' +ConvType(aProd[10],15,2)+'</vProd>' 
 cString += '<eantrib>'+ConvType(cEantrib)+'</eantrib>'
 cString += '<uTrib>'+ConvType(aProd[11])+'</uTrib>'

@@ -71,7 +71,7 @@ Return nCot
 
 //Atualiza frete a partir do gatilho do CJ_XTRANSP
 User Function RetFrete()
-Local nValor    := 0
+Local nValor    := M->CJ_XVLFRETE
 Local nLinha	:= TMP1->(Recno())
 Local nVlKg		:= 0
 Local nItens	:= 0
@@ -108,7 +108,7 @@ IF !empty(("TMP1")->CK_PRODUTO)
 			TMP1->CK_XVLFRET := nValDigit * (TMP1->CK_QTDVEN / nTotQtd )
 			U_ClcComis()
 		Else
-			If  !("TMP1")->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1
+			If  !("TMP1")->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1 .And. M->CJ_XTPFRET <> '1'
 				SB1->(dbSetOrder(1))
 				If SB1->(DbSeek(xFilial('SB1') + ("TMP1")->CK_PRODUTO )) .And. SB1->B1_PESBRU > 0
 					nValor += (("TMP1")->CK_QTDVEN * SB1->B1_PESBRU) * nVlKg
@@ -122,7 +122,7 @@ IF !empty(("TMP1")->CK_PRODUTO)
 	
 EndIf
 TMP1->(DbGoTo(nLinha))
-If M->CJ_XTPFRET <> '2'
+If M->CJ_XTPFRET <> '2' .And. M->CJ_XTPFRET <> '1'
 	M->CJ_XVLFRETE := nValor
 Else
 	nValor	:= nValDigit
@@ -1275,7 +1275,7 @@ IF SE4->(DbSeek(xFilial('SE4') + cCondPag))
 		nParc	:= Len(Separa(cParc,'+'))
 	EndIf
 
-	If &cParc == 0
+	If &cParc == 0 .Or. Empty(cParc)
 		nRet	:= 0
 	Else
 		nRet := ((nPrcFin / 30) * Round(((&cParc)/nParc),0)) 
@@ -2149,6 +2149,7 @@ Local nTotDespFin	:= 0
 Local nTotFrete		:= 0
 Local lSZL			:= .F.
 Local nTMP1Bkp		:= 0
+Local nRef			:= 0
 
 SA1->(DbSetOrder(1)) //--A1_FILIAL+A1_COD+A1_LOJA
 SA1->(DbSeek(FwxFilial('SA1') + cCodCli + cLoja))
@@ -2176,7 +2177,7 @@ MaFisIni( cCodCli ,;		// 1-Codigo Cliente/Fornecedor
 dbSelectArea("TMP1")
 TMP1->(DbGoTop())
 While !TMP1->(EOF())
-	IF !TMP1->CK_FLAG //.And. !Val(TMP1->CK_XMOTIVO) > 1
+	IF !TMP1->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1
 		nMoedaC		:=  1
 		nMoedaV		:=  1
 		cCodProd 	:= 	TMP1->CK_PRODUTO
@@ -2396,7 +2397,7 @@ EndDo
 
 TMP1->(DbGoTop())
 While !TMP1->(EOF()) .And. !lSZL
-	IF !TMP1->CK_FLAG .And. Len(aItens) > 0 //.And. !Val(TMP1->CK_XMOTIVO) > 1
+	IF !TMP1->CK_FLAG .And. Len(aItens) > 0 .And. !Val(TMP1->CK_XMOTIVO) > 1
 		nVlrPis  := 0
 		nAliqPIS := 0
 		nVlrCof  := 0
@@ -2943,7 +2944,7 @@ EndIf
 
 TMP1->(dbGoTop())
 While !TMP1->(EOF())
-	If !TMP1->CK_FLAG //.And. !Val(TMP1->CK_XMOTIVO) > 1
+	If !TMP1->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1
 				//TRATAMENTO PARA PEDIDO DE AMOSTRA MOSTRAR TUDO ZERADO
 		If M->CJ_XTPOPER $ SUPERGETMV('ES_OPZEROR',.T.,'') 
 			nResult	:= 0
@@ -3143,11 +3144,11 @@ EndIf
 nLinha := SC5->(Recno())
 DbSelectArea('SZD')
 SZD->(Dbsetorder(1))
-If SZD->(DbSeek(xFilial('SZD') + Alltrim(Str(year(dDatabase))) + PadL(Alltrim(STR(Month(dDataBase))),2,'0')))
+If SZD->(DbSeek(xFilial('SZD',SC5->C5_FILIAL) + Alltrim(Str(year(dDatabase))) + PadL(Alltrim(STR(Month(dDataBase))),2,'0')))
     nPerDsr		:= SZD->ZD_PDSR / 100    
 EndIf
 
-If Posicione('SA3',1,xFilial('SA3') + SC5->C5_VEND1 ,'A3_XTIPO') == '2' 
+If Posicione('SA3',1,xFilial('SA3',SC5->C5_FILIAL) + SC5->C5_VEND1 ,'A3_XTIPO') == '2' 
 	nPerDsr := 0
 EndIf
 
@@ -3163,7 +3164,7 @@ If SC6->(dbseek(SC5->C5_FILIAL + SC5->C5_NUM))
 			nPResult	:= noRound(SC6->C6_XMGBRUT - (SC6->C6_COMIS1 * nPerDsr) - SC6->C6_COMIS1,2) 
 			nVlResult   := xMoeda((SC6->C6_PRCVEN * SC6->C6_QTDVEN),Val(SC6->C6_XMOEDA),1,dDataBase,TamSx3("C6_PRCVEN")[2],POSICIONE('SM2',1,dDatabase,'M2_MOEDA2'))
 
-			If SZL->(DbSeek(xFilial('SZL') + SC5->C5_XNUMCJ + SC6->C6_ITEM + SC6->C6_PRODUTO))
+			If SZL->(DbSeek(SC5->C5_FILIAL + SC5->C5_XNUMCJ + SC6->C6_ITEM + SC6->C6_PRODUTO))
 				lSZL := .T.
 				nPResult	:= noRound((SZL->ZL_RESULT / SZL->ZL_RECSIPI ) * 100)
 				nVlResult   := SZL->ZL_RESULT
@@ -3357,8 +3358,12 @@ While !Eof()
         SB1->(dbSetOrder(1))
         If SB1->(DbSeek(xFilial('SB1') + ("TMP1")->CK_PRODUTO )) .And. SB1->B1_PESBRU > 0
             nFrete += (("TMP1")->CK_QTDVEN * SB1->B1_PESBRU) * nVlKg 
-			TMP1->CK_XVLFRET :=  ((("TMP1")->CK_QTDVEN * SB1->B1_PESBRU) * nVlKg) + (SZ5->Z5_FRETE / nTotItens)
-			If nLinha == TMP1->(Recno())
+			If M->CJ_XTPFRET <> '1'
+				TMP1->CK_XVLFRET :=  ((("TMP1")->CK_QTDVEN * SB1->B1_PESBRU) * nVlKg) + (SZ5->Z5_FRETE / nTotItens)
+			Else
+				nRet := TMP1->CK_XVLFRET
+			EndIf
+			If nLinha == TMP1->(Recno()) .And. M->CJ_XTPFRET <> '1'
 				If M->CJ_XTPFRET == '2' //CIF - DIGITADO NA MAO
 					nRet	:= M->CJ_XVLFRET * (TMP1->CK_QTDVEN / nTotPeso )
 				Else
@@ -3371,9 +3376,11 @@ While !Eof()
     ("TMP1")->(DbSkip())
 EndDo
 
-If M->CJ_XTPFRET <> '2'
+If M->CJ_XTPFRET <> '2' .And. M->CJ_XTPFRET <> '1'
 	M->CJ_XVLFRETE := nFrete
 EndIf
+
+
 
 TMP1->(DbGoTo(nLinha))
 
@@ -3383,6 +3390,53 @@ oGetDad:Refresh()
 RestArea(aArea) 
 Return nRet
 
+
+
+
+/*/{Protheus.doc} UpdFrete 
+atualiza frete, chamado no gatilho do CK_QTDVEN                                                     
+                                                                
+@param xParam Parameter Description                             
+@return xRet Return Description                                 
+@author  -                                               
+@since 29/08/2019                                                   
+/*/ 
+User Function UpdXFret()
+Local nFrete 	:= 0
+Local nVlKg     := 0
+Local aArea     := GetArea()
+local nLinha	:= TMP1->(Recno())
+Local nRet		:= 0
+Local nTotItens	:= 0
+Local nTotPeso	:= 0
+
+dbSelectArea("TMP1")
+dbGoTop()
+While !Eof()
+	IF TMP1->CK_UM == 'KG' .And. !("TMP1")->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1
+		nTotItens ++
+		nTotPeso	+= TMP1->CK_QTDVEN
+	EndIf
+	TMP1->(DbSkip())
+End
+
+dbSelectArea("TMP1")
+dbGoTop()
+While !Eof()
+    If  !("TMP1")->CK_FLAG .And. !Val(TMP1->CK_XMOTIVO) > 1
+		TMP1->CK_XVLFRET	:= M->CJ_XVLFRET * (TMP1->CK_QTDVEN / nTotPeso )
+		//U_ClcComis()
+    EndIf
+    ("TMP1")->(DbSkip())
+EndDo
+
+TMP1->(DbGoTo(nLinha))
+
+GETDREFRESH()	   
+oGetDad:Refresh()
+
+RestArea(aArea) 
+Return nRet
 
 
 User Function VldTab(cCodProd)
@@ -4612,7 +4666,7 @@ aControl := oWnd:aControls
 dbSelectArea("TMP1")
 dbGotop()
 While ( !Eof() )
-	If ( !TMP1->CK_FLAG ) //  .And. !Val(TMP1->CK_XMOTIVO) > 1
+	If ( !TMP1->CK_FLAG ) .And. !Val(TMP1->CK_XMOTIVO) > 1
 		IF TMP1->CK_XFIXA == 'S' .And. TMP1->CK_MOEDA == '2'
 			nVlAux  :=  (TMP1->CK_PRCVEN * TMP1->CK_QTDVEN) * TMP1->CK_XTAXA
 		Else
@@ -4646,7 +4700,7 @@ If nTotVal > 0 .And. FtRegraDesc(4,nTotVal+nTotDesc,@M->CJ_DESC4) <> nPerDesc
 	dbSelectArea("TMP1")
 	dbGotop()
 	While ( !Eof() )
-		If ( !TMP1->CK_FLAG ) //.And. !Val(TMP1->CK_XMOTIVO) > 1
+		If ( !TMP1->CK_FLAG ) .And. !Val(TMP1->CK_XMOTIVO) > 1
 			IF TMP1->CK_XFIXA == 'S' .And. TMP1->CK_MOEDA == '2'
 				nTotVal  += (TMP1->CK_PRCVEN * TMP1->CK_QTDVEN) * TMP1->CK_XTAXA
 			Else
@@ -4689,6 +4743,11 @@ Next nX
 
 If SCJ->(FieldPos('CJ_XVLTOT')) > 0
 	M->CJ_XVLTOT := nTotVal
+EndIf
+
+If !IsInCallStack('U_A415LIOK') 
+	GETDREFRESH()      
+	oGetDad:Refresh()
 EndIf
 
 RestArea(aAreaTmp1)

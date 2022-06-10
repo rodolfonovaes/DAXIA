@@ -1,11 +1,11 @@
 #INCLUDE "PROTHEUS.CH"
 
 /*
-FA040ALT
-Ponto de entrada na alteracao do titulo a receber validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
+  FA040ALT
+  Ponto de entrada na alteracao do titulo a receber validando a obrigatoriedade do centro de custo /item / classe de valor de acordo com a conta contabil
 
-@author 	Rodolfo Novaes
-@since		12/08/2021
+  @author 	Rodolfo Novaes
+  @since		12/08/2021
 */
 
 User Function FA040ALT()
@@ -15,7 +15,7 @@ Local lItem         := .F.
 Local lClvl         := .F.
 Local aArea 	    := GetArea()
 
-IF !lF040Auto .and. SUBSTR(SE1->E1_ORIGEM,1,4) == 'FINA'
+IF !lF040Auto .and. SUBSTR(SE1->E1_ORIGEM,1,4) == 'FINA' .and. ALLTRIM(SE1->E1_ORIGEM) != 'FINA460'
     CT1->(DbSetOrder(1))
     If CT1->(DbSeek(xFilial('CT1') + Posicione('SED',1,xFilial('SED') + M->E1_NATUREZ , 'ED_CONTA'))) 
         If CT1->CT1_CCOBRG == '1'
@@ -69,6 +69,7 @@ IF !lF040Auto .and. SUBSTR(SE1->E1_ORIGEM,1,4) == 'FINA'
         lRet := .F.
         Help('', 1, 'FA040ALT03',, 'Classe de valor obrigatorio para essa conta contabil. ', 1, 0)
     EndIf     
+
 Endif
 
 RestArea(aArea)

@@ -1,0 +1,2070 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "MATA450.CH"
+
+//Posicoes do array aSaldos
+#DEFINE _LIMCREDM 1,1
+#DEFINE _LIMCRED  1,2
+#DEFINE _SALDUPM  2,1
+#DEFINE _SALDUP   2,2
+#DEFINE _SALPEDLM 3,1
+#DEFINE _SALPEDL  3,2
+#DEFINE _MCOMPRAM 4,1
+#DEFINE _MCOMPRA  4,2
+#DEFINE _SALDOLCM 5,1
+#DEFINE _SALDOLC  5,2
+#DEFINE _MAIDUPLM 6,1
+#DEFINE _MAIDUPL  6,2
+#DEFINE _ITATUM   7,1
+#DEFINE _ITATU    7,2
+#DEFINE _PEDATUM  8,1
+#DEFINE _PEDATU   8,2
+#DEFINE _SALPEDM  9,1
+#DEFINE _SALPED   9,2
+#DEFINE _VALATRM  10,1
+#DEFINE _VALATR   10,2
+#DEFINE _LCFINM   11,1
+#DEFINE _LCFIN    11,2
+#DEFINE _SALFINM  12,1
+#DEFINE _SALFIN   12,2
+#DEFINE _STRASALDOS 12,2
+
+Static lFATTRVSA1 := ExistBlock("FATTRVSA1")
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATA450  ³ Rev.  ³ Eduardo Riera         ³ Data ³ 02.02.02 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa de Liberacao de Credito                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ Void MATA450(void)                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³              ³        ³      ³                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function MATA450( nPosArot, lAutomato )
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aArea     := GetArea()
+Local cFilSC9   := ""
+Local cCondicao := ""
+Local cCondBlk  := ""
+Local aIndSC9   := {}
+Local aCores    := {{"C9_BLCRED=='  ' .And. C9_BLEST=='  ' .And. Iif(SC9->((ColumnPos('C9_BLTMS') > 0)), Empty(C9_BLTMS), .T.)",'ENABLE' },;		//Item Liberado
+	{ "C9_BLCRED=='80' .Or. C9_BLCRED=='92'", 'BR_BRANCO' },;											//Em análise - Risk
+	{ "C9_BLCRED=='90' .Or. C9_BLCRED=='91'", 'BR_CINZA' },;											//Bloqueado Por Regras - Risk
+	{ "(C9_BLCRED=='10'.And.C9_BLEST=='10').Or.(C9_BLCRED=='ZZ'.And.C9_BLEST=='ZZ')",'DISABLE'},;		//Item Faturado
+	{ "!C9_BLCRED=='  ' .And.C9_BLCRED <> '09' .And. C9_BLCRED<>'10' .And. C9_BLCRED<>'ZZ'",'BR_AZUL'},;	   //Item Bloqueado - Credito
+	{ "C9_BLCRED=='09'",'BR_MARROM'},;	   //Item Bloqueado - Credito	
+	{ "!C9_BLEST=='  '.And. C9_BLEST<>'10'.And.C9_BLEST<>'ZZ'",'BR_PRETO'},;	  //Item Bloqueado - Estoque
+	{ "C9_BLWMS<='05'.And.!C9_BLWMS=='  '",'BR_AMARELO'},; //Item Bloqueado - WMS
+	{ "Iif(SC9->((ColumnPos('C9_BLTMS') > 0)), !Empty(C9_BLTMS), .F.)"  ,'BR_LARANJA'}}	//Item Bloqueado - TMS
+
+Default nPosArot  := 0
+Default lAutomato := .F.
+
+If VerSenha(136)
+	If cPaisLoc $ "ARG|POR|EUA"
+		Private aArrayAE:={}
+	EndIf
+	Private cCadastro := OemToAnsi(STR0005)    //"Libera‡„o de Cr‚dito"
+	Private aRotina   := MenuDef()
+
+	//----------------------------------------------------------------------------
+	// Será executada uma opção diretamento do aRotina sem passar pela mBrowse
+	//----------------------------------------------------------------------------
+	If nPosArot > 0 
+		
+		DbSelectArea( "SC9" )
+		bBlock := &( "{ |a| " + aRotina[ nPosArot, 2 ] + "(a) }" )
+		Eval( bBlock, lAutomato )
+	
+	Else
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Ponto de entrada para customizacao da legenda de cores ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		IF (Existblock("M450LEG"))
+			aCores := ExecBlock("M450LEG",.F.,.F.,aCores)
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ So Ped. Bloqueados   mv_par01          Sim Nao               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Pergunte("MTA451",.T.)
+			IF (Existblock("M450FIL"))
+				cFilSC9 := ExecBlock("M450FIL",.f.,.f.)
+			EndIf
+	
+			If ( MV_PAR01 == 1 .Or. mv_par01 == 3 .Or. !Empty(cFilSC9) )
+				cFilSC9  := If(Empty(cFilSC9),".T.",cFilSC9)
+				If ( mv_par01 == 1 )
+					cCondicao:='(C9_BLCRED=="01".Or.C9_BLCRED=="04".Or.C9_BLCRED=="80".Or.C9_BLCRED=="90".or.C9_BLCRED=="91".or.C9_BLCRED=="92").And.'
+				ElseIf (mv_par01 == 3)
+					cCondicao:='(C9_BLCRED=="01".Or.C9_BLCRED=="04".Or. C9_BLCRED == "09".Or.C9_BLCRED=="80".Or.C9_BLCRED=="90".or.C9_BLCRED=="91".or.C9_BLCRED=="92").And.'
+				Endif
+				cCondicao+=cFilSC9
+			EndIf
+			
+			IF (Existblock("M450FLB"))
+				cCondBlk := ExecBlock("M450FLB",.f.,.f.,{cCondicao})
+				If ValType(cCondBlk) == "C"
+					cCondicao := cCondBlk
+				EndIf
+			EndIf
+		
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Realiza a filtragem somente na função de browse para permitir o usuário ³
+			//³incluir filtros customizados na rotina                                  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			dbSelectArea("SC9")
+			mBrowse( 7, 4,20,74,"SC9",,,,,,aCores,,,,,,,,,,,,cCondicao) //,,"C9_BLCRED"
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Restaura a integridade da rotina                                ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			dbSelectArea("SC9")
+			RetIndex("SC9")
+			dbClearFilter()
+			aEval(aIndSc9,{|x| Ferase(x[1]+OrdBagExt())})
+			RestArea(aArea)
+		EndIf
+	EndIf
+Else
+	HELP(" ",1,"SEMPERM")
+Endif
+Return(.T.)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450Proces³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de processamento da reavalicao de credito             ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1: Alias de Entrada                                     ³±±
+±±³          ³ ExpL2: Indica se o Credito de ser Reavaliado                ³±±
+±±³          ³ ExpL3: Indica se o Estoque de ser Reavaliado                ³±±
+±±³          ³ ExpL4: Flag de cancelamento                                 ³±±
+±±³          ³ ExpL5: Indica se o processamento devera ser feito em todas  ³±±
+±±³          ³        as filiais                                           ³±±
+±±³          ³ ExpL6: Indica se os bloqueios de WMS devem ser reavaliados  ³±±
+±±³          ³ ExpL7: Indica se a funcao deve armazenar as mensagens de    ³±±
+±±³          ³       inconsistencias e alertas no processo de liberacao    ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina reavalia o credito com base nos parametros da    ³±±
+±±³          ³rotina de liberacao de credito ( MaAvalCred ). O estoque     ³±±
+±±³          ³sera realiada caso o credito seja liberado.                  ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function Ma450Proces(cAlias    , lAvCred   , lAvEst    , lEnd      , ;
+                     lEmpresa  , lAvWMS    , lLogMsg)
+
+Local aArea     	:= GetArea()
+Local aAreaSM0  	:= SM0->(GetArea())
+Local aRegSC6   	:= {}
+Local bWhile    	:= {|| !Eof()}
+Local lCredito  	:= .F.
+Local lEstoque  	:= .F.
+Local lMvAvalEst	:= SuperGetMV("MV_AVALEST")==2
+Local lBlqEst   	:= SuperGetMV("MV_AVALEST")==3 .And. !lAvEst
+Local lMta450T2 	:= ExistBlock("MTA450T2")
+Local lMt450End 	:= ExistBlock("MT450END")
+Local lMta450T  	:= ExistBlock("MTA450T")
+Local lMa450Ped 	:= ExistBlock("MA450PED")
+Local lMTValAvC 	:= ExistBlock("MTVALAVC")
+Local lMT450Ite 	:= ExistBlock("MT450ITE")                             
+Local lMT450TpLi	:= ExistBlock("MT450TPLI")
+Local lMT450Qry		:= ExistBlock("MT450QRY")
+Local lFatCredTools	:= FindFunction("FatCredTools")
+Local nValAV		:= 0
+Local lLibPedCr 	:= .T.
+Local cBlqCred  	:= ""
+Local cQuery    	:= ""
+Local cAliasSC9 	:= "MA450PROC"
+Local cMensagem 	:= ""
+Local cEmpresa  	:= cEmpAnt
+Local cSavFil   	:= cFilAnt
+Local cTipLib   	:= ""
+Local cQuebra   	:= ""
+Local nValItPed 	:= 0		
+Local nMvTipCrd 	:= SuperGetMV("MV_TIPACRD", .F., 1)
+Local nVlrTitAbe	:= 0
+Local nVlrTitAtr	:= 0
+
+Local lUseOffBal	:= FindFunction("RskIsActive") .And. RskIsActive()
+Local lSeekSE4 		:= .F.
+Local lLibPed  		:= .F.
+Local lRskIsTPC     := FindFunction("RskIsTPayCond")
+Local lRskMTkt		:= FindFunction("RskSetMTkt")
+Local lTicketC		:= SC9->(ColumnPos('C9_TICKETC')) > 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Tratamento para e-Commerce      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local lECommerce 	:= SuperGetMV("MV_LJECOMM",,.F.)
+Local cOrcamto   	:= ""     //Obtem o Orcamento original para posicionar na tabela MF5
+
+DEFAULT lEmpresa := .F.
+DEFAULT lAvWMS   := .F.
+DEFAULT lLogMsg  := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica o numero de registros a processar                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ProcRegua(SC9->(LastRec()))
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as filiais a serem liberadas                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lEmpresa
+	cEmpresa := cEmpAnt
+	bWhile   := {|| !Eof() .And. SM0->M0_CODIGO == cEmpresa }
+Else
+	cEmpresa := cEmpAnt+cFilAnt
+	bWhile   := {|| !Eof() .And. SM0->M0_CODIGO+FWGETCODFILIAL == cEmpresa }
+EndIf
+dbSelectArea("SM0")
+dbSetOrder(1)
+MsSeek(cEmpresa)
+While Eval(bWhile)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica a filial corrente                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cFilAnt := FWGETCODFILIAL
+	If lEmpresa
+		cMensagem := "("+FWGETCODFILIAL+"/"+SM0->M0_FILIAL+") "+RetTitle("C6_NUM")
+	Else
+		cMensagem := RetTitle("C6_NUM")
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta a Query de Pesquisa                                              ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SC9")
+	dbSetOrder(1)
+
+	cQuery := "SELECT SC9.R_E_C_N_O_ RECNO, SC9.C9_FILIAL, SC9.C9_CLIENTE, SC9.C9_LOJA, SC9.C9_PEDIDO, SC9.C9_ITEM, SC9.C9_BLCRED, SC5.C5_TIPLIB, SC5.C5_CONDPAG, SC6.R_E_C_N_O_ SC6RECNO "
+	If lTicketC .And. lRskMTkt
+		cQuery += ", SC9.C9_TICKETC "
+	EndIf
+	cQuery += "FROM "+RetSqlName("SC9")+" SC9,"
+	cQuery += RetSqlName("SC5")+" SC5,"
+	cQuery += RetSqlName("SC6")+" SC6 "
+	cQuery += "WHERE SC9.C9_FILIAL = '"+xFilial("SC9")+"' AND "
+	cQuery += "SC9.C9_PEDIDO  >= '"+MV_PAR01+"' AND "
+	cQuery += "SC9.C9_PEDIDO  <= '"+MV_PAR02+"' AND "
+	cQuery += "SC9.C9_CLIENTE >= '"+MV_PAR03+"' AND "
+	cQuery += "SC9.C9_CLIENTE <= '"+MV_PAR04+"' AND "
+	cQuery += "SC9.C9_NFISCAL = '"+Space(Len(SC9->C9_NFISCAL))+"' AND "
+	cQuery += "SC9.D_E_L_E_T_ <> '*' AND "
+	cQuery += "SC5.C5_FILIAL  = '"+xFilial("SC5")+"' AND "
+	cQuery += "SC5.C5_NUM     = SC9.C9_PEDIDO AND "
+	cQuery += "SC5.D_E_L_E_T_ <> '*' AND "			
+	cQuery += "SC6.C6_FILIAL  = '"+xFilial("SC6")+"' AND "
+	cQuery += "SC6.C6_NUM     = SC9.C9_PEDIDO AND "
+	cQuery += "SC6.C6_ITEM    = SC9.C9_ITEM AND "
+	cQuery += "SC6.C6_PRODUTO = SC9.C9_PRODUTO AND "			
+	cQuery += "SC6.C6_ENTREG  >= '"+Dtos(MV_PAR05)+"' AND "
+	cQuery += "SC6.C6_ENTREG  <= '"+Dtos(MV_PAR06)+"' AND "
+	cQuery += "SC6.D_E_L_E_T_ <> '*' "
+
+	If ( lAvCred .And. !lAvEst )
+		cQuery += "AND (SC9.C9_BLCRED IN ('01','04') ) "
+	EndIf
+	If ( lAvEst .And. !lAvCred )
+		cQuery += "AND ( SC9.C9_BLEST = '02' OR SC9.C9_BLWMS='03' ) AND SC9.C9_BLCRED='  ' "
+	EndIf
+	If ( lAvEst .And. lAvCred )
+		cQuery += "AND (SC9.C9_BLEST = '02' OR SC9.C9_BLCRED IN('01','04') OR SC9.C9_BLWMS='03') "
+	EndIf
+	If ( lAvWMS .And. !lAvEst )
+		cQuery += "AND (SC9.C9_BLWMS='03') "
+	EndIf    
+
+	If lMT450Qry
+		cQuery := ExecBlock("MT450QRY",.F.,.F.,{ cQuery })
+	EndIf
+	
+	cQuery += "ORDER BY "+SqlOrder(SC9->(IndexKey()))
+	cQuery := ChangeQuery(cQuery)
+
+	dbUseArea( .T., "TOPCONN", TCGENQRY(,,cQuery),cAliasSC9, .T., .T.)
+
+	dbSelectArea(cAliasSC9)
+	While (!((cAliasSC9)->(Eof())) .And. xFilial("SC9") == (cAliasSC9)->C9_FILIAL )
+		/* Integração RISK - TOTVS Mais Negócios
+		Os pedidos feitos com pagamento TOTVS Mais Negócios só podem ser 
+		liberados pela plataforma RISK */
+		If lUseOffBal
+			If lAvCred .And. ( RskEvlCredit( 1, ( cAliasSC9 )->C9_PEDIDO ) .Or. ;
+				( RskType() == 2 .And. !RskTermB( ( cAliasSC9 )->C9_CLIENTE + ( cAliasSC9 )->C9_LOJA, ( cAliasSC9 )->C5_CONDPAG ) ) )		
+					( cAliasSC9 )->( DbSkip() )
+					Loop
+			Endif
+			If lRskMTkt .And. lTicketC
+				// Seta o número do ticket
+				RskSetMTkt( ( cAliasSC9 )->C9_TICKETC )
+			EndIf 
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica o tipo de Liberacao                                        ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cTipLib := (cAliasSC9)->C5_TIPLIB
+		                             
+		If lMT450Ite
+			ExecBlock("MT450ITE",.F.,.F.,{cAliasSC9})
+		Endif			
+
+		If lMT450TpLi 
+			cTipLib := ExecBlock("MT450TPLI",.F.,.F.,{cTipLib})
+		Endif			
+		
+		If cTipLib == "1"
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Controle da Query para TOP CONNECT execeto AS/400                   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			dbSelectArea("SC9")
+			MsGoto((cAliasSC9)->RECNO)
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Posiciona Registros                                                     ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			dbSelectArea("SC6")
+			dbSetOrder(1)
+			MsSeek(xFilial("SC6")+SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_PRODUTO)
+			If ( SC6->C6_ENTREG >= mv_par05 .And. SC6->C6_ENTREG <= mv_par06 )
+				dbSelectArea("SF4")
+				dbSetOrder(1)
+				MsSeek(cFilial+SC6->C6_TES)
+				dbSelectArea("SC5")
+				dbSetOrder(1)
+				If MsSeek(xFilial("SC5")+SC9->C9_PEDIDO)
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Para e-Commerce ira gravar com bloqueio de credito para Boleto(FI) e sem   ³
+					//³bloqueio para os demais. Sera liberado com a baixa do titulo.              ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If  lECommerce .And. !( Empty(SC5->C5_ORCRES) ) .And. ChkFile("MF5")
+					    MF5->( DbSetOrder(1) ) //MF5_FILIAL+MF5_ECALIA+MF5_ECVCHV
+					
+					    cOrcamto := Posicione("SL1",1,xFilial("SL1")+SC5->C5_ORCRES,"L1_ORCRES")
+					    
+					    If  !( Empty(cOrcamto) ) .And. !( Empty(Posicione("MF5",1,xFilial("MF5")+"SL1"+xFilial("SL1")+cOrcamto,"MF5_ECPEDI")) )
+						    If  (Alltrim(SL1->L1_FORMPG) == "FI")
+								(cAliasSC9)->( dbSkip() )
+								IncProc(cMensagem+"..:"+(cAliasSC9)->C9_PEDIDO+"/"+(cAliasSC9)->C9_ITEM)
+								Loop
+						    EndIf
+					    EndIf
+					EndIf
+
+					If SC5->C5_TIPO$"BD"
+						dbSelectArea("SA2")
+						dbSetOrder(1)
+						MsSeek(xFilial("SA2")+SC9->C9_CLIENTE+SC9->C9_LOJA)
+						If ( lAvCred )
+							lCredito := .T.
+						Else
+							lCredito := Empty(SC9->C9_BLCRED)
+						EndIf
+					Else
+						dbSelectArea("SA1")
+						dbSetOrder(1)
+						MsSeek(xFilial("SA1")+SC9->C9_CLIENTE+SC9->C9_LOJA)
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³Realiza a Avaliacao de Credito                                          ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						If ( lAvCred )
+							If lMTValAvC
+								nValAv	:=	ExecBLock("MTValAvC",.F.,.F.,{'MA450PROCES',SC9->C9_PRCVEN*SC9->C9_QTDLIB,Nil})
+							Else
+								nValAv	:=	SC9->C9_PRCVEN*SC9->C9_QTDLIB					  
+							Endif			
+							//Analise de credito via Intellector Tools
+							If lFatCredTools .AND. nMvTipCrd == 2
+								
+								If nValItPed == 0
+									//Consulta os titulos em aberto
+									nVlrTitAbe := SldCliente(SC9->C9_CLIENTE + SC9->C9_LOJA, Nil, Nil, .F.)
+									//Consulta os titulos em atraso				
+									nVlrTitAtr := CrdXTitAtr(SC9->C9_CLIENTE + SC9->C9_LOJA, Nil, Nil, .F.)
+								EndIf
+								
+								nValItPed += nValAv
+								
+								LJMsgRun(STR0075,,{|| lCredito := FatCredTools(SC9->C9_CLIENTE, SC9->C9_LOJA, nValItPed, nVlrTitAbe, nVlrTitAtr)})//"Aguarde... Efetuando Analise de Crédito."
+								//lCredito := FatCredTools(SC9->C9_CLIENTE, SC9->C9_LOJA, nValItPed, nVlrTitAbe, nVlrTitAtr)
+							Else
+								/* Integração RISK - TOTVS Mais Negócios
+								 Caso utilize o TOTVS Mais Negócios, a avaliação de crédito deve ser 
+								 efetuada apenas pela plataforma RISK */
+								If lRskIsTPC
+									lSeekSE4 := RskIsTPayCond( SC5->C5_CONDPAG )
+								EndIf
+								
+								lLibPed	:= SuperGetMV("MV_RSKNTKT",,.F.)
+
+								If lUseOffBal .And. lLibPed .And. RskEvlCredit( 2, SC5->C5_CONDPAG )
+									cBlqCred	:= "80" 
+									lCredito	:= .F.
+								ElseIf lUseOffBal .And. !lSeekSE4 .And. lLibPed .And. RskType() == 2
+
+									If (!RskTermB(SC9->C9_CLIENTE+SC9->C9_LOJA,SC5->C5_CONDPAG))
+										cBlqCred	:= "91" 
+										lCredito	:= .F.
+									EndIF														
+								Else
+									lCredito := MaAvalCred(SC9->C9_CLIENTE,SC9->C9_LOJA,nValAv,SC5->C5_MOEDA,.T.,@cBlqCred)
+								EndIf
+							EndIf
+						Else
+							lCredito := Empty(SC9->C9_BLCRED)
+						EndIf
+					EndIf
+					If ( lAvEst .And. lCredito )
+						If ( SF4->F4_ESTOQUE == "S" .And. Empty(SC9->C9_RESERVA))
+							If lBlqEst
+								lEstoque := .F.
+							Else
+								lEstoque := A440VerSB2(SC9->C9_QTDLIB,lMvAvalEst)
+							EndIf
+						Else
+							lEstoque := .T.
+						Endif
+					Else
+						lEstoque := IF(Empty(SC9->C9_BLEST),.T.,.F.)
+					EndIf
+					If SC6->(Found())
+						Do Case
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Avalia Credito e Estoque                                       ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						Case ( lAvCred .And. lAvEst .And. lCredito .And. lEstoque)
+							a450Grava(1,.T.,.T.,,,lAvEst)
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Avalia Credito e Nao Estoque                                   ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						Case ( lAvCred .And. !lAvEst .And. lCredito )
+							a450Grava(1,.T.,.F.,,,lAvEst)
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Avalia Credito e bloqueia por Limite excedido                  ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						Case ( lAvCred .And. !lCredito )
+							/* Integração RISK - TOTVS Mais Negócios
+							 Valida se a condição de pagamento é TOTVS Mais Negócios */
+							lSeekSE4 := IIF(lRskIsTPC, RskIsTPayCond( SC5->C5_CONDPAG ), .F.)
+								
+							Begin Transaction
+								RecLock(cAlias,.F.)
+									/* Integração RISK - TOTVS Mais Negócios
+									 Atualiza o campo de ticket caso o pedido esteja em análise na 
+									 plataforma RISK */
+									If lUseOffBal .And. lSeekSE4 .And. cBlqCred == "80"
+										SC9->C9_TICKETC := " "
+									EndIf
+									SC9->C9_BLCRED := cBlqCred
+								MsUnLock()
+							End Transaction
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Avalia Estoque e Libera Estoque                                ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						Case ( lAvEst .And. lEstoque .And. lCredito)
+							a450Grava(1,.F.,lAvEst,,,lAvEst, lLogMsg)
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Avalia Estoque e Bloqueia Estoque                              ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						Case ( lAvEst .And. !lEstoque )
+							Begin Transaction
+								RecLock(cAlias,.F.)
+								SC9->C9_BLEST := "02"
+								MsUnLock()
+							End Transaction
+						EndCase
+					EndIf
+					If ( lMta450T )
+						ExecBlock("MTA450T",.F.,.F.)
+					EndIf
+				EndIf
+			EndIf
+		Else
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Posiciona Registros                                                     ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			aadd(aRegSC6,(cAliasSC9)->SC6RECNO)
+			
+			If ( lMta450T2 )
+				ExecBlock("MTA450T2",.F.,.F.)
+			EndIf
+
+			If (cAliasSC9)->C9_BLCRED <> '  '
+				lLibPedCr := .F.
+			Endif	
+		EndIf
+		cQuebra := (cAliasSC9)->C9_PEDIDO
+		dbSelectArea(cAliasSC9)
+		dbSkip()
+		IncProc(cMensagem+"..:"+(cAliasSC9)->C9_PEDIDO+"/"+(cAliasSC9)->C9_ITEM)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Liberacao por Pedido de Venda                                          ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cQuebra <> (cAliasSC9)->C9_PEDIDO .Or. (cAliasSC9)->(Eof())
+			If Len(aRegSC6) > 0
+				dbSelectArea("SC5")
+				dbSetOrder(1)
+				MsSeek(xFilial("SC5")+cQuebra)
+
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Para e-Commerce ira gravar com bloqueio de credito para Boleto(FI) e sem   ³
+				//³bloqueio para os demais. Sera liberado com a baixa do titulo.              ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If  lECommerce .And. !( Empty(SC5->C5_ORCRES) ) .And. ChkFile("MF5")
+				    MF5->( DbSetOrder(1) ) //MF5_FILIAL+MF5_ECALIA+MF5_ECVCHV
+				
+				    cOrcamto := Posicione("SL1",1,xFilial("SL1")+SC5->C5_ORCRES,"L1_ORCRES")
+				    
+				    If  !( Empty(cOrcamto) ) .And. !( Empty(Posicione("MF5",1,xFilial("MF5")+"SL1"+xFilial("SL1")+cOrcamto,"MF5_ECPEDI")) )
+					    If  (Alltrim(SL1->L1_FORMPG) == "FI")
+							aRegSC6 := {}
+							Loop
+					    EndIf
+				    EndIf
+				EndIf
+
+				Begin Transaction
+					MaAvalSC5("SC5",3,.F.,.F.,,,,,,cQuebra,aRegSC6,.T.,!lLibPedCr)					
+					aRegSC6 := {}
+				End Transaction
+				lLibPedCr := .T.			
+			EndIf
+			If lMa450Ped
+				Execblock("MA450PED",.F.,.F.,{cQuebra} )
+			Endif
+		EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Controle de cancelamento do usuario                                    ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lEnd
+			Exit
+		EndIf
+
+		/* Integração RISK - TOTVS Mais Negócios
+		 Limpa da memoria id do ticket. */
+		If lUseOffBal .And. lRskMTkt
+		    RskSetMTkt( "" )
+    	EndIf 
+
+		If ( lMt450End )
+			ExecBlock("MT450END",.F.,.F.)
+		EndIf
+		
+	EndDo
+	dbSelectArea(cAliasSC9)
+	dbCloseArea()
+
+	// Integrado ao wms devera avaliar as regras para convocação do serviço
+	// e disponibilizar os registros de atividades do WMS para convocação
+	If IntWms()
+		WmsAvalExe()
+	EndIf
+
+	dbSelectArea("SM0")
+	dbSkip()
+EndDo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Restaura a integridade da rotina                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cFilAnt := cSavFil
+dbSelectArea("SC9")
+RestArea(aAreaSM0)
+RestArea(aArea)
+Return(.T.)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450LibMan³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de liberacao manual do credito                        ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina libera o credito em qualquer circunstancia despre³±±
+±±³          ³zando a analise de credito do sistema. A liberacao de estoque³±±
+±±³          ³sera realiada caso o credito seja liberado.                  ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A450LibMan( lAutomato )
+
+Local aArea		:= GetArea()
+Local aAreaSC9  := SC9->(GetArea())
+Local aRegSC6   := {}
+Local lContinua	:= .T.
+Local nOpcA     := 0
+
+Local cPedido		:= ""
+Local cAliasSC5		:= "SC5"
+Local cAliasSC6		:= "SC6"
+Local cAliasSC9		:= "SC9"
+Local dLimLib		:= dDataBase
+Local lMt450Fim		:= Existblock("MT450FIM")
+Local lMTA450Lib	:= Existblock("MTA450LIB")
+Local lMTA450I		:= Existblock("MTA450I")
+Local lT_MTA450I	:= ExistTemplate("MTA450I")
+Local lDCLNew		:= SuperGetMv("MV_DCLNEW",.F.,.F.)
+Local lProcessa		:= .T.
+Local aRetAuto		:= {}	
+Local cQuery		:= ""
+
+Default lAutomato := .F.
+
+If !ctbValiDt( Nil, dDataBase, .T., Nil, Nil, { "FAT002" }, Nil )
+	Return .F.
+EndIf
+
+If ValType( lAutomato ) <> 'L'
+	lAutomato := .F.
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ So Ped. Bloqueados   mv_par01          Sim Nao               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Pergunte("MTA451",.F.)
+
+IF (Existblock("MT450MAN"))
+	lContinua := ExecBlock("MT450MAN",.F.,.F.)
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se o registro posicionado eh valido                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( SC9->C9_BLCRED == "10" .Or. SC9->C9_BLEST == "10" .Or. SC9->C9_BLCRED == "ZZ" .Or. SC9->C9_BLEST == "ZZ" )
+	HELP(" ",1,"A450NFISCA")
+	lContinua := .F.
+EndIf
+If ( SC9->C9_BLCRED == "  " .And. SC9->C9_BLEST == "  " )
+	Help(" ",1,"A450JALIB")
+	lContinua := .F.
+EndIf
+If ( Empty(SC9->C9_BLCRED) .And. !Empty(SC9->C9_BLEST) )
+	Help(" ",1,"A450ESTOQ")
+	lContinua := .F.
+EndIf
+If ( lContinua )
+	If !lAutomato
+		nOpcA := a450Tela(@lContinua , .T. , .F.,@dLimLib)
+	Else
+		If FindFunction( "GetParAuto" )
+			aRetAuto 	:= GetParAuto( "MATA450TESTCASE" )
+			nOpcA 		:= aRetAuto[1]
+		EndIf
+	EndIf		
+
+	/* Integração RISK - TOTVS Mais Negócios
+	 Atualiza o código de bloqueio dos pedidos do TOTVS Mais Negócios */
+	If FindFunction("RskIsActive") .And. RskIsActive() .And. nOpcA > 0 
+		If RskEvlCredit( 1, SC9->C9_PEDIDO )
+			nOpcA := 0
+			If ( SC9->C9_BLCRED == "80"	.Or. SC9->C9_BLCRED == "92" )
+				Help( "", 1, "A450LibMan",, STR0076, 1, 0,,,,,, { STR0077 } )	//"Este item está sendo analisado pela plataforma Risk"###"Aguarde a análise deste item pela plataforma Risk."
+			ElseIf SC9->C9_BLCRED == "90"
+				Help( "", 1, "A450LibMan",, STR0078, 1, 0,,,,,, { STR0079 } )	//"Este item está bloqueado por regras da plataforma Risk"###"Consulte a plataforma Risk para mais detalhes."
+			EndIf
+		EndIf 
+		
+		IF RskType() == 2
+			If ( !RskTermB( SC9->C9_CLIENTE + SC9->C9_LOJA, SC5->C5_CONDPAG ) )
+				nOpcA := 0
+				Help( "", 1, "A450LibMan",, STR0080, 1, 0,,,,,, { STR0079 } )	//"Este item está bloqueado pois o cliente está com o crédito bloqueado na plataforma Risk"###"Consulte a plataforma Risk para mais detalhes."
+			EndIF
+		EndIf
+	EndIf
+
+	If ( nOpcA == 1 )
+		lProcessa := .T.
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Ponto de Entrada para validacao do usuario                             ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If lMTA450Lib
+			lProcessa := ExecBlock("MTA450LIB",.f.,.f.,{SC9->C9_PEDIDO,SC9->C9_ITEM,nOpcA})
+		EndIf
+		
+		If lProcessa
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Libera de Credito para o item da liberacao do Pedido de Venda ( SC9 )   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+			a450Grava(1,.T.,.F.)
+
+			//Verifica se o novo DCL está configurado
+			If lDCLNew
+				DCLMTA450I()
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Pontos de Entrada 													   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+			ElseIF lT_MTA450I
+				ExecTemplate("MTA450I",.f.,.f.,{nOpca,dLimLib})
+			EndIf
+	
+			IF lMTA450I
+				ExecBlock("MTA450I",.f.,.f.,{nOpca,dLimLib})
+			EndIf
+		Endif
+
+		// Integrado ao wms devera avaliar as regras para convocação do serviço
+		// e disponibilizar os registros de atividades do WMS para convocação
+		If IntWms()
+			WmsAvalExe()
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Rejeicao do Credito para o item da liberacao do Pedido de Venda ( SC9 ) ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	ElseIf nOpcA == 3
+		a450Grava(2,.T.,.F.)
+		IF (Existblock("MTA450R"))
+			ExecBlock("MTA450R",.f.,.f.)
+		EndIf
+	ElseIf nOpcA == 4
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Liberacao para todos os itens do SC9                                    ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+		cPedido := SC9->C9_PEDIDO
+		dbSelectArea("SC9")
+		dbSetOrder(1)
+
+		cAliasSC9 := "A450LIBMAN"
+		cAliasSC5 := "A450LIBMAN"
+		cAliasSC6 := "A450LIBMAN"
+		cQuery := "SELECT C9_FILIAL,C9_PEDIDO,C9_BLCRED,C9_ITEM,SC9.R_E_C_N_O_ SC9RECNO,SC5.C5_TIPLIB,"
+		cQuery += "SC5.R_E_C_N_O_ SC5RECNO,SC6.R_E_C_N_O_ SC6RECNO "
+		cQuery += "FROM "+RetSqlName("SC9")+" SC9,"
+		cQuery += RetSqlName("SC5")+" SC5,"
+		cQuery += RetSqlName("SC6")+" SC6 "			
+		cQuery += "WHERE SC9.C9_FILIAL = '"+xFilial("SC9")+"' AND "
+		cQuery += "SC9.C9_PEDIDO = '"+cPedido+"' AND "
+		cQuery += "SC9.C9_BLCRED <> '"+Space(Len(SC9->C9_BLCRED))+"' AND "
+		If mv_par01 == 1						
+			cQuery += "SC9.C9_BLCRED <> '09' AND "				
+		Endif	
+		cQuery += "SC9.C9_BLCRED <> '10' AND "
+		cQuery += "SC9.C9_BLCRED <> 'ZZ' AND "
+		cQuery += "SC9.D_E_L_E_T_ = ' ' AND "
+		cQuery += "SC5.C5_FILIAL='"+xFilial("SC5")+"' AND "
+		cQuery += "SC5.C5_NUM=SC9.C9_PEDIDO AND "
+		cQuery += "SC5.D_E_L_E_T_ = ' ' AND "
+		cQuery += "SC6.C6_FILIAL='"+xFilial("SC6")+"' AND "
+		cQuery += "SC6.C6_NUM=SC5.C5_NUM AND "
+		cQuery += "SC6.C6_ITEM=SC9.C9_ITEM AND "
+		cQuery += "SC6.C6_PRODUTO=SC9.C9_PRODUTO AND "
+		cQuery += "SC6.D_E_L_E_T_ = ' ' "
+
+		cQuery := ChangeQuery(cQuery)
+
+		dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC9,.T.,.T.)
+
+		While ( !Eof() .And. (cAliasSC9)->C9_FILIAL == xFilial("SC9") .And.;
+				(cAliasSC9)->C9_PEDIDO == cPedido )
+				
+			lProcessa := .T.				
+			
+			If ( !Empty((cAliasSC9)->C9_BLCRED) .And. (cAliasSC9)->C9_BLCRED <> "10" .And. (cAliasSC9)->C9_BLCRED <> "ZZ")
+			
+				If mv_par01 == 1
+					If (cAliasSC9)->C9_BLCRED == "09"
+						lProcessa := .F.
+					Endif	
+				Endif
+				
+				If lProcessa
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Ponto de Entrada para validacao do usuario                             ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If lMTA450Lib
+						lProcessa := ExecBlock("MTA450LIB",.f.,.f.,{(cAliasSC9)->C9_PEDIDO,(cAliasSC9)->C9_ITEM,nOpcA})
+					EndIf
+
+					If lProcessa
+						SC5->(MsGoto((cAliasSC5)->SC5RECNO))
+						
+						If (cAliasSC5)->C5_TIPLIB == "2"
+							aadd(aRegSC6,(cAliasSC6)->SC6RECNO)
+						Else
+							SC9->(MsGoto((cAliasSC9)->SC9RECNO))
+							a450Grava(1,.T.,.F.)
+						EndIf				
+					EndIf
+				Endif
+
+				//Verifica se o novo DCL está configurado
+				If lDCLNew
+					DCLMTA450I()
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Pontos de Entrada 					                                   ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+				ElseIF lT_MTA450I
+					ExecTemplate("MTA450I",.f.,.f.,{nOpca,dLimLib})										
+				EndIf
+
+				If lMTA450I
+					ExecBlock("MTA450I",.f.,.f.,{nOpca,dLimLib})										
+				EndIf
+			Endif
+				
+			dbSelectArea(cAliasSC9)
+			dbSkip()
+		EndDo
+		
+		dbSelectArea(cAliasSC9)
+		dbCloseArea()
+		dbSelectArea("SC9")
+		
+		If Len(aRegSC6) > 0
+		
+			dbSelectArea("SC9")
+			DbClearFilter()
+			dbSetOrder(1)
+
+			Begin Transaction
+				MaAvalSC5("SC5",3,.F.,.F.,,,,,,cPedido,aRegSC6,.T.,.F.)
+				aRegSC6 := {}
+			End Transaction
+		EndIf
+		If lMt450Fim
+			Execblock("MT450FIM",.F.,.F.,{cPedido})
+		Endif
+
+		// Integrado ao wms devera avaliar as regras para convocação do serviço
+		// e disponibilizar os registros de atividades do WMS para convocação
+		If IntWms()
+			WmsAvalExe()
+		EndIf
+
+	EndIf
+EndIf
+MsUnLockAll()
+RestArea(aAreaSC9)
+RestArea(aArea)
+
+Return(	lContinua )
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450LibAut³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de interface da reavalicao de credito                 ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina realiza a interface com o usuario para a rotina  ³±±
+±±³          ³de processamento da reavaliacao de credito.                  ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A450LibAut( lAutomato )
+
+Local aArea   := GetArea()
+Local lContinua	:= .T. 
+
+Default lAutomato := .F.
+
+If !ctbValiDt( Nil, dDataBase, .T., Nil, Nil, { "FAT002" }, Nil )
+	Return Nil
+EndIf
+
+If ValType( lAutomato ) <> 'L'
+	lAutomato := .F.
+EndIf
+
+/* Integração RISK - TOTVS Mais Negócios
+ A liberação de pedidos do TOTVS Mais Negócios deve ser realizada 
+ pela plataforma RISK */
+If FindFunction("RskType") .And. RskType() == 1
+	Help( "", 1, "A450LibAut", , STR0081, 1, 0,,,,,, {STR0082} ) //"Liberação automática não disponível."###"Utilize a plataforma Risk para realizar a liberação de crédito."
+	lContinua := .F.
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ mv_par01 Pedido de          ?                                 ³
+//³ mv_par02 Pedido ate         ?                                 ³
+//³ mv_par03 Cliente de         ?                                 ³
+//³ mv_par04 Cliente ate        ?                                 ³
+//³ mv_par05 Dta Liberacao de   ?                                 ³
+//³ mv_par06 Dta Liberacao ate  ?                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lContinua 
+	If !lAutomato
+		If ( Pergunte("LIBAUT",.T.) )
+			If MsgYesNo(OemToAnsi(STR0034),OemToAnsi(STR0035))       //"Confirma Libera‡„o Automatica dos Pedidos ?"###"Aten‡„o"
+				Processa({|lEnd| Ma450Proces("SC9",.T.,.F.,@lEnd)},,,.T.)
+			EndIf
+		EndIf
+	Else
+		If ( Pergunte( "LIBAUT", .F. ) )
+			Ma450Proces( "SC9", .T., .F. )
+		EndIf
+	EndIf
+EndIf
+
+RestArea(aArea)
+Return(Nil)
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³FtSomaAtr ³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de calculo do atraso do cliente                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina realiza o calculo do atraso do cliente com base  ³±±
+±±³          ³no titulos em aberto. A tabela de clientes deve estar posicio³±±
+±±³          ³nada.                                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function FtSomaAtr(cFilNew)
+
+Local aArea		:= GetArea()
+Local cAliasTmp	:= "SOMAATRASO"
+Local cSalvFil	:= cFilAnt
+Local nValAtraso	:= 0
+Local nVlr			:= 0
+Local cCodCli		:= SA1->A1_COD
+Local cLojCli		:= SA1->A1_LOJA
+Local nTmE1SALDO	:= GetSx3Cache("E1_SALDO","X3_TAMANHO") //Tamanho do campo
+Local nDcE1SALDO	:= GetSx3Cache("E1_SALDO","X3_DECIMAL") //Decimais do campo
+
+// Troca a filial corrente
+Default cFilNew	:= cFilAnt
+
+cFilAnt			:= cFilNew
+
+// Prepara a consulta aos títulos em aberto do cliente/loja posicionado
+BeginSql Alias cAliasTmp
+	COLUMN E1_VENCREA AS DATE
+	COLUMN E1_SALDO   AS NUMERIC(nTmE1SALDO, nDcE1SALDO)
+
+	SELECT SE1.E1_FILIAL, SE1.E1_PREFIXO, SE1.E1_NUM,    SE1.E1_PARCELA, SE1.E1_TIPO,  SE1.E1_CLIENTE,
+	       SE1.E1_LOJA,   SE1.E1_MOEDA,   SE1.E1_STATUS, SE1.E1_VENCREA, SE1.E1_SALDO
+	  FROM %Table:SE1% SE1
+	 WHERE SE1.E1_FILIAL = %xFilial:SE1%
+	   AND SE1.E1_CLIENTE = %Exp:cCodCli%
+	   AND SE1.E1_LOJA = %Exp:cLojCli%
+	   AND SE1.E1_VENCREA < %Exp:DtoS(dDataBase)%
+	   AND SE1.E1_STATUS = 'A'
+	   AND SE1.%NotDel%
+	 ORDER BY SE1.E1_FILIAL, SE1.E1_CLIENTE, SE1.E1_LOJA, SE1.E1_TIPO, SE1.E1_PREFIXO, SE1.E1_NUM, SE1.E1_PARCELA
+EndSql
+
+While (cAliasTmp)->(! Eof())
+	nVlr		:=	xMoeda((cAliasTmp)->E1_SALDO, (cAliasTmp)->E1_MOEDA, 1)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Caso o título seja de qualquer natureza credora (-) o saldo deve ser abatido.  ³
+	//³ Os títulos tipo RA (Receb.Antecipado), NCC (Nota de Crédito) e PR (Provisório) ³
+	//³ não precisam de tratamento especial. Bops 00323-A.                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (cAliasTmp)->E1_TIPO $ MVABATIM
+		nValAtraso += nVlr
+	ElseIf !((cAliasTmp)->E1_TIPO $ MVRECANT+"/"+MVPROVIS+"/"+MV_CRNEG)
+		nValAtraso -= nVlr
+	EndIf
+	(cAliasTmp)->(DbSkip())
+EndDo
+(cAliasTmp)->(DbCloseArea())
+
+cFilAnt	:= cSalvFil
+RestArea(aArea)
+Return (nValAtraso)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450Grava ³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de atualizacao da liberacao de credito                ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpN1: 1 - Liberacao                                         ³±±
+±±³          ³       2 - Rejeicao                                          ³±±
+±±³          ³ExpL2: Indica uma Liberacao de Credito                       ³±±
+±±³          ³ExpL3: Indica uma liberacao de Estoque                       ³±±
+±±³          ³ExpL4: Indica se exibira o help da liberacao                 ³±±
+±±³          ³ExpA5: Saldo dos lotes a liberar                             ³±±
+±±³          ³ExpA6: Forca analise da liberacao de estoque                 ³±±
+±±³          ³ExpL7: Indica se a funcao deve armazenar as mensagens de     ³±±
+±±³          ³       inconsistencias e alertas no processo de liberacao    ³±±
+±±³          ³ExpL8: Indica se é uma liberação de pedido do TOTVS Mais     ³±±
+±±³          ³       Negócios											   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina realiza a atualizacao da liberacao de pedido de  ³±±
+±±³          ³venda com base na tabela SC9.                                ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function a450Grava(nOpc     , lAtuCred  , lAtuEst   , lHelp     , ;
+                   aSaldos  , lAvEst    , lLogMsg	, lRskLibPed )
+
+Local aArea      := GetArea()
+Local aAreaC9    := SC9->(GetArea())
+Local aSaldoP3   := {}
+Local lCredito   := Empty(SC9->C9_BLCRED)
+Local nQtdEst    := 0
+Local nMCusto    :=  Val(SuperGetMv("MV_MCUSTO"))
+Local nQtdPoder3 := 0
+Local nQtdEmP3   := 0
+Local nQtdALib   := 0
+Local nQtdLib    := 0
+Local lOrdSepLib := .F.
+Local lEstoque   := .F.
+Local lMvAvalEst := SuperGetMv("MV_AVALEST")==2
+Local lBlqEst    := SuperGetMv("MV_AVALEST")==3 .And. Empty(aSaldos)
+Local cLiberOk   := ""
+Local cBlq       := ""
+Local cBloquei   := ""
+Local nX
+Local lUseOffBal := FindFunction( "RskIsActive" ) .And. RskIsActive()
+Local lContinua  := .T.
+Local lTrvSA1    := .T.
+                 
+DEFAULT lHelp    := .T.
+DEFAULT aSaldos  := {}
+DEFAULT lAvEst   := .F.
+DEFAULT lLogMsg  := .F.
+DEFAULT lRskLibPed := .F.
+
+//- Status dos Bloqueios do pedido de venda. Se .T. DCF gerado, tem que estornar.
+Private lbloqDCF := !Empty(SC9->C9_BLCRED+SC9->C9_BLEST)
+
+/* Integração RISK - TOTVS Mais Negócios
+ Controla para que a rotina não libere crédito sem passar pelo risk */
+If lUseOffBal .And. lAtuCred
+	If RskCdPgPay( SC9->C9_PEDIDO )
+		lContinua := lRskLibPed
+		If !lContinua
+			LogMsg( "a450Grava", 23, 6, 1, "", "", "a450Grava -> " + STR0085 ) //Não será possível liberar crédito para um pedido de venda Mais Negócios, acesse a rotina de Aprovação de Tickets."
+		EndIf
+	ElseIf RskType() == 2 .And. !RskCdPgPay( SC9->C9_PEDIDO )
+		If ( !RskTermB( SC9->C9_CLIENTE + SC9->C9_LOJA, SC5->C5_CONDPAG ) )
+			lContinua := .F.
+			LogMsg( "a450Grava", 23, 6, 1, "", "", "a450Grava -> " + STR0086 ) // Não será possível liberar crédito para um pedido de venda Mais Negócios."
+		EndIF
+	Endif
+EndIf
+
+If lContinua
+	lBlqEst := lBlqEst .And. !lAvEst
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Posiciona Registros                                                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SC5")
+	dbSetOrder(1)
+	MsSeek(xFilial("SC5")+SC9->C9_PEDIDO)
+
+	dbSelectArea("SC6")
+	dbSetOrder(1)
+	MsSeek(xFilial("SC6")+SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_PRODUTO)
+
+	dbSelectArea("SA1")
+	dbSetOrder(1)
+	MsSeek(xFilial("SA1")+SC9->C9_CLIENTE+SC9->C9_LOJA)
+
+	dbSelectArea("SF4")
+	dbSetOrder(1)
+	MsSeek(xFilial("SF4")+SC6->C6_TES)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Moeda Forte do Cliente                                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nMCusto:= If (SA1->A1_MOEDALC > 0, SA1->A1_MOEDALC, nMCusto)					
+	dbSelectArea("SB2")
+	dbSetOrder(1)
+	MsSeek(cFilial+SC6->C6_PRODUTO+SC6->C6_LOCAL)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Liberacao do SC9                                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If ( nOpc == 1 )
+		Begin Transaction
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Travamento dos Registros                                                ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			lTrvSA1 := IIf(cPaisLoc == "BRA" .And. lFATTRVSA1, ExecBlock("FATTRVSA1", .F., .F., {xFilial("SA1"), SA1->A1_COD, SA1->A1_LOJA}), .T.)
+			If lTrvSA1 .And. !(SC5->C5_TIPO $ "DB")
+				RecLock("SA1",.F.)
+			EndIf
+			
+			RecLock("SC5",.F.)
+			RecLock("SC6",.F.)
+			RecLock("SC9",.F.)
+			If ( SB2->(Found()) )
+				RecLock("SB2",.F.)
+			EndIf
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Calcula a quantidade disponivel em estoque                              ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			nQtdEst :=SC9->C9_QTDLIB
+			If ( Empty(SC9->C9_RESERVA) .And. !Empty(SC9->C9_BLCRED+SC9->C9_BLEST) .And. SF4->F4_ESTOQUE == "S")				
+				If lBlqEst
+					lEstoque := .F.
+				Else
+					If Empty(aSaldos)
+						lEstoque := A440VerSB2(@nQtdEst,lMvAvalEst)
+					Else          
+						lEstoque := A440VerSB2(@nQtdEst,lMvAvalEst,,,,.F.)
+					EndIf
+				EndIf
+			Else
+				lEstoque := .T.
+			EndIf
+			If ( nQtdEst == 0 )
+				nQtdEst  := SC9->C9_QTDLIB
+				lEstoque := .F.
+			EndIf
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Avaliacao de Credito                                                    ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If ( lAtuCred .And. !Empty(SC9->C9_BLCRED) )
+				MaAvalSC9("SC9",4,Nil,Nil,Nil,.F.)
+				SC9->C9_BLCRED := ""
+				SC9->C9_BLEST := "02"
+				MaAvalSC9("SC9",3)
+				lCredito := .T.
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Regrava a quantidade empenha quando solicitado                          ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If ( lMvAvalEst )
+					SC6->C6_QTDEMP -= SC9->C9_QTDLIB
+					SC9->C9_QTDLIB := nQtdEst
+					SC9->C9_QTDLIB2 := nQtdEst * ( SC6->C6_UNSVEN / SC6->C6_QTDVEN )
+					SC6->C6_QTDEMP += SC9->C9_QTDLIB
+				EndIf
+			EndIf
+			If ( Empty(SC9->C9_BLCRED) .And. (lAtuEst .Or. lEstoque))
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Avaliacao do Estoque                                                    ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If !( SF4->F4_PODER3=='D' .And. !(SC5->C5_TIPO$"CIPD") )
+					aSaldoP3   := MaNeedP3(SC9->C9_QTDLIB,IIf(Empty(SC9->C9_BLCRED+SC9->C9_BLEST),SC9->C9_QTDLIB,0))
+					nQtdPoder3 := aSaldoP3[2]
+					nQtdEmP3   := aSaldoP3[3]
+				Else
+					nQtdPoder3 := 0
+					nQtdEmP3   := 0
+				EndIf
+				If Rastro(SC9->C9_PRODUTO) .Or. Localiza(SC9->C9_PRODUTO) .Or. !Empty(SC9->C9_RESERVA) .Or. nQtdPoder3 <> 0 .Or. nQtdEmP3 <> 0
+					If (Rastro(SC9->C9_PRODUTO) .Or. Localiza(SC9->C9_PRODUTO)) .And. !lEstoque
+						//Nao faz nada.
+					Else
+
+						RecLock("SC5")
+						cLiberOk := SC5->C5_LIBEROK
+						nQtdALib := SC9->C9_QTDLIB
+						cBlq     := SC5->C5_BLQ
+						cBloquei := SC6->C6_BLOQUEI
+						SC9->(a460Estorna())
+						SC5->C5_BLQ     := cBlq
+						SC6->C6_BLOQUEI := cBloquei
+						If Len(aSaldos)>0
+							For nX := 1 To Len(aSaldos)
+								RecLock("SC6")
+								SC6->C6_LOTECTL := aSaldos[nX][1]
+								SC6->C6_NUMLOTE := aSaldos[nX][2]
+								SC6->C6_LOCALIZ := aSaldos[nX][3]
+								SC6->C6_NUMSERI := aSaldos[nX][4]
+								SC6->C6_DTVALID := aSaldos[nX][7]
+								SC6->C6_POTENCI := aSaldos[nX][6]
+								
+								MaLibDoFat(SC6->(RecNo()),Min(aSaldos[nX][5],nQtdALib),@lCredito,@lEstoque,!(lAtuCred .Or. Empty(SC9->C9_BLCRED)),!Empty(SC9->C9_BLEST),.F.,.F.)
+								nQtdALib -= Min(aSaldos[nX][5],nQtdALib)
+								
+								If Len(aSaldos) > 1
+									SC6->C6_LOTECTL := ''
+									SC6->C6_NUMLOTE := ''
+									SC6->C6_LOCALIZ := ''
+									SC6->C6_NUMSERI := ''
+									SC6->C6_DTVALID := Ctod('')
+									SC6->C6_POTENCI := 0
+								EndIf			
+							Next nX
+						Else
+							nQtdLib := MaLibDoFat(SC6->(RecNo())                        , SC9->C9_QTDLIB       , @lCredito, @lEstoque, ;
+												!(lAtuCred .Or. Empty(SC9->C9_BLCRED)), !Empty(SC9->C9_BLEST), .F.      , .F.      , ;
+																						,                      ,          ,          , ;
+																						,                      ,          , lLogMsg  , ;
+												@lOrdSepLib)
+							If (Empty(nQtdLib) .And. lOrdSepLib) 
+								DisarmTransaction()
+								Break
+							EndIf
+						EndIf
+						RecLock("SC5")
+						SC5->C5_LIBEROK := cLiberOk
+					EndIf
+				Else
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Retira o Bloqueio de Estoque                                            ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					FatAtuEmpN("-")
+					MaAvalSC9("SC9",6,{{ "","","","",SC9->C9_QTDLIB,SC9->C9_QTDLIB2,Ctod(""),"","","",SC9->C9_LOCAL}},Nil,Nil,.F.)
+					SC9->C9_BLEST := ""
+					MaAvalSC9("SC9",5,{{ "","","","",SC9->C9_QTDLIB,SC9->C9_QTDLIB2,Ctod(""),"","","",SC9->C9_LOCAL}})
+					dbSelectArea("SC9")
+					MsUnlock()
+					dBCommit()
+					FatAtuEmpN("+")
+				EndIf
+			EndIf
+		End Transaction
+		If ( (lAtuEst .And. !Empty(SC9->C9_BLEST)) ) .And. lHelp .And. IsInCallStack("A455LibMan")
+			Help(" ",1,"A455LIBMAN",, STR0060, 1, 1 ) //"Liberacao manual de estoque nao permitida."
+			lHelp := .F.
+		EndIf
+	Else
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Rejeicao do SC9                                                         ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		Begin Transaction
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Efetua o Bloqueio de Credito por Rejeicao                               ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			RecLock("SC9")
+			SC9->C9_BLCRED := "09"
+			MsUnlock()	
+		End Transaction
+	EndIf
+EndIf
+
+RestArea(aAreaC9)
+RestArea(aArea)
+Return(Nil)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450Tela  ³ Rev.  ³ Eduardo Riera         ³ Data ³02.02.2002 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Rotina de interface das liberacaoes de credito e credito/esto³±±
+±±³          ³que.                                                         ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpL1: Flag de controle. Indica se havera interface com o    ³±±
+±±³          ³       usuario                                               ³±±
+±±³          ³ExpL2: Indica se havera avaliacao de credito                 ³±±
+±±³          ³ExpL3: Indica se havera avaliacao de estoque                 ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina realiza a atualizacao da liberacao de pedido de  ³±±
+±±³          ³venda com base na tabela SC9.                                ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function a450Tela(lContinua , lAvCred , lAvEst, dLimLib)
+Local aArea      := GetArea()
+Local aAreaSC9   := SC9->(GetArea())
+Local nValItem   := 0
+Local nValPed    := 0
+Local nLimCred   := 0
+Local nMoeda     := 0
+Local nSalPedL   := 0
+Local nSalPed    := 0
+Local nSalDup	 := 0
+Local nSalDupM	 := 0
+Local nValAtraso := 0
+Local nOpca 	 := 0
+Local nSalvEmp   := 0
+Local cDescBloq  := ""
+Local cDescri    := ""
+Local cCondSC9   := ""
+Local cProduto   := SC9->C9_PRODUTO
+Local cLocal     := SC9->C9_LOCAL
+Local oDlg
+Local bWhile     := Nil
+Local nMCusto    := 0
+Local nMCustoCli := 0  	
+Local nDecs		 := 0
+Local aSaldos
+Local lLiberado  := .F.
+Local nSalFin    := 0
+Local nSalFinM   := 0
+Local nLcFin     := 0
+Local nLcFinM    := 0
+Local aCols      := {}
+Local aHeader    := {}
+Local cMoeda     := ""
+Local aColsNew   := {}
+Local lMT450COLS := ExistBlock('MT450COLS')
+Local lGestao	 := Iif( FWSizeFilial() > 2, .T., .F.)	//-Indica se esta configurado como Gestao Corporativa na P11
+Local lPosicion  := .F.
+Local nTam		 := 0
+Local nMVMCusto  := Val(SuperGetMv("MV_MCUSTO"))
+Local cFilSA1    := ""
+Local cEmpAtu	 := ""	
+Local aFilSE1	 := {}
+Local cFilBkp    := ""
+Local nTamFilSA1 := TamSX3("A1_FILIAL")[1]
+Local aPDFields  := {"A1_LC","A1_LCFIN","A1_SALFIN","A1_SALFINM","A1_METR","A1_TITPROT","A1_CHQDEVO","A1_NOME","A1_RISCO"}
+Local lUseOffBal := FindFunction( "RskIsActive" ) .And. RskIsActive()
+Local lRskBtnWhen := !lUseOffBal .Or. ( lUseOffBal .And. RskType() == 2 ) // 2=offbalance;
+
+Private cCadastro := OemToAnsi(STR0006)      //"Consulta Posi‡„o Clientes"
+
+DEFAULT dLimLib := dDataBase
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Posiciona no SC5                                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( lContinua )
+	dbSelectArea("SC5")
+	dbSetOrder(1)
+	If dbSeek(xFilial()+SC9->C9_PEDIDO)
+		If !SoftLock("SC5")
+			lContinua := .F.
+		EndIf
+	EndIf
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica o Tipo de Analize                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( SC5->C5_TIPLIB=="2" )
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Quando for por PV deve-se somar todos os SC9 gerados para o item        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SC9")
+	dbSetOrder(1)
+	dbSeek(xFilial("SC9")+SC9->C9_PEDIDO)
+	cCondSC9 := SC9->C9_PEDIDO
+	bWhile := {||  xFilial("SC9") == SC9->C9_FILIAL .And.;
+		cCondSC9 == SC9->C9_PEDIDO }
+Else
+	cCondSC9 := SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_SEQUEN
+	bWhile   := {||   xFilial("SC9") == SC9->C9_FILIAL .And.;
+		cCondSC9 == SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_SEQUEN }
+EndIf
+
+dbSelectArea("SA1")           // Posiciona cliente
+dbSetOrder(1)
+dbSeek(cFilial+SC5->C5_CLIENTE+SC5->C5_LOJACLI)
+nMCusto:= If (SA1->A1_MOEDALC > 0, SA1->A1_MOEDALC, nMVMCusto)
+cMoeda           := " "+Pad(SuperGetMv("MV_SIMB"+AllTrim(STR(nMCusto))),4)
+nDecs            := MsDecimais(nMcusto)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica o tipo de analise a ser efetuado ( Filial ou Matriz )    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( SuperGetMv("MV_CREDCLI") == "L" )
+	nLimCred := SA1->A1_LC
+	nSalPed  := SA1->A1_SALPED + SA1->A1_SALPEDB
+	nSalPedL := SA1->A1_SALPEDL
+	nSalDup  := SA1->A1_SALDUP
+	nSalDupM := SA1->A1_SALDUPM
+	nSalFin  := SA1->A1_SALFIN
+	nLcFin   := SA1->A1_LCFIN
+	nLcFinM  := SA1->A1_SALFINM
+Else
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Soma-se Todos os Limites de Credito do Cliente          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SA1")
+	dbSetOrder(1)
+	cFilSA1		:= xFilial("SA1")
+	dbSeek(cFilSA1+SC5->C5_CLIENTE)
+	While ( !Eof() .And. cFilSA1 == SA1->A1_FILIAL .And. SC5->C5_CLIENTE ==  SA1->A1_COD )
+		nMCustoCli := Iif(SA1->A1_MOEDALC > 0, SA1->A1_MOEDALC, nMVMCusto)
+		nLimCred += xMoeda(SA1->A1_LC,nMCustoCli,nMCusto,dDataBase)
+		nSalPed  += xMoeda(SA1->A1_SALPED+SA1->A1_SALPEDB,nMCustoCli,nMCusto,dDataBase)
+		nSalPedL += xMoeda(SA1->A1_SALPEDL,nMCustoCli,nMCusto,dDataBase)
+		nSalDup  += SA1->A1_SALDUP
+		nSalDupM += xMoeda(SA1->A1_SALDUPM,nMCustoCli,nMCusto,dDataBase)
+		nSalFin  += SA1->A1_SALFIN
+		nLcFin   += xMoeda(SA1->A1_LCFIN,nMCustoCli,nMCusto,dDataBase)
+		nSalFinM += xMoeda(SA1->A1_SALFINM,nMCustoCli,nMCusto,dDataBase)
+		dbSelectArea("SA1")
+		dbSkip()
+	EndDo
+EndIf
+
+nSalvEmp := SM0->(Recno())
+cFilBkp  := cFilAnt
+If lGestao
+	If FWModeAccess("SA1",2) == "C"
+		nTamFilSA1 := At("U",FWSM0Layout())-1
+	ElseIf FWModeAccess("SA1",3) == "C"
+		nTamFilSA1 := At("F",FWSM0Layout())-1
+	EndIf
+Endif
+cFilSA1 := AllTrim(SA1->A1_FILIAL)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Analisar o atraso de Todas as Filiais do Sistema                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SM0")
+SM0->(DbGoTop())
+SM0->(DbSeek(cEmpAnt + cFilSA1))
+cFilAnt := FWCodFil()
+While !Eof() .and. SM0->M0_CODIGO == cEmpAnt .And. Ascan(aFilSE1,xFilial('SE1')) == 0
+
+	aAdd(aFilSE1,xFilial('SE1'))
+
+	If ( SuperGetMv("MV_CREDCLI")=="L" )
+		nValAtraso += FtSomaAtr(FWGETCODFILIAL)
+	Else
+		dbSelectArea("SA1")
+		dbSetOrder(1)
+		dbSeek(xFilial("SA1")+SC5->C5_CLIENTE)
+		While ( !Eof() .And. xFilial("SA1")  == SA1->A1_FILIAL .And.;
+				SC5->C5_CLIENTE == SA1->A1_COD )
+			nValAtraso += FtSomaAtr(FWGETCODFILIAL)
+			dbSelectArea("SA1")
+			dbSkip()
+		EndDo
+	EndIf
+    If lGestao
+    	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Verifica se Filial esta compartilhada e força posicionar na prox filial³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+        If FWModeAccess("SA1",3)=="C" .And. FWModeAccess("SE1",3)=="C" 
+    		nTam := At("F",FWSM0Layout())-1
+    		//posiciona na prox un de neg 
+    		cEmpAtu	:= FWCodFil()  
+    		While SM0->(!EOF()) .And. SubStr(FWCodFil(),1,nTam)==SubStr(cEmpAtu,1,nTam) 
+				lPosicion:= .T.
+				SM0->(dbSkip()) 
+			EndDo	
+			cFilAnt := FWCodFil()
+    	EndIf	    
+    Else
+	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Forca a saida quando o SE1 estiver compartilhado               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	    If ( FWModeAccess("SE1",3)=="C" .Or. FWModeAccess("SA1",3)=="E") 
+			Exit
+		EndIf
+	EndIf
+	dbSelectArea("SM0")
+	If !lPosicion
+		SM0->(DbSkip())
+		cFilAnt := FWCodFil()
+	EndIf
+
+	If lGestao .And. !(AllTrim(Substr(cFilAnt, 1, nTamFilSA1)) == cFilSA1)
+		Exit
+	EndIf
+
+EndDo
+
+ASize(aFilSE1, 0)
+aFilSE1 := Nil
+
+dbSelectArea("SM0")
+dbGoto(nSalvEmp)
+cFilAnt := cFilBkp
+
+dbSelectArea("SA1")           // Posiciona cliente
+dbSetOrder(1)
+dbSeek(cFilial+SC5->C5_CLIENTE+SC5->C5_LOJACLI)
+dbSelectArea("SC9")
+While ( !Eof() .And. Eval(bWhile) .And. lContinua)
+	If (  SC9->C9_BLCRED != "10" .And. SC9->C9_BLEST != "10" .And.;
+		SC9->C9_BLCRED != "ZZ" .And. SC9->C9_BLEST != "ZZ" .And.;
+			(If(lAvCred,!Empty(SC9->C9_BLCRED),.F.) .Or.;
+			If(lAvEst,!Empty(SC9->C9_BLEST),.F.)) )
+		lLiberado := .T.
+		If !SoftLock("SC9")
+			lContinua := .F.
+		EndIf
+		If ( lContinua )
+			dbSelectArea("SC9")
+
+			If ( SC5->C5_TIPO $ "DB" )
+				Help(" ",1,"A450NCRED")
+				lContinua := .F.
+			EndIf
+		EndIf
+		If ( lContinua )
+			dbSelectArea("SC6")           // Posiciona item do pedido
+			dbSetOrder(1)
+			dbSeek(cFilial+SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_PRODUTO)
+
+			dbSelectArea("SM2")           // Posiciona moeda da data base
+			dbSetOrder(1)
+			dbSeek(dDataBase,.T.)
+
+			dbSelectArea("SC9")
+			nMoeda   := Iif(SC5->C5_MOEDA < 2,1,SC5->C5_MOEDA)
+			nValItem := xMoeda((SC6->C6_PRCVEN * SC9->C9_QTDLIB),nMoeda,nMcusto,dDataBase)
+			nValPed  += nValItem
+			nSalPed  -= nValItem
+			nSalPed  := IIf( nSalped < 0 , 0 , nSalPed )
+
+		EndIf
+	EndIf
+	dbSelectArea("SC9")
+	dbSkip()
+EndDo
+dbSelectArea("SC9")
+dbGoto(aAreaSC9[3])
+If ( !lLiberado )
+	Help(" ",1,"A450JALIB")
+Endif
+If ( lContinua .And. lLiberado )
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Reposiciona o SA1                                                      ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SA1")
+	dbSetOrder(1)
+	dbSeek(cFilial+SC5->C5_CLIENTE+SC5->C5_LOJACLI)
+	If ( SC9->C9_BLCRED == "01" )
+		cDescBloq := OemToAnsi(STR0007)  //"Cr‚dito"
+	ElseIf SC9->C9_BLCRED == "04"
+		cDescBloq := OemToAnsi(STR0008)  //"Limite de Cr‚dito Vencido"
+	ElseIf SC9->C9_BLCRED == "09"
+		cDescBloq := OemToAnsi(STR0009)  //"Rejeitado"
+	ElseIf !Empty(SC9->C9_BLEST)
+		cDescBloq := OemToAnsi(STR0039)  //"Estoque"
+	EndIf
+	cDescri := Substr(SA1->A1_NOME,1,35)
+
+	aSaldos	        	:=	Array(_STRASALDOS)
+	aSaldos[_LIMCREDM] 	:=	nLimCred
+	aSaldos[_LIMCRED ] 	:=  xMoeda(nLimCred,nMCusto,1)
+	aSaldos[_SALDUPM ] 	:=	nSalDupM
+	aSaldos[_SALDUP  ] 	:=	nSalDup
+	aSaldos[_SALPEDLM] 	:=	nSalPedL
+	aSaldos[_SALPEDL ] 	:=	xMoeda(nSalPedL,nMCusto,1)
+	aSaldos[_MCOMPRAM] 	:=	SA1->A1_MCOMPRA
+	aSaldos[_MCOMPRA ] 	:=	xMoeda(SA1->A1_MCOMPRA,nMCusto,1)
+	aSaldos[_SALDOLCM] 	:=  nLimCred-nSaldupM-nSalPedL
+	aSaldos[_SALDOLC ] 	:=  xMoeda(nLimCred-nSaldupM-nSalPedL,nMCusto,1)
+	aSaldos[_MAIDUPLM] 	:=	SA1->A1_MAIDUPL
+	aSaldos[_MAIDUPL ] 	:=	xMoeda(SA1->A1_MAIDUPL,nMCusto,1)
+	aSaldos[_ITATUM  ] 	:=	xMoeda((SC9->C9_PRCVEN * SC9->C9_QTDLIB),nMoeda,nMcusto)
+	aSaldos[_ITATU   ] 	:=	xMoeda((SC9->C9_PRCVEN * SC9->C9_QTDLIB),nMoeda,1)
+	aSaldos[_PEDATUM ] 	:=  nValPed
+	aSaldos[_PEDATU  ]	:=  xMoeda(nValPed ,nMCusto,1)
+	aSaldos[_SALPEDM ]	:=	nSalPed
+	aSaldos[_SALPED  ]	:=  xMoeda(nSalPed ,nMCusto,1)
+	aSaldos[_VALATRM ] 	:=	xMoeda(nValAtraso,1,nMCusto)
+	aSaldos[_VALATR  ] 	:=	nValAtraso
+	aSaldos[_LCFINM  ] 	:=	nLcFin
+	aSaldos[_LCFIN   ] 	:=  xMoeda(nLCFin,nMcusto,1)
+	aSaldos[_SALFINM ] 	:=	nSalFinM
+	aSaldos[_SALFIN  ] 	:=	nSalFin
+
+	aHeader  := {OemToAnsi(STR0055),OemToAnsi(STR0056),OemToAnsi(STR0054)+AllTrim(cMoeda)," ",OemToAnsi(STR0055),;
+		OemToAnsi(STR0059)}
+	
+	//Inicializa variaveis com lista de campos que devem ser ofuscados de acordo com usuario.
+	FATPDLoad(/*cUser*/,/*aAlias*/, aPDFields, /*cSource*/)
+	
+	//Limite de Credito/Tit.Protestados/DT.ULT TIT
+	Aadd(aCols,{OemToAnsi(STR0018),TRansform(FATPDObfuscate(aSaldos[_LIMCRED],"A1_LC"),PesqPict("SA1","A1_LC",17,1)),;
+		TRansform(FATPDObfuscate(aSaldos[_LIMCREDM],"A1_LC"),PesqPict("SA1","A1_LC",17,nMcusto))," ",;
+		OemToAnsi(STR0019),Space(02)+FATPDObfuscate(STR(SA1->A1_TITPROT,3),"A1_TITPROT")+Space(05)+;
+		OemToAnsi(STR0020)+Space(03)+DtoC(SA1->A1_DTULTIT)}) //Limite de Credito/Tit.Protestados/DT.ULT TIT
+
+	// Saldo Titulos / Cheques Devolvidos/DT.ULT.CHQ	
+	Aadd(aCols,{OemToAnsi(STR0021),TRansform(aSaldos[_SALDUP],PesqPict("SA1","A1_SALDUP",17,1)),;
+		TRansform(aSaldos[_SALDUPM],PesqPict("SA1","A1_SALDUPM",17,nMcusto))," ",;
+		OemToAnsi(STR0022),Space(02)+FATPDObfuscate(STR(SA1->A1_CHQDEVO,3),"A1_CHQDEVO")+Space(05)+;
+		OemToAnsi(STR0020)+Space(03)+DtoC(SA1->A1_DTULCHQ)}) // Saldo Titulos / Cheques Devolvidos/DT.ULT.CHQ
+
+	// Pedidos Aprovados/Maior Compra	
+	Aadd(aCols,{OemToAnsi(STR0023),TRansform(aSaldos[_SALPEDL],PesqPict("SA1","A1_SALPEDL",17,1)),;
+		TRansform(aSaldos[_SALPEDLM],PesqPict("SA1","A1_SALPEDL",17,nMcusto))," ",OemToAnsi(STR0024),;
+		Transform(aSaldos[_MCOMPRAM],PesqPict("SA1","A1_MCOMPRA",17,nMCusto))}) // Pedidos Aprovados/Maior Compra
+
+	// Saldo Lim Credito/Maior Duplicata	
+	Aadd(aCols,{OemToAnsi(STR0025),TRansform(FATPDObfuscate(aSaldos[_SALDOLC],"A1_LC"),PesqPict("SA1","A1_SALDUP",17,1)),;
+		TRansform(FATPDObfuscate(aSaldos[_SALDOLCM],"A1_LC"),PesqPict("SA1","A1_SALDUPM",17,nMcusto))," ",;
+		OemToAnsi(STR0026),Transform(aSaldos[_MAIDUPLM],PesqPict("SA1","A1_MAIDUPL",17,nMCusto))}) // Saldo Lim Credito/Maior Duplicata
+
+	// Item Pedido Atual/Media de Atraso	
+	Aadd(aCols,{OemToAnsi(STR0027),TRansform(aSaldos[_ITATU],PesqPict("SA1","A1_SALDUP",17,1)),;
+		TRansform(aSaldos[_ITATUM],PesqPict("SA1","A1_SALDUP",17,nMcusto))," ",;
+		OemToAnsi(STR0029),Space(14)+Transform(FATPDObfuscate(SA1->A1_METR,"A1_METR"),PesqPict("SA1","A1_METR",7))+Space(04)+;
+		OemToAnsi(STR0028)}) // Item Pedido Atual/Media de Atraso
+
+	If SC5->C5_TIPLIB=="2"
+		Aadd(aCols,{OemToAnsi(STR0036),TRansform(aSaldos[_PEDATU],PesqPict("SA1","A1_SALDUP",17,1)),;
+			TRansform(aSaldos[_PEDATUM],PesqPict("SA1","A1_SALDUP",17,nMcusto))," ",;
+			OemToAnsi(STR0031),Space(10)+DtoC(SA1->A1_VENCLC)}) //Pedido Atual/ Vencto.Lim.Credito
+	Else
+		Aadd(aCols,{"","","","",;
+			OemToAnsi(STR0031),Space(10)+DtoC(SA1->A1_VENCLC)}) //Pedido Atual/ Vencto.Lim.Credito
+	EndIf
+
+	// Saldo de Pedidos / Data Limite Liberação	
+	Aadd(aCols,{OemToAnsi(STR0030),TRansform(aSaldos[_SALPED],PesqPict("SA1","A1_SALPED",17,1)),;
+		TRansform(aSaldos[_SALPEDM],PesqPict("SA1","A1_SALPED",17,nMcusto))," ",;
+		OemToAnsi(STR0033),Space(10)+DtoC(dLimLib)}) // Saldo de Pedidos / Data Limite Liberação
+
+	//Lim. de Cred. Secundario/Atraso Atual	
+	Aadd(aCols,{OemToAnsi(STR0057),TRansform(FATPDObfuscate(aSaldos[_LCFIN],"A1_LC"),PesqPict("SA1","A1_LC",17,1)),;
+		TRansform(FATPDObfuscate(aSaldos[_LCFINM],"A1_LC"),PesqPict("SA1","A1_LC",17,nMcusto))," ",;
+		OemToAnsi(STR0032),TRansform(FATPDObfuscate(aSaldos[_VALATR],"A1_LC"),PesqPict("SA1","A1_SALDUP",17,1))}) //Lim. de Cred. em Cheque/Atraso Atual
+
+	Aadd(aCols,{OemToAnsi(STR0058),TRansform(aSaldos[_SALFIN],PesqPict("SA1","A1_SALDUP",17,1)),;
+		TRansform(aSaldos[_SALFINM],PesqPict("SA1","A1_SALDUP",17,nMcusto))," ",,,}) // Saldo em Cheques
+	DEFINE MSDIALOG oDlg FROM  125,3 TO 430,608 TITLE OemToAnsi(STR0005) PIXEL    //"Libera‡„o de Cr‚dito"
+
+	//-- Ponto de Entrada permite alterar o conteudo dos campos do aCols		
+	IF lMT450COLS
+		aColsNew := ExecBlock('MT450COLS',.F.,.F.,{aHeader,aCols})
+		IF VALTYPE(aColsNew) == "A"
+			aCols := {}
+			aCols := ACLONE(aColsNew)
+		ENDIF
+	ENDIF
+
+
+	@ 003, 004  TO 033, 299 LABEL "" OF oDlg  PIXEL
+	@ 130, 004  TO 150, 155 LABEL "" OF oDlg  PIXEL
+	@ 130, 160  TO 150, 240 LABEL "" OF oDlg  PIXEL
+
+	DEFINE SBUTTON FROM 134, 242 TYPE 1 ACTION (nOpca := 1,oDlg:End()) WHEN lRskBtnWhen ENABLE OF oDlg
+	DEFINE SBUTTON FROM 134, 272 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+
+	@ 135, 010 BUTTON OemToAnsi(STR0010)   SIZE 34,11 FONT oDlg:oFont ACTION (a450F4con(),cCadastro:= OemToAnsi(STR0005) )           OF oDlg PIXEL     				//"Consulta"
+	@ 135, 045 BUTTON OemToAnsi(STR0037)   SIZE 34,11 FONT oDlg:oFont ACTION (cCadastro:=OemToAnsi(STR0037),A030Visual("SA1",SA1->(RecNo()),1),cCadastro:= OemToAnsi(STR0005) ) OF oDlg PIXEL   	//"Cliente"
+	@ 135, 080 BUTTON OemToAnsi(STR0038)   SIZE 34,11 FONT oDlg:oFont ACTION (cCadastro:=OemToAnsi(STR0038),a410Visual("SC5",SC5->(RecNo()),1),cCadastro:= OemToAnsi(STR0005) ) OF oDlg PIXEL 	//"Pedido"
+	@ 135, 115 BUTTON OemToAnsi(STR0039)   SIZE 34, 11 FONT oDlg:oFont ACTION ( a450ConEst(cProduto,cLocal) )  OF oDlg PIXEL     					//"Estoque"
+
+	@ 135, 165 BUTTON OemToAnsi(STR0011)   SIZE 34,11 FONT oDlg:oFont ACTION (nOpca := 4,oDlg:End() ) WHEN lRskBtnWhen OF oDlg PIXEL //"Lib.Todos"
+	@ 135, 200 BUTTON OemToAnsi(STR0012)   SIZE 34,11 FONT oDlg:oFont ACTION (nOpca := 3,oDlg:End() ) WHEN lRskBtnWhen OF oDlg PIXEL //"Rejeita"
+
+	@ 010, 008 SAY OemToAnsi(STR0013)      SIZE 23, 7 OF oDlg PIXEL   //"Pedido :"
+	@ 010, 032 SAY SC9->C9_PEDIDO          SIZE 26, 7 OF oDlg PIXEL
+	@ 010, 060 SAY OemToAnsi(STR0014)      SIZE 35, 7 OF oDlg PIXEL   //"Cond.Pagto. :"
+	@ 010, 095 SAY SC5->C5_CONDPAG         SIZE 09, 7 OF oDlg PIXEL
+	@ 010, 115 SAY OemToAnsi(STR0017)      SIZE 21, 7 OF oDlg PIXEL   //"Risco :"
+	@ 010, 138 SAY FATPDObfuscate(SA1->A1_RISCO,"A1_RISCO")           SIZE 11, 7 OF oDlg PIXEL
+	@ 010, 153 SAY OemToAnsi(STR0054+SuperGetMv("MV_SIMB"+Alltrim(STR(nMCusto))))  SIZE 50, 7 OF oDlg PIXEL //"Valores em "
+	@ 010, 200 SAY OemToAnsi(STR0015)      SIZE 27, 7 OF oDlg PIXEL   //"Bloqueio :"
+	@ 010, 230 SAY cDescBloq               SIZE 83, 7 OF oDlg PIXEL
+
+	@ 021, 008 SAY OemToAnsi(STR0016)      SIZE 23, 7 OF oDlg PIXEL   //"Cliente :"
+	@ 021, 032 SAY FATPDObfuscate(cDescri,"A1_NOME")                 SIZE 96, 7 OF oDlg PIXEL
+	@ 021, 153 SAY OemToAnsi(STR0033)      SIZE 64, 7 OF oDlg PIXEL   //"Data Limite Libera‡Æo :"
+	@ 020.4, 230 MSGET dLimLib               SIZE 52, 7 OF oDlg PIXEL	HASBUTTON
+
+	oLbx := RDListBox(2.48, .5, 295, 95, aCols, aHeader,{55,50,50,12,55,69})
+	
+	FATPDLogUser("A450TELA")
+	ACTIVATE MSDIALOG oDlg
+	FATPDUnload("A450TELA")
+EndIf
+
+RestArea(aAreaSC9)
+RestArea(aArea)
+Return(nOpcA)
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A450F4Con ³ Autor ³ Rosane Luciane Chene  ³ Data ³ 08.02.95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Rotina para consultar dados clientes                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ MATA450                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function A450F4Con()
+
+Local aBackRot := {}
+Private cFilCorr	:= cFilAnt			/* Gestao */
+
+If Type("aRotina") == "A"
+	aBackRot := aClone(aRotina)
+Else
+	Private aRotina := {{ " "," ",0,1 } ,{ " "," ",0,2 },{ " "," ",0,3 }}
+EndIf
+If Type("cCadastro") == "U"
+	Private cCadastro := STR0037
+EndIf
+
+If MPUserHasAccess("FINC010") .And. VerSenha(104) // Verifica direito de acesso a Posição do Cliente
+	DbSelectArea("SA1")
+	If ( Pergunte("FIC010",.T.) )
+		Fc010Con()
+	EndIf
+Else
+	Help(" ",1,"SEMPERM")
+EndIf
+ 
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura as perguntas originais da rotina            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Pergunte("MTA451",.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura a integridade dos dados                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Len(aBackRot) > 0
+	aRotina := aClone(aBackRot)
+EndIf
+
+Return(Nil)
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A450ConEst³ Autor ³ Armando Tadeu Buchina ³ Data ³ 23.09.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Rotina para consultar dados de estoque                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ MATA450                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function a450ConEst(cProduto,cLocal)
+
+Local aArea		:= GetArea()
+Local aAreaSB1  := SB1->(GetArea())
+Local aAreaSB2  := SB2->(GetArea())
+Local lMta450Con:= (ExistBlock("MTA450CO"))
+Local nStok     := 0
+
+DEFAULT cProduto:= SC6->C6_PRODUTO
+DEFAULT cLocal	:= SC6->C6_LOCAL
+
+If lMta450Con
+	ExecBlock("MTA450CO",.f.,.f.)
+Else
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	If ( MsSeek(xFilial()+cProduto,.F.) )
+		dbSelectArea("SB2")
+		dbSetOrder(1)
+		If MsSeek(xFilial()+cProduto+cLocal,.F.)
+			nStok:= SaldoSb2()
+		EndIf
+		DEFINE MSDIALOG oDlg FROM  62,1 TO 293,365 TITLE OemToAnsi(STR0040) PIXEL				//"POSI€AO DO ESTOQUE"
+		@ 0, 2 TO 28, 181 LABEL "" OF oDlg  PIXEL
+		@ 31, 2 TO 91, 181 LABEL "" OF oDlg  PIXEL
+		@ 8, 4 SAY OemToAnsi(STR0041) SIZE 31, 7 OF oDlg PIXEL			//"Produto :"
+		@ 7, 39 SAY cProduto + " /" + Subs(SB1->B1_DESC,1,20) SIZE 140, 7 OF oDlg PIXEL
+		@ 16, 5 SAY OemToAnsi(STR0042) SIZE 31, 7 OF oDlg PIXEL			//"Local    :"
+		@ 16, 39 SAY cLocal SIZE 13, 7 OF oDlg PIXEL
+		@ 37, 9 SAY OemToAnsi(STR0043) SIZE 92, 7 OF oDlg PIXEL			//"Pedido de Vendas em Aberto"
+		@ 37, 118 SAY B2_QPEDVEN  SIZE 53, 7 OF oDlg PIXEL
+		@ 45, 9 SAY OemToAnsi(STR0044) SIZE 88, 7 OF oDlg PIXEL			//"Quantidade Empenhada"
+		@ 45, 118 SAY B2_QEMP SIZE 53, 7 OF oDlg PIXEL
+		@ 53, 9 SAY OemToAnsi(STR0045) SIZE 88, 7 OF oDlg PIXEL			//"Qtd.Prevista p/Entrar"
+		@ 53, 118 SAY B2_SALPEDI SIZE 53, 7 OF oDlg PIXEL
+		@ 61, 9 SAY OemToAnsi(STR0046) SIZE 88, 7 OF oDlg PIXEL			//"Quantidade Reservada (A)"
+		@ 61, 118 SAY B2_RESERVA SIZE 53, 7 OF oDlg PIXEL
+		@ 69, 9 SAY OemToAnsi(STR0047) SIZE 53, 7 OF oDlg PIXEL			//"Saldo Atual (B)"
+		@ 69, 118 SAY B2_QATU SIZE 53, 7 OF oDlg PIXEL
+		@ 78, 9 SAY OemToAnsi(STR0048) SIZE 53, 7 OF oDlg PIXEL			//"Dispon¡vel (B - A)"
+		@ 78, 118 SAY nStoK SIZE 53, 7 OF oDlg PIXEL
+		DEFINE SBUTTON FROM 98, 149 TYPE 1 ACTION (oDlg:End()) ENABLE OF oDlg
+		ACTIVATE MSDIALOG oDlg CENTERED
+	Else
+		HELP(" ",1,"C6_PRODUTO")
+	EndIf
+EndIf
+RestArea(aAreaSB1)
+RestArea(aAreaSB2)
+RestArea(aArea)
+Return
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A450Legend³Autor  ³ Eduardo Riera         ³ Data ³13.09.2000 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³Demonstra a legenda das cores da mbrowse                     ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                       ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Esta rotina monta uma dialog com a descricao das cores da    ³±±
+±±³          ³Mbrowse.                                                     ³±±
+±±³          ³                                                             ³±±
+±±³          ³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Materiais                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function A450Legend()
+Local aLegenda := {}
+
+Aadd(aLegenda, {"ENABLE"    ,STR0050}) //"Item Liberado"
+Aadd(aLegenda, {"DISABLE"   ,STR0051}) //"Item Faturado"
+Aadd(aLegenda, {"BR_AZUL"   ,STR0052}) //"Item Bloqueado - Credito"
+Aadd(aLegenda, {"BR_MARROM" ,STR0074}) //"Rejeitados"
+Aadd(aLegenda, {"BR_PRETO"  ,STR0053})	 //"Item Bloqueado - Estoque"
+
+If !__lPyme
+	Aadd(aLegenda, {"BR_AMARELO",STR0072}) //"Bloqueado - WMS"
+	Aadd(aLegenda, {"BR_LARANJA",STR0073}) //"Bloqueado - TMS"
+EndIf
+
+/* Integração RISK - TOTVS Mais Negócios
+ Adicionando itens do TOTVS Mais Negócios na legenda */
+If FindFunction("RskIsActive") .And. RskIsActive()		
+	Aadd(aLegenda, {"BR_BRANCO"	, STR0083})	//"Em análise - Risk" 
+	Aadd(aLegenda, {"BR_CINZA"	, STR0084})	//"Bloqueado Por Regras - Risk" 
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ponto de Entrada para alterar cores da legenda    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("MA450COR")
+	aLegenda := ExecBlock("MA450COR",.F.,.F.,aLegenda)
+Endif
+BrwLegenda(cCadastro, STR0049, aLegenda)
+
+Return(.T.)
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Marco Bianchi         ³ Data ³01/09/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±
+±±³          ³                                                            ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Array com opcoes da rotina.                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³    1 - Pesquisa e Posiciona em um Banco de Dados           ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function MenuDef()
+
+Private aRotina	:= {{STR0004, "A450LibMan", 0, 2, 0, .T.},;	// "Manual"
+               	    {STR0003, "A450LibAut", 0, 2, 0, .T.},;	// "Automática"					   	  		
+               	    {STR0049, "A450Legend", 0, 8, 0, .F.},;	// "Legenda"				   		
+               	    {STR0001, "PesqBrw",    0, 1, 0, .F.}}	// "Pesquisar"
+
+If ExistBlock("MA450MNU")
+	ExecBlock("MA450MNU",.F.,.F.)
+EndIf
+Return(aRotina)
+
+
+
+
+//-----------------------------------------------------------------------------------
+/*/{Protheus.doc} FATPDLoad
+    @description
+    Inicializa variaveis com lista de campos que devem ser ofuscados de acordo com usuario.
+	Remover essa função quando não houver releases menor que 12.1.27
+
+    @type  Function
+    @author Squad CRM & Faturamento
+    @since  05/12/2019
+    @version P12.1.27
+    @param cUser, Caractere, Nome do usuário utilizado para validar se possui acesso ao 
+        dados protegido.
+    @param aAlias, Array, Array com todos os Alias que serão verificados.
+    @param aFields, Array, Array com todos os Campos que serão verificados, utilizado 
+        apenas se parametro aAlias estiver vazio.
+    @param cSource, Caractere, Nome do recurso para gerenciar os dados protegidos.
+    
+    @return cSource, Caractere, Retorna nome do recurso que foi adicionado na pilha.
+    @example FATPDLoad("ADMIN", {"SA1","SU5"}, {"A1_CGC"})
+/*/
+//-----------------------------------------------------------------------------------
+Static Function FATPDLoad(cUser, aAlias, aFields, cSource)
+	Local cPDSource := ""
+
+	If FATPDActive()
+		cPDSource := FTPDLoad(cUser, aAlias, aFields, cSource)
+	EndIf
+
+Return cPDSource
+
+
+//-----------------------------------------------------------------------------------
+/*/{Protheus.doc} FATPDUnload
+    @description
+    Finaliza o gerenciamento dos campos com proteção de dados.
+	Remover essa função quando não houver releases menor que 12.1.27
+
+    @type  Function
+    @author Squad CRM & Faturamento
+    @since  05/12/2019
+    @version P12.1.27
+    @param cSource, Caractere, Remove da pilha apenas o recurso que foi carregado.
+    @return return, Nulo
+    @example FATPDUnload("XXXA010") 
+/*/
+//-----------------------------------------------------------------------------------
+Static Function FATPDUnload(cSource)    
+
+    If FATPDActive()
+		FTPDUnload(cSource)    
+    EndIf
+
+Return Nil
+
+
+//-----------------------------------------------------------------------------
+/*/{Protheus.doc} FATPDObfuscate
+    @description
+    Realiza ofuscamento de uma variavel ou de um campo protegido.
+	Remover essa função quando não houver releases menor que 12.1.27
+
+    @type  Function
+    @sample FATPDObfuscate("999999999","U5_CEL")
+    @author Squad CRM & Faturamento
+    @since 04/12/2019
+    @version P12
+    @param xValue, (caracter,numerico,data), Valor que sera ofuscado.
+    @param cField, caracter , Campo que sera verificado.
+    @param cSource, Caractere, Nome do recurso que buscar dados protegidos.
+    @param lLoad, Logico, Efetua a carga automatica do campo informado
+
+    @return xValue, retorna o valor ofuscado.
+/*/
+//-----------------------------------------------------------------------------
+Static Function FATPDObfuscate(xValue, cField, cSource, lLoad)
+    
+    If FATPDActive()
+		xValue := FTPDObfuscate(xValue, cField, cSource, lLoad)
+    EndIf
+
+Return xValue   
+
+
+//-----------------------------------------------------------------------------
+/*/{Protheus.doc} FATPDLogUser
+    @description
+    Realiza o log dos dados acessados, de acordo com as informações enviadas, 
+    quando a regra de auditoria de rotinas com campos sensíveis ou pessoais estiver habilitada
+	Remover essa função quando não houver releases menor que 12.1.27
+
+   @type  Function
+    @sample FATPDLogUser(cFunction, nOpc)
+    @author Squad CRM & Faturamento
+    @since 06/01/2020
+    @version P12
+    @param cFunction, Caracter, Rotina que será utilizada no log das tabelas
+    @param nOpc, Numerico, Opção atribuída a função em execução - Default=0
+
+    @return lRet, Logico, Retorna se o log dos dados foi executado. 
+    Caso o log esteja desligado ou a melhoria não esteja aplicada, também retorna falso.
+
+/*/
+//-----------------------------------------------------------------------------
+Static Function FATPDLogUser(cFunction, nOpc)
+
+	Local lRet := .F.
+
+	If FATPDActive()
+		lRet := FTPDLogUser(cFunction, nOpc)
+	EndIf 
+
+Return lRet  
+
+//-----------------------------------------------------------------------------
+/*/{Protheus.doc} FATPDActive
+    @description
+    Função que verifica se a melhoria de Dados Protegidos existe.
+
+    @type  Function
+    @sample FATPDActive()
+    @author Squad CRM & Faturamento
+    @since 17/12/2019
+    @version P12    
+    @return lRet, Logico, Indica se o sistema trabalha com Dados Protegidos
+/*/
+//-----------------------------------------------------------------------------
+Static Function FATPDActive()
+
+    Static _lFTPDActive := Nil
+  
+    If _lFTPDActive == Nil
+        _lFTPDActive := ( GetRpoRelease() >= "12.1.027" .Or. !Empty(GetApoInfo("FATCRMPD.PRW")) )  
+    Endif
+
+Return _lFTPDActive  
