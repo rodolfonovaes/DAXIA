@@ -15,33 +15,38 @@
 User Function M410VRES()
 Local aArea := GetArea()
 Local cJustif   := ''
+Local lRet      := .T.
 
-SD2->(DbSetOrder(8))
-If !SD2->(DbSeek(xFilial('SD2') +SC5->C5_NUM))
-    SCJ->(DbSetOrder(1))
-    If SCJ->(DbSeek(xFilial('SCJ') + SC5->C5_XNUMCJ))
-        
-        cJustif := Dlg_Justif()
+If SC5->C5_XLOGLIB <> ' '
+    MsgAlert('Pedido com liberação, nao sera possivel excluir residuo', 'Aviso')
+    lRet := .F.
+Else
+    SD2->(DbSetOrder(8))
+    If !SD2->(DbSeek(xFilial('SD2') +SC5->C5_NUM))
+        SCJ->(DbSetOrder(1))
+        If SCJ->(DbSeek(xFilial('SCJ') + SC5->C5_XNUMCJ))
+            
+            cJustif := Dlg_Justif()
 
-        Reclock('SCJ',.F.)
-        SCJ->CJ_STATUS := 'R'
-        MsUnlock()
+            Reclock('SCJ',.F.)
+            SCJ->CJ_STATUS := 'R'
+            MsUnlock()
 
-        SCK->(DbSetOrder(1))
-        If SCK->(DbSeek(xFilial('SCK') + SCJ->CJ_NUM))
-            While(SCJ->CJ_FILIAL + SCJ->CJ_NUM  == SCK->(CK_FILIAL + CK_NUM))
-                Reclock('SCK',.F.)
-                SCK->CK_XMOTIVO := '000011'
-                SCK->CK_XJUSTIF := cJustif
-                MsUnlock()
-                SCK->(DbSkip())
-            Enddo
+            SCK->(DbSetOrder(1))
+            If SCK->(DbSeek(xFilial('SCK') + SCJ->CJ_NUM))
+                While(SCJ->CJ_FILIAL + SCJ->CJ_NUM  == SCK->(CK_FILIAL + CK_NUM))
+                    Reclock('SCK',.F.)
+                    SCK->CK_XMOTIVO := '000011'
+                    SCK->CK_XJUSTIF := cJustif
+                    MsUnlock()
+                    SCK->(DbSkip())
+                Enddo
+            EndIf
         EndIf
     EndIf
 EndIf
-
 Restarea(aArea)
-Return .T.
+Return lRet
 
 
 Static Function Dlg_Justif()

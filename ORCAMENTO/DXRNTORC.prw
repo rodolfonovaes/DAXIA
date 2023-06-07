@@ -718,12 +718,6 @@ EndDo
 If nItens == 0
 	If cTipo $ 'ITORIG|ITATUAL'
 		nItens := 1
-	Else
-		SCK->(DbGoTop())
-		While !SCK->(EOF())
-			nItens++
-			SCK->(DbSkip())
-		EndDo
 	EndIf
 EndIf
 aadd(aRet,{ROUND(nRecVenIpi,2),0})  //Receita de Vendas Com IPI 1

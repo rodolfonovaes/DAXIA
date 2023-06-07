@@ -9,6 +9,6 @@ Atualiza o preço de venda na geração do documento de entrada
 (examples)
 @see (links_or_references)
 /*/
-User Function MT103UPC()
+xUser Function MT103UPC()
 Local nValor := SD1->D1_CUSTO
 Return nValor

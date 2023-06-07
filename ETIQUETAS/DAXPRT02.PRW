@@ -80,30 +80,44 @@ Private cModelo  	:= "ZT230"
 		lRet := .F.
 	EndIf
 
+	SG2->(DbSetOrder(1))
+	If lRet .And. !SG2->(DbSeek(xFilial('SG2') + TRBLO->C2_PRODUTO + TRBLO->C2_ROTEIRO))
+		Alert('Roteiro de Operações não encontrado!')
+		lRet := .F.	
+	EndIf	
+
 	SD4->(DbSetOrder(2))
 	If lRet .And. !SD4->(DbSeek(xFilial('SD4') +  TRBLO->C2_NUM + TRBLO->C2_ITEM + TRBLO->C2_SEQUEN))
 		Alert('Requisições Empenhadas não encontradas!')
 		lRet := .F.	
 	Else
-		While Alltrim(xFilial('SD4') + TRBLO->C2_NUM + TRBLO->C2_ITEM + PADR(TRBLO->C2_SEQUEN,TAMSX3('D4_OP')[1]))  == Alltrim(SD4->(D4_FILIAL + D4_OP ))
-			SB1->(DbSetOrder(1))
-			If SB1->(DbSeek(xFilial('SB1') + SD4->D4_COD)) .And. !Empty(SB1->B1_XTPCOMP)
-				Exit
+		If lRet .and. SG2->G2_XMAMTEM <> '4'
+			While Alltrim(xFilial('SD4') + TRBLO->C2_NUM + TRBLO->C2_ITEM + PADR(TRBLO->C2_SEQUEN,TAMSX3('D4_OP')[1]))  == Alltrim(SD4->(D4_FILIAL + D4_OP ))
+				SB1->(DbSetOrder(1))
+				If SB1->(DbSeek(xFilial('SB1') + SD4->D4_COD)) .And. !Empty(SB1->B1_XTPCOMP)
+					Exit
+				EndIf
+				SD4->(DbSkip())
+			Enddo
+
+			If Empty(SB1->B1_XTPCOMP) //se não encontrar nenhuma preenchida , eu reposiciono na D4
+				SD4->(DbSeek(xFilial('SD4') +  TRBLO->C2_NUM + TRBLO->C2_ITEM + TRBLO->C2_SEQUEN ))
 			EndIf
-			SD4->(DbSkip())
-		Enddo
-
-		If Empty(SB1->B1_XTPCOMP) //se não encontrar nenhuma preenchida , eu reposiciono na D4
-			SD4->(DbSeek(xFilial('SD4') +  TRBLO->C2_NUM + TRBLO->C2_ITEM + TRBLO->C2_SEQUEN ))
 		EndIf
+	EndIf
 
+	If SB1->B1_XTPCOMP == '2' .And. Empty(TRBLO->C2_XNOMFOR)
+		Alert('Nome do fornecedor não preenchido na OP!')
+		lRet := .F.			
 	EndIf
 
 	SB8->(DbSetOrder(3))
-	If lRet .And. !SB8->(DbSeek(xFilial('SB8') + SD4->D4_COD + SD4->D4_LOCAL + SD4->D4_LOTECTL))
-		If !SB8->(DbSeek(xFilial('SB8') + SD4->D4_COD + SD4->D4_LOCAL))
-			Alert('Saldo por lote não encontrado ou lote não empenhado!')
-			lRet := .F.	
+	If lRet .and. SG2->G2_XMAMTEM <> '4'
+		If lRet .And. !SB8->(DbSeek(xFilial('SB8') + SD4->D4_COD + SD4->D4_LOCAL + SD4->D4_LOTECTL))
+			If !SB8->(DbSeek(xFilial('SB8') + SD4->D4_COD + SD4->D4_LOCAL))
+				Alert('Saldo por lote não encontrado ou lote não empenhado!')
+				lRet := .F.	
+			EndIf
 		EndIf
 	EndIf
 
@@ -122,13 +136,6 @@ Private cModelo  	:= "ZT230"
 		cQrq	 := QAA->QAA_XCRQ
 	EndIf		
 
-	SG2->(DbSetOrder(1))
-	If lRet .And. !SG2->(DbSeek(xFilial('SG2') + TRBLO->C2_PRODUTO + TRBLO->C2_ROTEIRO))
-		Alert('Roteiro de Operações não encontrado!')
-		lRet := .F.	
-	EndIf	
-
-	If lRet
 		If SG2->G2_XMAMTEM == '1' .And. SB1->B1_XTPCOMP == '1'
 			SB1->(DbSeek(xFilial('SB1') + TRBLO->C2_PRODUTO))
 			AADD(aItens,{		TRBLO->C2_PRODUTO, ; 	//1 - Codigo
@@ -173,14 +180,34 @@ Private cModelo  	:= "ZT230"
 								SUBSTR(cUsuario,1,15), ; // 9 - Resp Tecnico
 								cQrq, ; // 10 - CRQ
 								'',;// 11 - chave SA2
-								SB8->B8_LOTEFOR}) // 12 - chave fornecedor													 
+								SB8->B8_LOTEFOR}) // 12 - chave fornecedor		
+		ElseIf SG2->G2_XMAMTEM == '4' .And. SB1->B1_XTPCOMP == '2' //NOVA OPCAO 
+		
+			SB1->(DbSeek(xFilial('SB1') + TRBLO->C2_PRODUTO))	
+			AADD(aItens,{		TRBLO->C2_PRODUTO, ; 		//1 - Codigo 
+								SB1->B1_DESC, ;    	//2 - Descrição
+								DTOS(TRBLO->C2_DATPRF), ;	//3 - Fabricacao
+								DTOS(TRBLO->C2_DATPRF + SB1->B1_PRVALID) , ;	//4 - Validade
+								TRBLO->C2_XLOTE,; 		//5 - Lote DA 
+								Alltrim(TRBLO->C2_NUM) + '/'+ Alltrim(STR(Year( TRBLO->C2_EMISSAO) )) /*+ IIF(!Empty(SB8->B8_LOTEFOR),'(' + Alltrim(SB8->B8_LOTEFOR) + ')','')*/ ,; //6 - Lote Forn
+								SG2->G2_XMAMTEM,;//7 - XMANTEM
+								'BRASIL',; // 8 - Origem
+								SUBSTR(cUsuario,1,15), ; // 9 - Resp Tecnico
+								cQrq, ; // 10 - CRQ
+								'',;// 11 - chave SA2
+								''}) // 12 - chave fornecedor																					 
 		EndIf			
+
 		If Len(aItens) > 0
 			U_DaxEtq(aItens)
 		Else
-			Alert('Não foi possivel imprimir a etiqueta, favor verificar os cadastros.' + CRLF + ' G2_XMANTEM = ' + SG2->G2_XMAMTEM + 'B1_XTPCOMP = ' + SB1->B1_XTPCOMP)
+			Alert('O produto '+Alltrim(SB1->B1_COD)+ 'com a configuração Rot. Operação' + SG2->G2_XMAMTEM + ' vs Cadastro prod ' + SB1->B1_XTPCOMP + 'nao atende nenhuma regra abaixo ' + CRLF +;
+			' Regras :' + CRLF +;
+			' (1)Manter data fabr/validade item origem vs (1)Tp Compente' + CRLF +;
+			' (2)Manter data fabricacao vs (2)Tp Compente' + CRLF +;
+			' (3)Nao manter vs () Tp Compente' + CRLF +;
+			' (4)Manter data entrega OP Vs (2) Tp Compente' + CRLF )
 		EndIf
-	EndIf
 	
 Return lRet
 

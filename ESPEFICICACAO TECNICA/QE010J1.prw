@@ -38,11 +38,16 @@ SB5->(DbSeek(xFilial('SB5')  + cProd))
 SB8->(DbSetOrder(6))
 SB8->(DbSeek(xFilial('SB8')  + PADR(QEK->QEK_LOTE,TAMSX3('B8_LOTECTL')[1])))
 
-If SB1->B1_MSBLQL == '1' .Or. !MsgYesNo('Houve uma alteração na especificação e será gerado um novo pdf que sera enviado ao fluig.' + CRLF + 'Deseja continuar?', 'Envio de especificação tecnica')
+If SB1->B1_MSBLQL == '1' 
+    MsgInfo('Produto bloqueado, não sera integrado com o fluig.','Atenção')
     RestArea(aArea)
     Return
 EndIf
 
+If !MsgYesNo('Houve uma alteração na especificação e será gerado um novo pdf que sera enviado ao fluig.' + CRLF + 'Deseja continuar?', 'Envio de especificação tecnica')
+    RestArea(aArea)
+    Return
+EndIf
 
 
 Aadd(aEspec, Alltrim(QE6->QE6_XCODET) + '-REV-' + Alltrim(cRev))                         //1 cEspec criar na QE6 e QP6

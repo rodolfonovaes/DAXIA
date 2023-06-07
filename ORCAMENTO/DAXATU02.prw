@@ -1,8 +1,12 @@
 #INCLUDE "PROTHEUS.CH"
-
+#INCLUDE "TOPCONN.CH"
 
 
 User Function DAXATU02()
+
+
+
+
 
 GPShowMemo(SC5->C5_MENNOTA)
 
@@ -104,12 +108,18 @@ Return
 Static Function DXShowMemo(cMemo)
 Local aParamBox := {}
 Local aPergRet	:= {}
+Local aMvPar := {}
+Local nX      := 0
+
+For nX := 1 To 40
+ aAdd( aMvPar, &( "MV_PAR" + StrZero( nX, 2, 0 ) ) )
+Next nX
 
 SC6->(DbSetOrder(1))
 SC6->(DbSeek(xFilial('SC6') + SC5->C5_NUM))
 
-aAdd(aParamBox, {1, "Data Entrega"			, SC6->C6_ENTREG  ,  ,'U_VDTENTR()', ,'EMPTY(SC5->C5_XDTCOL) .And. Empty(SC5->C5_XOBCOL)', 50, .F.} )			//1
-aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,,'SA4' ,'EMPTY(SC5->C5_XDTCOL) .And. Empty(SC5->C5_XOBCOL)', 50, .F.} )	//2
+aAdd(aParamBox, {1, "Data Entrega"			, SC6->C6_ENTREG  ,  ,'U_VDTENTR()', ,'EMPTY(SC5->C5_XDTCOL) .And. Empty(SC5->C5_XOBCOL) ', 50, .F.} )			//1
+aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,,'SA4' ,'EMPTY(SC5->C5_XDTCOL) .And. Empty(SC5->C5_XOBCOL) .And. U_VlPrdGfe()', 50, .F.} )	//2
 //aAdd(aParamBox, {1, "Data Entrega"			, SC6->C6_ENTREG  ,  ,'U_VDTENTR()', ,, 50, .F.} )			//1
 //aAdd(aParamBox, {1, "Transportadora"		, SC5->C5_TRANSP , "@!" ,,'SA4' ,, 50, .F.} )	//2
 aAdd(aParamBox, {1, "Pedido Vinculado"		, SC5->C5_XPEDVIN , "@!" ,,'SC5VIN' ,, 50, .F.} )//3
@@ -118,6 +128,10 @@ aAdd(aParamBox, {1, "Mensagem Nota"			, SC5->C5_MENNOTA , "@!" ,,'' ,, 50, .F.} 
 If ParamBox(aParamBox, 'Ajuste', aPergRet)
 	UpdC5(aPergRet)
 EndIf
+
+For nX := 1 To Len( aMvPar )
+ &( "MV_PAR" + StrZero( nX, 2, 0 ) ) := aMvPar[ nX ]
+Next nX
 
 Return
 
@@ -414,6 +428,15 @@ If SC6->(DBSeek(SC5->C5_FILIAL + SC5->C5_NUM))
     EndDo
 EndIf
 
+//Valida Transportadora GFE - Produtos Controlados
+If _lRet .And. !U_VlPrdGfe()
+    cMsgP := " Transportadora/Tabela de frete incompatível com o produto escolhido "
+    cMsgS := " Favor alterar para continuar"
+    Help( ,, 'DAXATU02 (023)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+    _lRet := .F.
+EndIf
+
+
 RestArea(aArea)
 Return _lRet
 
@@ -473,3 +496,61 @@ EndIF
 
 	
 Return _lRet
+
+
+ /*/{Protheus.doc} VlPrdGfe
+    (long_description)
+    @type  Function
+    @author user
+    @since date
+    @version version
+    @param param, param_type, param_descr
+    @return return, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    /*/
+User Function VlPrdGfe()
+Local lRet := .T.
+Local cQuery := ''
+Local cAliasQry := GetNextAlias()
+Local cTransp   := IIF(IsInCallStack('U_DAXATU02'),MV_PAR03,MV_PAR02)
+Local cMsgP     := ''
+Local cMsgS     := ''
+
+cQuery := " SELECT C6_PRODUTO"
+cQuery += " FROM "+RetSQLName("SC6") + " AS SC6 " //WITH (NOLOCK)
+cQuery += " INNER JOIN "+RetSQLName("SB5") + " AS SB5 ON C6_PRODUTO = B5_COD AND SB5.D_E_L_E_T_ = ' ' " //WITH (NOLOCK)
+cQuery += " WHERE C6_FILIAL  = '" + SC5->C5_FILIAL + "' "
+cQuery += " AND SC6.D_E_L_E_T_= ' ' "
+cQuery += " AND SC6.C6_NUM = '"+ SC5->C5_NUM +"' "
+cQuery += " AND SB5.B5_XCONTRO = 'S' "
+//Valido os produtos do pedido
+
+TcQuery cQuery new Alias ( cAliasQry )
+
+(cAliasQry)->(dbGoTop())
+
+If !(cAliasQry)->(EOF())
+    SA4->(DbSetOrder(1))
+    If SA4->(DbSeek(xFilial('SA4') + cTransp))
+        GU3->(DbSetOrder(11))
+        If GU3->(DbSeek(xFilial('GU3') + SA4->A4_CGC))
+            GVA->(DbSetOrder(1))
+            If GVA->(DBSeek(xFilial('GVA') + GU3->GU3_CDEMIT)) .And. GVA->GVA_XCONTR <> '1'
+                lRet := .F.
+            EndIf
+        Else
+            lRet := .F.
+        EndIf
+    Else
+        lRet := .F.        
+    EndIf
+EndIf
+If IsInCallStack('U_DXATUSC5') .and. !lRet
+    cMsgP := " Transportadora/Tabela de frete incompatível com o produto escolhido "
+    cMsgS := " Favor alterar para continuar"
+    //Help( ,, 'DAXATU02 (023)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+    ALERT('Transportadora/Tabela de frete incompatível com o produto escolhido' + CRLF + "Favor alterar para continuar")
+EndIf
+Return lRet

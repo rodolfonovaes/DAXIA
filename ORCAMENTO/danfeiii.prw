@@ -14,8 +14,8 @@
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
 #DEFINE MAXITEM   014 //o limite da primeira pagina é esse... se atropelar tem que arrumar la pra baixo                                               // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 042        
-#DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
+#DEFINE MAXITEMP2 045        
+#DEFINE MAXITEMP2F 045                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  057                                                // Máxima de caracteres por linha de produtos/serviços
 
@@ -225,7 +225,7 @@ Else
 		EndIf
 	Endif
 	
-	If lVerPerg
+	If lVerPerg .And. !IsInCallStack('U_zGerDanfe') //Rodolfo - tratamento para nao bagunçar os parametros qdo chamado pela API
 		lContinua := Pergunte("NFSIGW",.T.)  .AND. ( (!Empty(MV_PAR06) .AND. MV_PAR06 == 2) .OR. Empty(MV_PAR06) )
 	EndIf
 EndIf
@@ -5264,8 +5264,8 @@ Local aDesc := {}
 	
 For nX := 1 To nLenDet
 	Aadd(aProd, {oDet[nX]:_Prod:_cProd:TEXT})
-	//Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
-	Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto
+	Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
+	//Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto - 13/09/2022 pediram pra voltar como era antes
 Next
 
 

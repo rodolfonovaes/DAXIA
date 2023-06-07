@@ -35,6 +35,8 @@ User function DAXETQOP()
 	aAdd(aCampos,{"C2_EMISSAO" 				 ,"D",08,0})
 	aAdd(aCampos,{"C2_LOCAL" 				 ,"C",02,0})
 	aAdd(aCampos,{"C2_ROTEIRO" 				 ,"C",TAMSX3('C2_ROTEIRO')[1],0})
+	aAdd(aCampos,{"C2_XNOMFOR" 				 ,"C",TAMSX3('C2_XNOMFOR')[1],0})
+	
 	
 	//Antes de criar a tabela, verificar se a mesma j� foi aberta
 	If (Select("TRBLO") <> 0)
@@ -205,7 +207,7 @@ EndDo
 cArq := CriaTrab(aCampos,.F.)
 dbCreate(cArq,aCampos,"DBFCDX")
 
-cQuery3 := " SELECT C2_FILIAL, C2_NUM, C2_ITEM,C2_SEQUEN, C2_PRODUTO, C2_ROTEIRO , B1_DESC, C2_XLOTE, C2_QUANT, C2_DATPRI, C2_DATPRF, B1_UM ,C2_EMISSAO , C2_LOCAL"
+cQuery3 := " SELECT C2_FILIAL, C2_NUM, C2_ITEM,C2_SEQUEN, C2_PRODUTO, C2_ROTEIRO , B1_DESC, C2_XLOTE, C2_QUANT, C2_DATPRI, C2_DATPRF, B1_UM ,C2_EMISSAO , C2_LOCAL, C2_XNOMFOR "
 cQuery3 += "   FROM " + RetSqlName("SC2") + " SC2 "	
 cQuery3 += "  INNER JOIN "  + RetSqlName("SB1") + " SB1 ON B1_COD = C2_PRODUTO AND SB1.D_E_L_E_T_ = '' "
 cQuery3 += "  WHERE SC2.D_E_L_E_T_ = ''"
@@ -232,6 +234,8 @@ While TMPLO->(!EOF())
 	TRBLO->C2_EMISSAO 				:= STOD(TMPLO->C2_EMISSAO)
 	TRBLO->C2_LOCAL 				:= TMPLO->C2_LOCAL
 	TRBLO->C2_ROTEIRO 				:= TMPLO->C2_ROTEIRO
+	TRBLO->C2_XNOMFOR				:= TMPLO->C2_XNOMFOR
+
 	MsUnlock()
 	TMPLO->(dbSkip())
 EndDo

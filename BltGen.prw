@@ -410,6 +410,7 @@ Return Nil
 */
 
 Static Function ChamaImp()
+Local _nCont	:= 0
 Private _cBarra  := SPACE(44)
 Private _cLinhaD := ""
 

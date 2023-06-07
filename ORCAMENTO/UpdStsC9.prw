@@ -1,0 +1,35 @@
+#Include 'PROTHEUS.CH'
+#Include 'RWMAKE.CH'
+#Include 'topconn.ch'
+#Include 'tbiconn.ch'
+User Function UpdStsC9(aFilial)
+Local cQuery	:= ""
+Local nRet      := 0
+PRIVATE cEmpProc	:= '01'
+PRIVATE cFilProc	:= aFilial[2]
+
+
+If Select("SX2") == 0
+	//Preparando o ambiente
+	RPCSetType(3)
+	CONOUT('UpdStsC9 - Empresa ' + cEmpProc + '/ Filial '+ cFilProc)
+
+	RPCSetEnv(cEmpProc, cFilProc, "", "", "")
+EndIf
+
+cQuery := "UPDATE SC5010 SET C5_BLEST = XSC9.BLEST FROM SC5010 SC5  "
+cQuery += "JOIN (SELECT C9_FILIAL,C9_PEDIDO,MAX(C9_BLEST) AS BLEST FROM SC9010 WHERE SC9010.D_E_L_E_T_ = ' ' GROUP BY C9_FILIAL,C9_PEDIDO) AS XSC9 ON XSC9.C9_FILIAL = SC5.C5_FILIAL AND XSC9.C9_PEDIDO = SC5.C5_NUM "
+cQuery += "WHERE SC5.D_E_L_E_T_ = ' ' "
+nRet   := TCSQLEXEC(cQuery)
+
+cQuery := "UPDATE SC5010 SET C5_BLCRED = XSC9.BLCRED FROM SC5010 SC5  "
+cQuery += "JOIN (SELECT C9_FILIAL,C9_PEDIDO,MAX(C9_BLCRED) AS BLCRED FROM SC9010 WHERE SC9010.D_E_L_E_T_ = ' ' GROUP BY C9_FILIAL,C9_PEDIDO) AS XSC9 ON XSC9.C9_FILIAL = SC5.C5_FILIAL AND XSC9.C9_PEDIDO = SC5.C5_NUM "
+cQuery += "WHERE SC5.D_E_L_E_T_ = ' ' "
+nRet   := TCSQLEXEC(cQuery)
+
+cQuery := "UPDATE SC5010 SET C5_XBLWMS = XSC9.BLWMS FROM SC5010 SC5  "
+cQuery += "JOIN (SELECT C9_FILIAL,C9_PEDIDO,MAX(C9_BLWMS) AS BLWMS FROM SC9010 WHERE SC9010.D_E_L_E_T_ = ' ' GROUP BY C9_FILIAL,C9_PEDIDO) AS XSC9 ON XSC9.C9_FILIAL = SC5.C5_FILIAL AND XSC9.C9_PEDIDO = SC5.C5_NUM "
+cQuery += "WHERE SC5.D_E_L_E_T_ = ' ' "
+nRet   := TCSQLEXEC(cQuery)
+
+Return

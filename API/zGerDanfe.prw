@@ -26,6 +26,7 @@ User Function zGerDanfe(cNota, cSerie, cPasta, cArquivo)
     Local lEnd      := .F.
     Local nTamNota  := TamSX3('F2_DOC')[1]
     Local nTamSerie := TamSX3('F2_SERIE')[1]
+    Local lExistNFe := .F.
 
     Private PixelX
     Private PixelY
@@ -60,6 +61,9 @@ User Function zGerDanfe(cNota, cSerie, cPasta, cArquivo)
         MV_PAR04 := 2                          //NF de Saida
         MV_PAR05 := 1                          //Frente e Verso = Sim
         MV_PAR06 := 2                          //DANFE simplificado = Nao
+        MV_PAR07 := Stod('20000101')
+        MV_PAR08 := Stod('20501231')
+
           
         //Cria a Danfe
         //oDanfe := FWMSPrinter():New(cArquivo, IMP_PDF, .F.,cPasta , .T.,,,,.T.)
@@ -86,9 +90,10 @@ User Function zGerDanfe(cNota, cSerie, cPasta, cArquivo)
         nColAux   := 0
           
         //Chamando a impressão da danfe no RDMAKE
-        u_xDanfeProc(@oDanfe, @lEnd, cIdent, , , .F.)
+        //u_xDanfeProc(@oDanfe, @lEnd, cIdent, , , lExistNFe)
+        U_xDanfeProc(@oDanfe, , cIDEnt, Nil, Nil, @lExistNFe)
         oDanfe:preview()
     EndIf
       
     RestArea(aArea)
-Return
+Return lExistNFe

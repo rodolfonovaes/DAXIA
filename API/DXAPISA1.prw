@@ -48,6 +48,8 @@ Static Function Customers( oSelf )
     Local nReg          := 0
     Local nAux          := 0
     Local cAliasSA1     := GetNextAlias()
+    Local cNomeVend     := ''
+    Local cMailVend     := ''
  
     Default oself:cgc     := ''
     Default oself:page      := 1
@@ -122,6 +124,16 @@ Static Function Customers( oSelf )
         nCount++
         If nCount >= nStart
             nAux++
+
+            SA3->(DbSetOrder(1))
+            If SA3->(DbSeek(xFilial('SA3') + ( cAliasSA1 )->A1_VEND))
+                cNomeVend     := SA3->A3_NOME
+                cMailVend     := SA3->A3_EMAIL
+            Else
+                cNomeVend     := ''
+                cMailVend     := ''            
+            EndIf
+
             aAdd( aListCli , JsonObject():New() )
             aListCli[nAux]['codigo']    := ( cAliasSA1 )->A1_COD
             aListCli[nAux]['loja']      := ( cAliasSA1 )->A1_LOJA
@@ -132,7 +144,10 @@ Static Function Customers( oSelf )
             aListCli[nAux]['xmailld']   := Alltrim( EncodeUTF8( ( cAliasSA1 )->A1_XMAILLD ) )
             aListCli[nAux]['inscri']    := Alltrim( EncodeUTF8( ( cAliasSA1 )->A1_INSCR ) )
             aListCli[nAux]['grpven']    := Alltrim( EncodeUTF8( ( cAliasSA1 )->A1_GRPVEN ) )
-            aListCli[nAux]['cgc']    := Alltrim( EncodeUTF8( ( cAliasSA1 )->A1_CGC ) )
+            aListCli[nAux]['cgc']       := Alltrim( EncodeUTF8( ( cAliasSA1 )->A1_CGC ) )
+            aListCli[nAux]['vendedor']  := Alltrim( EncodeUTF8( cNomeVend) )
+            aListCli[nAux]['emailvend'] := Alltrim( EncodeUTF8( cMailVend ) )
+
             
             If Len(aListCli) >= oself:pageSize
                 Exit

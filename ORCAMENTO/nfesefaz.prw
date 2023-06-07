@@ -7905,7 +7905,7 @@ cString += '<CFOP>'+ConvType(aProd[07])+'</CFOP>'
 cString += '<uCom>'+ConvType(aProd[08])+'</uCom>'
 cString += '<qCom>'+ConvType(aProd[09],15,4)+'</qCom>'
 //Rodolfo - tratamento para tag vuncom (problema no valor do danfe/xml difere do protheus, assumi o valor do protheus)
-If (Len(aICMSZFM) > 0 .And. Len(aCST) > 0 .And. !Empty(aICMSZFM[1])) .or. nPrcVen == 0
+If (Len(aICMSZFM) > 0 .And. Len(aCST) > 0 .And. !Empty(aICMSZFM[1])) .or. cF2Tipo == 'I' .or. nPrcVen == 0
 	cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(aProd[10]/aProd[09],21,8))+'</vUnCom>' 
 Else
 	cString += '<vUnCom>'+ IIf(cF2Tipo == "C" .and. cTipoCompl <> '2' ,ComplPreco(cTipo,cF2Tipo,aProd),ConvType(nPrcVen,21,8))+'</vUnCom>'//Rodolfo 

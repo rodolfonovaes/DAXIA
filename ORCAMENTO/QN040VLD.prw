@@ -19,7 +19,8 @@ Local oDlg			:= NIL
 Local oTexto		:= NIL
 Local oFontMet		:= TFont():New("Courier New",6,0)
 Local cCodFNC		:= ""
-Local cTexto		:= ""    
+Local cTexto		:= ""  
+Local aArea         := GetArea()  
 
 If (INCLUI .OR. ALTERA) .And. M->QI2_STATUS == "5" 
     //Tela do Motivo de Nao Procede
@@ -52,4 +53,14 @@ If (INCLUI .OR. ALTERA) .And. M->QI2_STATUS == "5"
         MsUnlock()
     Endif
 Endif
+
+If lRet
+    QI0->(DbSetOrder(1))
+    If QI0->(DbSeek(xFilial('QI0') + '1' + M->QI2_CODCAU))
+        If M->QI2_STATUS == '3' .And. QI0->QI0_XOBPLA == '1' .And. Empty(M->QI2_CODACA)
+            Alert("Para esta causa é necessário a abertura de um plano de ação. Cliquem em outras ações > Pl.Acao, gere um plano e posteriormente salve esta FNC") 
+            lRet := .F.
+        EndIf
+    EndIf
+EndIf
 Return lRet

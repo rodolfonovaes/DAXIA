@@ -8,10 +8,10 @@ LOCAL _nQuant	:= aCols[n,_nPosQtd]
 LOCAL _nPosEnt	:= ASCAN(aHeader,{ |x| ALLTRIM(x[2]) =="C6_ENTREG"} ) 
 LOCAL _dEntreg	:= aCols[n,_nPosEnt]
 LOCAL _lDeleta	:= GdDeleted(n)
-
+Local lDevol	:= IIF(M->C5_TIPO == 'D',.T.,.F.)
 LOCAL _lPerigo  := .F. 													// INDICA SE O PRODUTO  PERIGOSO
 
-IF FUNNAME() = "MATA410" .AND. !_lDeleta
+IF FUNNAME() = "MATA410" .AND. !_lDeleta .and. !lDevol
 	
 	SB5->(DBSETORDER(1))
 	IF SB5->(DBSEEK(XFILIAL("SB5")+_cProduto))
@@ -217,5 +217,77 @@ IF FUNNAME() = "MATA410" .AND. !_lDeleta
 		ENDIF
 	ENDIF
 ENDIF
+
+If lDevol
+	SB5->(DBSETORDER(1))
+	IF SB5->(DBSEEK(XFILIAL("SB5")+_cProduto))
+		_lPerigo := ( SB5->B5_PRODPF == "S" .OR. SB5->B5_PRODCON == "S" .OR. SB5->B5_PRODEX == "S" ) // VERIFICO SE O PRODUTO  PERIGOSO!
+		
+		IF _lPerigo
+			//Validação Transportadora só alerta
+			IF _lRet
+
+				dbSelectArea("SA4")
+				dbSetOrder(1)
+				IF dbSeek(xFilial("SA4")+M->C5_TRANSP)
+					_lExibe := .T.
+
+					// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA FEDERAL
+					IF SB5->B5_PRODPF  == "S" 
+						IF SA4->A4_YPRODPF <> "S"
+							cMsgP := "A transportadora não possui licença."
+							cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+							Help( ,, 'M410LIOK (023)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+							_lExibe := .F.
+						ELSE
+							IF SA4->A4_YVLLPF < _dEntreg
+								cMsgP := "Não é permitido vender o produto " + ALLTRIM(_cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+								cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+								Help( ,, 'M410LIOK (024)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								_lExibe := .F.
+							ENDIF
+						ENDIF
+					ENDIF
+					// TRATAMENTO PRODUTO PERIGOSO - CONTROLE POLICIA CIVIL
+					/*
+					IF  _lExibe .AND. SB5->B5_PRODCON == "S"
+						IF SA4->A4_PRODCON <> "S"
+							cMsgP := "A transportadora não possui licença."
+							cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+							Help( ,, 'M410LIOK (019)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+							_lExibe := .F.
+						ELSE
+							IF SA4->A4_YVLLPC < _dEntreg
+								cMsgP := "Não é permitido vender o produto " + ALLTRIM(_cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+								cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+								Help( ,, 'M410LIOK (020)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								_lExibe := .F.
+							ENDIF
+						ENDIF
+					ENDIF
+					*/
+					// TRATAMENTO PRODUTO PERIGOSO - CONTROLE EXERCITO
+					IF _lExibe .AND. SB5->B5_PRODEX  == "S"
+						IF SA4->A4_PRODEX <> "S"
+							cMsgP := "A transportadora não possui licença."
+							cMsgS := "Verifique se a transportadora possui Licença e providencie o cadastro da mesma."
+							Help( ,, 'M410LIOK (025)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+							_lExibe := .F.
+						ELSE
+							IF SA4->A4_YVLLEX < _dEntreg
+								cMsgP := "Não é permitido vender o produto " + ALLTRIM(_cProduto) + " pois a Transportadora está com a Licença Vencida na Data da Entrega."
+								cMsgS := "Solicite a data de validade da licença renovada e atualize o cadastro da Transportadora."
+								Help( ,, 'M410LIOK (026)',,cMsgP, 1, 0, NIL, NIL, NIL, NIL, NIL, {cMsgS})
+								_lExibe := .F.
+							ENDIF
+						ENDIF
+					ENDIF
+				ELSE
+					// NÃO TEM PREVISÃO DO QUE FAZER QUANDO NÃO HÁ TRANSPORTADORA
+				ENDIF
+			ENDIF			
+		EndIf
+	EndIf
+EndIf
 
 RETURN _lRet 

@@ -54,7 +54,7 @@ Static Function PDFNF( oSelf )
     Local cFilCont      := ""
     Local aFiles      := {} // O array receberï¿½ os nomes dos arquivos e do diretï¿½rio
     Local aSizes      := {} // O array receberï¿½ os tamanhos dos arquivos e do diretorio          
-
+    Local lRet          := .T.
     Default oself:cgc       := ' '
     Default oself:nf        := ' '
  
@@ -89,51 +89,35 @@ Static Function PDFNF( oSelf )
 
         nAux++
         cFileName   :=  Alltrim(( cAliasSF2 )->A1_CGC)+'_' + Alltrim(( cAliasSF2 )->F2_DOC) + '.pdf'
-        U_zGerDanfe(( cAliasSF2 )->F2_DOC,( cAliasSF2 )->F2_SERIE,'\DANFE_API\', cFileName )
+        lRet := U_zGerDanfe(( cAliasSF2 )->F2_DOC,( cAliasSF2 )->F2_SERIE,'\DANFE_API\', cFileName )
 
-      /*  oFile := FwFileReader():New('/DANFE_API/' + cFileName)
-        If (oFile:Open())
-            cFile := oFile:FullRead() // EFETUA A LEITURA DO ARQUIVO
+        If lRet 
+            //Transformo em base64 o arquivo
+            ADir('\DANFE_API\' + cFileName, aFiles, aSizes)//Verifica o tamanho do arquivo, parï¿½metro exigido na FRead.
 
-            // RETORNA O ARQUIVO PARA DOWNLOAD
-            //oself:SetHeader("Content-Disposition", "attachment; filename=" +'/DANFE_API/' + cFileName)
-            oself:SetHeader("Content-Disposition", "attachment; filename="+Alltrim('/DANFE_API/'+cFileName) )
-            oself:SetContentType("application/pdf") 
-            oself:SetResponse(cFile)           
-        Else
-            cJSONRet += '{'
-            cJSONRet += '"status":"Erro na leitura do PDF", ' + CRLF
-            cJSONRet += '"mensagem": ' +  CRLF
-            cJSONRet += '} ' + CRLF    
-            SetRestFault(400, FwNoAccent(cJSONRet))                 
-        EndIf*/
+            If Len(aFiles) == 0
+                //Alert('Não foi gerado o arquivo PDF!')
+                Return
+            EndIF
 
-        //Transformo em base64 o arquivo
-        ADir('\DANFE_API\' + cFileName, aFiles, aSizes)//Verifica o tamanho do arquivo, parï¿½metro exigido na FRead.
+            nHandle := fopen('\DANFE_API\' + cFileName , FO_READWRITE + FO_SHARED )
+            cString := ""
+            FRead( nHandle, cString, aSizes[1] ) //Carrega na variï¿½vel cString, a string ASCII do arquivo.
 
-        If Len(aFiles) == 0
-            //Alert('Não foi gerado o arquivo PDF!')
-            Return
-        EndIF
+            cFilCont := Encode64(cString) //Converte o arquivo para BASE64
 
-        nHandle := fopen('\DANFE_API\' + cFileName , FO_READWRITE + FO_SHARED )
-        cString := ""
-        FRead( nHandle, cString, aSizes[1] ) //Carrega na variï¿½vel cString, a string ASCII do arquivo.
+            fclose(nHandle) 
 
-        cFilCont := Encode64(cString) //Converte o arquivo para BASE64
-
-        fclose(nHandle) 
-
-        aAdd( aPDF , JsonObject():New() )
-        aPDF[nAux]['cgc']       := ( cAliasSF2 )->A1_CGC
-        aPDF[nAux]['nf']        := ( cAliasSF2 )->F2_DOC
-        aPDF[nAux]['pdf']       := cFilCont
-            
+            aAdd( aPDF , JsonObject():New() )
+            aPDF[nAux]['cgc']       := ( cAliasSF2 )->A1_CGC
+            aPDF[nAux]['nf']        := ( cAliasSF2 )->F2_DOC
+            aPDF[nAux]['pdf']       := cFilCont
+        EndIf     
         ( cAliasSF2 )->( DBSkip() )
     End
     ( cAliasSF2 )->( DBCloseArea() )
 
-    If Len(aPDF) > 0
+    If Len(aPDF) > 0 .aND. lRet
         oJsonPDF['PDFNF'] := aPDF
     Else
         If empty(cJSONRet)

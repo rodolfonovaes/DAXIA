@@ -53,7 +53,7 @@ LOCAL cAliasNF 	      := GETNEXTALIAS()
 LOCAL aLaudo          := {}
 LOCAL aLotLeg         := {}  // ARRAY COM DADOS 
 LOCAL cDirLeg         := "\LAUDOS_ANALISYS\" // Laudo do sistema Legado 
-
+Local lNovaOp         := .F.
 Private cCodCli
 Private cCodLoj
 Private cNF_ 
@@ -147,25 +147,48 @@ IF  cTipo == "S"
                 AND SB8.%NotDel%
     ENDSQL
 ELSEIF  cTipo == "P"
-    BEGINSQL ALIAS cAliasNF
-        SELECT  DISTINCT    ' '            AS    NOTA, ' '              AS      SERIE, QPK.QPK_CLIENT AS   CLIENTE, QPK.QPK_LOJA  AS     LOJA, 
-                            ' '            AS    NOME, QPK.QPK_PRODUT   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
-                            SB8.B8_LOTECTL AS    LOTE,  QPK.QPK_TAMLOT  AS QUANTIDADE, QPK.QPK_EMISSA AS   EMISSAO, SB1.B1_TIPO   AS     TIPO, 
-			    			SB8.B8_LOTEFOR AS LOTEFOR
-        FROM    %table:QPK% QPK (NOLOCK),
-                %table:SB1% SB1 (NOLOCK),
-                %table:SB8% SB8 (NOLOCK)
-        WHERE     QPK.QPK_LOTE = %exp:mv_par02%      
-            AND QPK.QPK_FILIAL = %xFilial:SB8% 
-            AND SB8.B8_FILIAL  = %xFilial:SB8%            
-            AND SB1.B1_FILIAL  = %xFilial:SB1%            
-            AND SB1.B1_COD     = QPK.QPK_PRODUT
-            AND SB8.B8_PRODUTO = QPK.QPK_PRODUT
-            AND SB8.B8_LOTECTL = QPK.QPK_LOTE
-            AND QPK.%NotDel%
-            AND SB8.%NotDel%
-            AND SB1.%NotDel%
-    ENDSQL
+    lNovaOp := VldOp()
+    If lNovaOp
+        BEGINSQL ALIAS cAliasNF
+            SELECT  DISTINCT    ' '            AS    NOTA, ' '              AS      SERIE, QPK.QPK_CLIENT AS   CLIENTE, QPK.QPK_LOJA  AS     LOJA, 
+                                ' '            AS    NOME, QPK.QPK_PRODUT   AS      CODIGO, SB1.B1_DESC     AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
+                                C2_XLOTE       AS    LOTE, QPK.QPK_TAMLOT   AS      QUANTIDADE, SC2.C2_EMISSAO AS   EMISSAO, SB1.B1_TIPO   AS     TIPO, 
+                                ' ' AS LOTEFOR
+            FROM    %table:QPK% QPK (NOLOCK),
+                    %table:SB1% SB1 (NOLOCK),
+                    %table:SC2% SC2 (NOLOCK)
+            WHERE     QPK.QPK_OP    = %exp:SC2->(C2_NUM + C2_ITEM + C2_SEQUEN)%      
+                AND QPK.QPK_FILIAL  = %xFilial:SB8% 
+                AND SB1.B1_FILIAL   = %xFilial:SB1%            
+                AND SB1.B1_COD      = QPK.QPK_PRODUT
+                AND SC2.C2_NUM      = %exp:SC2->C2_NUM% 
+                AND SC2.C2_ITEM     = %exp:SC2->C2_ITEM% 
+                AND SC2.C2_SEQUEN   = %exp:SC2->C2_SEQUEN% 
+                AND QPK.%NotDel%
+                AND SC2.%NotDel%
+                AND SB1.%NotDel%
+        ENDSQL    
+    Else
+        BEGINSQL ALIAS cAliasNF
+            SELECT  DISTINCT    ' '            AS    NOTA, ' '              AS      SERIE, QPK.QPK_CLIENT AS   CLIENTE, QPK.QPK_LOJA  AS     LOJA, 
+                                ' '            AS    NOME, QPK.QPK_PRODUT   AS     CODIGO, SB1.B1_DESC    AS DESCRICAO, SB1.B1_TIPOCQ AS CONTROLE, 
+                                SB8.B8_LOTECTL AS    LOTE,  QPK.QPK_TAMLOT  AS QUANTIDADE, QPK.QPK_EMISSA AS   EMISSAO, SB1.B1_TIPO   AS     TIPO, 
+                                SB8.B8_LOTEFOR AS LOTEFOR
+            FROM    %table:QPK% QPK (NOLOCK),
+                    %table:SB1% SB1 (NOLOCK),
+                    %table:SB8% SB8 (NOLOCK)
+            WHERE     QPK.QPK_LOTE = %exp:mv_par02%      
+                AND QPK.QPK_FILIAL = %xFilial:SB8% 
+                AND SB8.B8_FILIAL  = %xFilial:SB8%            
+                AND SB1.B1_FILIAL  = %xFilial:SB1%            
+                AND SB1.B1_COD     = QPK.QPK_PRODUT
+                AND SB8.B8_PRODUTO = QPK.QPK_PRODUT
+                AND SB8.B8_LOTECTL = QPK.QPK_LOTE
+                AND QPK.%NotDel%
+                AND SB8.%NotDel%
+                AND SB1.%NotDel%
+        ENDSQL
+    EndIf
 ELSEIF  cTipo == "E"
     BEGINSQL ALIAS cAliasNF
         SELECT  DISTINCT    ' '            AS NOTA, ' '              AS      SERIE,  ''            AS   CLIENTE, ''            AS     LOJA, 
@@ -272,17 +295,21 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
         dDtFabr := CTOD("  /  /  ")
         dDtVal  := CTOD("  /  /  ")
         cLoteF  := ""
-
-        IF !U_RetDFbVl( (cAliasNF)->CODIGO, (cAliasNF)->LOTE, '', @dDtFabr, @dDtVal, @cLoteF)
-            IF !lJob
-                Help( ,, "Help",,"Dados do Lote ("+aCab[8]+") não encontrados!", 1, 0 ) 
-                RETURN NIL
-            ELSE
-                CONOUT("ERRO: Dados do Lote ("+aCab[8]+") não encontrados!")
-                RETURN "ERRO: Dados do Lote ("+aCab[8]+") não encontrados!"
+        If lNovaOp 
+            dDtFabr := SC2->C2_DATPRF
+            dDtVal  := Stod((cAliasNF)->EMISSAO)+ Posicione('SB1',1,xfilial('SB1') + (cAliasNF)->CODIGO , 'B1_PRVALID')
+            cLoteF  := ''
+        Else
+            IF !U_RetDFbVl( (cAliasNF)->CODIGO, (cAliasNF)->LOTE, '', @dDtFabr, @dDtVal, @cLoteF)
+                IF !lJob
+                    Help( ,, "Help",,"Dados do Lote ("+aCab[8]+") não encontrados!", 1, 0 ) 
+                    RETURN NIL
+                ELSE
+                    CONOUT("ERRO: Dados do Lote ("+aCab[8]+") não encontrados!")
+                    RETURN "ERRO: Dados do Lote ("+aCab[8]+") não encontrados!"
+                ENDIF
             ENDIF
-        ENDIF
-
+        EndIF
         If !Rastro((cAliasNF)->CODIGO)
             IF !lJob
                 Help( ,, "Help",,"Produto não possui controle de Rastro!", 1, 0 ) 
@@ -309,6 +336,10 @@ IF cTipo <> "F" // PARA QIE/QIP/JOB SERÁ POR LOTE
         ENDIF
 
         cOrigem := U_RtOriPrd( (cAliasNF)->CODIGO , (cAliasNF)->LOTE, lJob )
+
+        If lNovaOp
+            cOrigem := 'P'
+        EndIf
 
         aCabec := { (cAliasNF)->NOTA        , ; // 01 - Nota Fiscal de Saída
                     (cAliasNF)->SERIE       , ; // 02 - Série da Nota Fiscal de Saida
@@ -885,3 +916,38 @@ oPrinter:SayAlign( 820, 000, cSitMail, oFont06, 600, 50, CLR_BLACK, 2, 0 )
 
 RestArea( aArea )
 Return( Nil )
+
+
+/*/{Protheus.doc} VldOp
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 01/09/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function VldOp()
+Local lRet  := .F.
+Local cOp   := MV_PAR01
+
+SC2->(DbSetOrder(1))
+If SC2->(DbSeek(xFilial('SC2') + MV_PAR01))
+    SG2->(DbSetOrder(1))
+	If SG2->(DbSeek(xFilial('SG2') + SC2->C2_PRODUTO + SC2->C2_ROTEIRO))
+        If SG2->G2_XMAMTEM == '4' 
+            SB1->(DbSetOrder(1))
+            If SB1->(DbSeek(xFilial('SB1') + SC2->C2_PRODUTO))
+                If SB1->B1_XTPCOMP == '2'
+                    lRet := .T.
+                EndIf
+            EndIf
+        EndIf
+    EndIf
+EndIf
+    
+Return lRet
+

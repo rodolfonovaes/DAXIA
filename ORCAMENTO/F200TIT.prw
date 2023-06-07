@@ -5,6 +5,9 @@ Gravação de centro de custo na leitura do cnab
 */
 User Function F200TIT()
 Local lGrava := .F.
+Local cCc	 := Separa(SuperGetMV('ES_200TIT',.t.,''),'|')[1]
+Local cItem	 := Separa(SuperGetMV('ES_200TIT',.t.,''),'|')[2]
+Local cClVldb:= Separa(SuperGetMV('ES_200TIT',.t.,''),'|')[3]
 If SE5->E5_BANCO == '237'    //BRADESCO
 	If AllTrim(SE5->E5_CONTA) == '1809' .And. SE5->E5_CNABOC $ '02|10|12|14|08|9F|21|19|30|14'
 		lGrava := .T.
@@ -29,7 +32,9 @@ EndIf
 
 If lGrava
 	RecLock("SE5",.F.)
-	Replace SE5->E5_CCUSTO With '20102'
+	Replace SE5->E5_CCUSTO With cCc
+	Replace SE5->E5_ITEMD  With cItem
+	Replace SE5->E5_CLVLDB With cClVldb
 	SE5->(MsUnlock())
 EndIf		
 Return

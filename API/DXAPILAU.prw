@@ -55,6 +55,7 @@ Static Function PDFLAU( oSelf )
     Local aFiles        := {} // O array receberï¿½ os nomes dos arquivos e do diretï¿½rio
     Local aSizes        := {} // O array receberï¿½ os tamanhos dos arquivos e do diretorio          
     Local cResult       := ''
+    Local cArquivo      := ''
     Default oself:cgc       := ' '
     Default oself:nf        := ' '
  
@@ -83,58 +84,34 @@ Static Function PDFLAU( oSelf )
     // Alimenta array de clientes
     //-------------------------------------------------------------------
     While ( cAliasSD2 )->( ! Eof() )
-        cFilAnt := ( cAliasSD2 )->D2_FILIAL
-        Opensm0(cempant+cfilant, .T.)
-        Openfile(cempant+cfilant)
+        
+        //Transformo em base64 o arquivo
+        cArquivo  := ALLTRIM((cAliasSD2)->D2_DOC)+"_"+ALLTRIM((cAliasSD2)->D2_ITEM)+"_"+ALLTRIM((cAliasSD2)->D2_LOTECTL)+ ".pdf" // NOTA + ITEM + LOTE
+        ADir('\LAUDOS_DAXIA\' + cArquivo, aFiles, aSizes)//Verifica o tamanho do arquivo, parï¿½metro exigido na FRead.
 
-        nAux++
-        cResult := U_DAXR050( { (cAliasSD2)->D2_DOC, (cAliasSD2)->D2_SERIE, (cAliasSD2)->D2_LOTECTL, (cAliasSD2)->D2_ITEM }, .T. )
-        cFileName := ALLTRIM((cAliasSD2)->D2_DOC)+"_"+ALLTRIM((cAliasSD2)->D2_ITEM)+"_"+ALLTRIM((cAliasSD2)->D2_LOTECTL) + ".pdf"
-        IF  SUBSTR( cResult, 1, 5 ) == "ERRO:"
+        If Len(aFiles) == 0
+            //Alert('Não foi gerado o arquivo PDF!')
             cJSONRet += '{'
             cJSONRet += '"status":"Erro ao gerar o laudo", ' + CRLF
             cJSONRet += '"mensagem":  "' + cResult + CRLF
             cJSONRet += '} ' + CRLF    
-            SetRestFault(400, FwNoAccent(cJSONRet))
-        ELSE        
-        /*  oFile := FwFileReader():New('/DANFE_API/' + cFileName)
-            If (oFile:Open())
-                cFile := oFile:FullRead() // EFETUA A LEITURA DO ARQUIVO
+            SetRestFault(400, FwNoAccent(cJSONRet))                
+            Return
+        EndIF
 
-                // RETORNA O ARQUIVO PARA DOWNLOAD
-                //oself:SetHeader("Content-Disposition", "attachment; filename=" +'/DANFE_API/' + cFileName)
-                oself:SetHeader("Content-Disposition", "attachment; filename="+Alltrim('/DANFE_API/'+cFileName) )
-                oself:SetContentType("application/pdf") 
-                oself:SetResponse(cFile)           
-            Else
-                cJSONRet += '{'
-                cJSONRet += '"status":"Erro na leitura do PDF", ' + CRLF
-                cJSONRet += '"mensagem": ' +  CRLF
-                cJSONRet += '} ' + CRLF    
-                SetRestFault(400, FwNoAccent(cJSONRet))                 
-            EndIf*/
+        nHandle := fopen('\LAUDOS_DAXIA\' + cArquivo , FO_READWRITE + FO_SHARED )
+        cString := ""
+        FRead( nHandle, cString, aSizes[1] ) //Carrega na variï¿½vel cString, a string ASCII do arquivo.
 
-            //Transformo em base64 o arquivo
-            ADir('\LAUDOS_DAXIA\' + cFileName, aFiles, aSizes)//Verifica o tamanho do arquivo, parï¿½metro exigido na FRead.
+        cFilCont := Encode64(cString) //Converte o arquivo para BASE64
 
-            If Len(aFiles) == 0
-                //Alert('Não foi gerado o arquivo PDF!')
-                Return
-            EndIF
+        fclose(nHandle) 
 
-            nHandle := fopen('\LAUDOS_DAXIA\' + cFileName , FO_READWRITE + FO_SHARED )
-            cString := ""
-            FRead( nHandle, cString, aSizes[1] ) //Carrega na variï¿½vel cString, a string ASCII do arquivo.
-
-            cFilCont := Encode64(cString) //Converte o arquivo para BASE64
-
-            fclose(nHandle) 
-
-            aAdd( aPDF , JsonObject():New() )
-            aPDF[nAux]['cgc']       := ( cAliasSD2 )->A1_CGC
-            aPDF[nAux]['nf']        := ( cAliasSD2 )->D2_DOC
-            aPDF[nAux]['pdflaudo']       := cFilCont
-        EndIf
+        aAdd( aPDF , JsonObject():New() )
+        aPDF[Len(aPdf)]['cgc']       := ( cAliasSD2 )->A1_CGC
+        aPDF[Len(aPdf)]['nf']        := ( cAliasSD2 )->D2_DOC
+        aPDF[Len(aPdf)]['pdflaudo']  := cFilCont
+        
             
         ( cAliasSD2 )->( DBSkip() )
     End

@@ -14,8 +14,8 @@
 #DEFINE HMARGEM   030
 #DEFINE VMARGEM   030
 #DEFINE MAXITEM   014                                                // Máximo de produtos para a primeira página
-#DEFINE MAXITEMP2 042        
-#DEFINE MAXITEMP2F 042                                               // pagina 2 em diante sem informação complementar
+#DEFINE MAXITEMP2 045        
+#DEFINE MAXITEMP2F 045                                               // pagina 2 em diante sem informação complementar
 #DEFINE MAXITEMP3 020                                                // Máximo de produtos para a pagina 2 (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
 #DEFINE MAXITEMC  057                                                // Máxima de caracteres por linha de produtos/serviços
 
@@ -4136,7 +4136,7 @@ static function executeRetorna( aNfe, cIdEnt, lUsacolab, lAutomato )
 				endif
 			endif
 
-			If Len(oWs:oWSRETORNANOTASNXRESULT:OWSNOTAS:OWSNFES5) > 0
+ 			If Len(oWs:oWSRETORNANOTASNXRESULT:OWSNOTAS:OWSNFES5) > 0
 				For nX := 1 To Len(oWs:oWSRETORNANOTASNXRESULT:OWSNOTAS:OWSNFES5)
 					cRetorno        := oWs:oWSRETORNANOTASNXRESULT:OWSNOTAS:OWSNFES5[nX]:oWSNFE:CXML
 					cProtocolo      := oWs:oWSRETORNANOTASNXRESULT:OWSNOTAS:OWSNFES5[nX]:oWSNFE:CPROTOCOLO
@@ -5937,8 +5937,8 @@ Local aDesc := {}
 	
 For nX := 1 To nLenDet
 	Aadd(aProd, {oDet[nX]:_Prod:_cProd:TEXT})
-	//Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
-	Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto
+	Aadd(aDesc, {oDet[nX]:_Prod:_xProd:TEXT})
+	//Aadd(aDesc, {Posicione('SB1',1,xFilial('SB1')+oDet[nX]:_Prod:_cProd:TEXT,'B1_DESC' )}) //Rodolfo - Ajuste para trazer descrição completa do produto
 Next
 
 

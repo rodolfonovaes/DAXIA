@@ -206,6 +206,8 @@ User Function PDFBOL341(aItens, aLog, nTipoCart)
 	Private cPathServG := "\bol_gerados"
 	Private cPathTemp  := GETTEMPPATH()
 
+	SE1->(DbClearFilter())//Limpo o filtro que estava causando errorlog qdo chamava a função do boleto do bradesco antes
+
 	ProcRegua( nLen )
 
 	For i := 1 To nLen

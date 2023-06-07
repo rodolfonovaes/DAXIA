@@ -194,7 +194,7 @@ Do While SCK->( .not. EoF() ) .and. SCK->CK_FILIAL + SCK->CK_NUM == SCJ->CJ_FILI
    oPrn:Say( nLin, 2100, Transform( SCK->CK_XVLICM, "@E 99,999,999.99" ), oFontC10 ) // % ICMS
    oPrn:Say( nLin, 2400, Transform( nVlrTot,        "@E 9,999,999.99" ), oFontC10 ) // Valor total do IPI
    oPrn:Say( nLin, 2750, DtoC( SCK->CK_ENTREG ), oFont10 ) // Data de Entrega
-   oPrn:Say( nLin, 3000, Transform( SCK->CK_XVLFRET, "@E 99,999,999.99" ), oFont10 ) // Data de Entrega
+   //oPrn:Say( nLin, 3000, Transform( SCK->CK_XVLFRET, "@E 99,999,999.99" ), oFont10 ) // Data de Entrega
    nLin += 15
 
    oPrn:Say( nLin, 0065, Replicate( "_", 525 ), oFont06 )
@@ -341,8 +341,8 @@ EndCase
 oPrn:Say( 0567, 1820, Upper( cFraseFrete ), oFont12 )
 oPrn:Say( 0567, 2400, AllTrim( SCJ->CJ_XCONTAT ), oFont12 )
 
-oPrn:Say( 0623, 1820, "Valor Frete:", oFont14N )
-oPrn:Say( 0623, 2000, Transform( SCJ->CJ_XVLFRET, "@E 9,999,999.99" ), oFont12 )
+//oPrn:Say( 0623, 1820, "Valor Frete:", oFont14N )
+//oPrn:Say( 0623, 2000, Transform( SCJ->CJ_XVLFRET, "@E 9,999,999.99" ), oFont12 )
 
 oPrn:Say( 0679, 1820, "Destino", oFont14N )
 
@@ -375,7 +375,7 @@ oPrn:Say( 0840, 2000, "%",                  oFont12N )
 oPrn:Say( 0840, 2200, "%",                  oFont12N )
 oPrn:Say( 0840, 2400, "TOTAL",              oFont12N )
 oPrn:Say( 0840, 2750, "DATA P/",            oFont12N )
-oPrn:Say( 0840, 3000, "VALOR",              oFont12N )
+//oPrn:Say( 0840, 3000, "VALOR",              oFont12N )
 oPrn:Say( 0880, 0065, "PRODUTO",            oFont12N )
 oPrn:Say( 0880, 0680, "PROCEDÊNCIA",        oFont12N )
 oPrn:Say( 0880, 1090, "QTDE",               oFont12N )
@@ -386,7 +386,7 @@ oPrn:Say( 0880, 2000, "IPI",                oFont12N )
 oPrn:Say( 0880, 2200, "ICMS",               oFont12N )
 oPrn:Say( 0880, 2400, "DO ITEM C/IPI",      oFont12N )
 oPrn:Say( 0880, 2750, "ENTREGA",            oFont12N )
-oPrn:Say( 0880, 3000, "FRETE",              oFont12N )
+//oPrn:Say( 0880, 3000, "FRETE",              oFont12N )
 
 nLin := 940
 nPagina++ // Incremento de pagina
@@ -411,6 +411,8 @@ Local cAno      := SubStr( DtoS( dDataBase), 1, 4 )
 Local cMesExt   := MesExtenso( Month( dDataBase ) )
 Local cDtImpr_  := cDia + " de " + cMesExt + " de " + cAno
 Local cMenDolar := "* O Valor em Dolar será convertido na data do faturamento"
+Local nLinha    := 2140
+Local nSubstr   := 1
 
 /*----------------------------------------------------------------------+
 | Abaixo faço o desenho do box para as informações do rodapé da página. |
@@ -423,6 +425,35 @@ oPrn:Box( 2270, 0050, 2380, 1050 )
 oPrn:Say( 2080, 1100, "Resumo do Pedido", oFont10N )
 oPrn:Say( 2080, 2240, OEMToANSI( cMenDolar ), oFont10N )
 oPrn:Box( 2110, 1100, 2390, 2920 )
+
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )    
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )    
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )    
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )    
+nLinha += 30
+nSubstr += 140
+oPrn:Say( nLinha, 1110, SubStr(SCJ->CJ_XOBSPED ,nSubstr,140), oFont10N )    
+nLinha += 30
+nSubstr += 140
+
 oPrn:EndPage() // Finaliza a pagina
 Return( Nil )
 

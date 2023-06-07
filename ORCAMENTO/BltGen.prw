@@ -42,7 +42,7 @@ If MntPerg()
 				Return .F.                              
 			EndIf	
 
-			SM0->(dbGoTop())
+			//SM0->(dbGoTop())
 			
 			cXEmpresa := AllTrim(SM0->M0_NOMECOM)+"  - "+"CNPJ "+Transform(SM0->M0_CGC,"@R 99.999.999/9999-99")+"  -  "+ALLTRIM(SM0->M0_ENDCOB)+" - "+ALLTRIM(SM0->M0_CIDCOB)+"/"+ALLTRIM(SM0->M0_ESTCOB) 
 
@@ -156,6 +156,8 @@ cFilter		+= 'DTOS(E1_VENCREA)>="'+DTOS(MV_PAR17)+'" .And. DTOS(E1_VENCREA) <= "'
 cFilter		+= "!(E1_TIPO$MVABATIM) "
 cFilter		+= ".AND. ALLTRIM(E1_TIPO) $ 'NF/DP/BOL/MUT/FT' "
 //cFilter		+= " .AND. E1_XFORMA = 'BOL' "
+cFilter		+= " .AND. POSICIONE('SA1',1,xFILIAL('SA1') + E1_CLIENTE + E1_LOJA,'A1_BCO1') == '"+AllTrim(MV_PAR07)+"' "
+cFilter		+= " .AND. POSICIONE('SA1',1,xFILIAL('SA1') + E1_CLIENTE + E1_LOJA,'A1_YBOLETO') == 'S' "
 
 If MV_PAR19 == 1  // ReImpressao = SIM
 	cFilter		+= " .AND. !Empty(E1_NUMBCO) "
@@ -171,6 +173,7 @@ Else
 	cFilter		+= " .AND. Empty(E1_PORTADO) "
 EndIf
 
+SE1->(DbClearFilter())//Limpo o filtro que estava causando errorlog qdo chamava a função do boleto do bradesco antes
 DbSelectArea("SE1")
 IndRegua("SE1", cIndexName, cIndexKey,, cFilter, "Aguarde selecionando registros....")
 
@@ -407,6 +410,7 @@ Return Nil
 */
 
 Static Function ChamaImp()
+Local nX		:= 0
 Private _cBarra  := SPACE(44)
 Private _cLinhaD := ""
 
@@ -429,7 +433,8 @@ Endif
 oPrint:SETPAPERSIZE(9)
 
 
-For _nCont := 1 to len(_aTitulos)
+For nX := 1 to len(_aTitulos)
+	_nCont := nX
 	_nLinha  := 1
 	                      
 	_cBarra  := SPACE(44)
@@ -445,12 +450,13 @@ For _nCont := 1 to len(_aTitulos)
 	
 	oPrint:EndPage()
 	
-Next _nCont
+Next
 
 	
 //oPrint:setup()                                 
 oPrint:Preview()
-
+FreeObj(oPrint)
+oPrn := Nil
 Return Nil
 
 

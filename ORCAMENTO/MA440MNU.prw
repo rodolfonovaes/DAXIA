@@ -13,7 +13,7 @@ If at(UPPER(Alltrim(UsrRetName( retcodusr() ))),UPPER(cUsers)) > 0 .Or. at(UPPER
 EndIf
 
 //Atualizo campos de status
-UpdStsC9()
+//UpdStsC9()
 
 Return 
 

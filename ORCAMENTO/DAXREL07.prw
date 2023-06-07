@@ -138,6 +138,7 @@ AADD(aCampos,{"VLRDI"    		,"N", 26, 8})
 AADD(aCampos,{"VARCAMB"   		,"N", 26, 8})
 AADD(aCampos,{"VARUNIT"   		,"N", 26, 8})
 AADD(aCampos,{"VARIACAO"		,"N", 26, 8})
+AADD(aCampos,{"DESP_EXTRA"		,"N", 26, 8})
 AADD(aCampos,{"W6_DTRECDO"		,"D", TAMSX3('W6_DTRECDO')[1], 0})
 AADD(aCampos,{"Y5_NOME"		    ,"C", TAMSX3('Y5_NOME')[1], 0})
 AADD(aCampos,{"PORTOORIG"		    ,"C", TAMSX3('YR_CID_ORI')[1], 0})
@@ -207,7 +208,8 @@ cQuery += " ( SELECT TOP 1 SUM(W7_QTDE) FROM SW7010 SW7A WHERE SW7A.D_E_L_E_T_ =
 cQuery += " W7_PRECO AS VUNIT,
 cQuery += " W2_FOB_TOT AS VTOTAL,
 cQuery += " ((SELECT SUM(ZH_VALOR)    FROM SZH010 SZH    WHERE ZH_PO_NUM = SW2.W2_PO_NUM    AND REPLICATE('0',(4 -LEN(ZH_NR_CONT)))+CAST(ZH_NR_CONT AS VARCHAR(4)) = SW7.W7_POSICAO    AND ZH_FILIAL = '" + xFilial('SZH') + "'    AND SZH.D_E_L_E_T_ = ' '    AND ZH_PO_NUM = SW2.W2_PO_NUM	AND ZH_DESPESA IN (SELECT ZH_DESPESA FROM SZH010 WHERE                         SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '101' AND '899'						AND ZH_DESPESA NOT IN (SELECT ZH_DESPESA FROM SZH010 WHERE SZH.D_E_L_E_T_ = ' ' AND ZH_DESPESA BETWEEN '201' AND '299'						AND ZH_DESPESA NOT IN ('104')))		)/W7_QTDE) AS CUSTOEST ," 
-cQuery += " EI2_HAWB PROCESSO, SUM(EI2_RATEIO) RATEIO, SUM(EI2_FOB_R) VLRDI, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ) VLRPAGO, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ)-SUM(EI2_FOB_R) VARCAMB, SUM(EI2_QUANT) QUANT, (SUM((EI2_FOB_R/EI1_FOB_R) *  E2_VALLIQ)-SUM(EI2_FOB_R))/SUM(EI2_QUANT) VARUNIT , W6_DT_ENTR, W6_XPRENTR"
+cQuery += " EI2_HAWB PROCESSO, SUM(EI2_RATEIO) RATEIO, SUM(EI2_FOB_R) VLRDI, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ) VLRPAGO, SUM((EI2_FOB_R/EI1_FOB_R) * E2_VALLIQ)-SUM(EI2_FOB_R) VARCAMB, SUM(EI2_QUANT) QUANT, (SUM((EI2_FOB_R/EI1_FOB_R) *  E2_VALLIQ)-SUM(EI2_FOB_R))/SUM(EI2_QUANT) VARUNIT , W6_DT_ENTR, W6_XPRENTR,"
+cQuery += " ( SELECT SUM(WD_VALOR_R) FROM SWD010 SWD WHERE SWD.D_E_L_E_T_ = '' AND  W2_PO_NUM = SWD.WD_HAWB AND SWD.WD_FILIAL = '" + xFilial('SWD') + "' AND WD_DESPESA IN ('767','775','785','837')  	 )AS DESP_EXTRA
 cQuery += "  FROM " + RetSqlName("SW2") + " SW2 "
 cQuery += " INNER JOIN "  + RetSqlName("SW3") + " SW3 ON W2_PO_NUM = W3_PO_NUM  "
 cQuery += " LEFT JOIN "  + RetSqlName("SW6") + " SW6 ON W2_PO_NUM = W6_PO_NUM  AND SW6.D_E_L_E_T_ = '' AND W6_FILIAL = '" + xFilial('SW6') + "' "
@@ -335,7 +337,8 @@ While TMPREL->(!EOF())
         TRBREL->CUSTOFIN    := TMPREL->CUSTEFTR + TMPREL->VARUNIT
         TRBREL->VARIACAO    := ((TRBREL->CUSTOEFT - TRBREL->CUSTOEST) / TRBREL->CUSTOEST) * 100  //deve ser % e nao valor
         TRBREL->W6_DTRECDO   := STOD(TMPREL->RECDOCTO)
-        TRBREL->WF_DESC     := TMPREL->W2_TAB_PC
+        TRBREL->WF_DESC     := TMPREL->W2_TAB_PC  
+        TRBREL->DESP_EXTRA   := TMPREL->DESP_EXTRA
 
 
         MsUnlock()
@@ -414,6 +417,7 @@ oBrowse:SetColumns(MontaColunas("CUSTOFIN"      ,"Custo Real"	    ,34,"@E 9,999,
 oBrowse:SetColumns(MontaColunas("VARIACAO"      ,"Variação"	        ,35,"@E 9,999,999.9999",2,020,0))//38		
 oBrowse:SetColumns(MontaColunas("W6_DTRECDO"    ,"Recb. Docto"		,36,"@!",1,020,0))//39
 oBrowse:SetColumns(MontaColunas("WF_DESC"       ,"Tab Pre Calculo"		,36,"@!",1,020,0))//40
+oBrowse:SetColumns(MontaColunas("DESP_EXTRA"    ,"Despesas Extra"	,33,"@E 9,999,999.9999",2,020,0))//41
 
 /*
 oBrowse:SetColumns(MontaColunas("VLRPAGO"       ,"Valor Pago R$"	,34,"@E 9,999,999.99",2,020,0))//36	
@@ -535,6 +539,7 @@ oFWMsExcel:AddColumn("RESUMO","ITENS","Custo Real"	,2)         //37
 oFWMsExcel:AddColumn("RESUMO","ITENS","Variação"	,2)         //38
 oFWMsExcel:AddColumn("RESUMO","ITENS","Recb. Docto",1)          //39
 oFWMsExcel:AddColumn("RESUMO","ITENS","Tab Pre Calculo",1)      //40
+oFWMsExcel:AddColumn("RESUMO","ITENS","Despesas Extra",1)      //41
 
 TRBREL->(DbGoTop()) 		
 While TRBREL->(!Eof())
@@ -578,7 +583,8 @@ While TRBREL->(!Eof())
     TRBREL->CUSTOFIN        ,;//37
     TRBREL->VARIACAO        ,;//38
     TRBREL->W6_DTRECDO      ,;//39
-    TRBREL->WF_DESC         ;//40
+    TRBREL->WF_DESC         ,;//40
+    TRBREL->DESP_EXTRA         ;//40
     })
     TRBREL->(dbSkip())
 

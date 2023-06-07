@@ -26,6 +26,7 @@ Local cChave 	:= SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA
 Local cChaveK   := QEK->( QEK_FILIAL + QEK_FORNEC + QEK_LOJFOR + QEK_NTFISC + QEK_SERINF + QEK_ITEMNF )
 Local lOk		:= .F.
 Local cMenNota	:= ''
+Local cQuery	:= "" 	
 
 If SF1->F1_TIPO == 'D'
 	dbSelectArea("SA1")
@@ -111,6 +112,24 @@ if nConfirma == 1
 	Else
 		MsgInfo('Um ou mais registros nao foram atualizados!')
 	EndIf
+
+    cQuery := " SELECT WD_VALOR_R "
+    cQuery += " FROM "+RetSQLName("SWD") + " AS SWD " //WITH (NOLOCK)
+    cQuery += " WHERE WD_FILIAL  = '" + xFilial("SWD") + "' "
+    cQuery += " AND SWD.D_E_L_E_T_= ' ' "
+    cQuery += " AND SWD.WD_NF_COMP = '"+ SF1->F1_DOC +"' "
+    cQuery += " AND WD_DESPESA =  '766' "
+
+    TcQuery cQuery new Alias ( cAliasQry )
+
+    (cAliasQry)->(dbGoTop())
+
+    If !(cAliasQry)->(EOF())
+		RecLock('SF1', .F.)
+		SF1->F1_MENNOTA := AlltriM(SF1->F1_MENNOTA) + '. THC R$ ' + Transform((cAliasQry)->WD_VALOR_R,PesqPict("SWD","WD_VALOR_R"))
+		MsUnlock()
+	EndIf
+
 	RestArea(aArea)
 	
 Endif
